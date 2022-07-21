@@ -54,7 +54,7 @@ func generateIvals(n int) []ival {
 }
 
 func TestTreeNil(t *testing.T) {
-	tree := interval.NewTree[ival](nil)
+	var tree interval.Tree[ival]
 
 	if s := tree.String(); s != "" {
 		t.Errorf("tree.String() = %v, want \"\"", s)
@@ -63,12 +63,39 @@ func TestTreeNil(t *testing.T) {
 	if s := tree.Size(); s != 0 {
 		t.Errorf("tree.Size() = %v, want 0", s)
 	}
+
+	if _, ok := tree.Shortest(ival{}); ok {
+		t.Errorf("tree.Shortest(), got: %v, want: false", ok)
+	}
+
+	if _, ok := tree.Largest(ival{}); ok {
+		t.Errorf("tree.Largest(), got: %v, want: false", ok)
+	}
+
+	if s := tree.Subsets(ival{}); s != nil {
+		t.Errorf("tree.Subsets(), got: %v, want: nil", s)
+	}
+
+	if s := tree.Supersets(ival{}); s != nil {
+		t.Errorf("tree.Supersets(), got: %v, want: nil", s)
+	}
 }
 
 func TestTreeWithDups(t *testing.T) {
 	tree := interval.NewTree([]ival{{0, 100}, {41, 102}, {42, 67}, {42, 67}, {48, 50}, {3, 13}})
 	if s := tree.Size(); s != 5 {
 		t.Errorf("tree.Size() = %v, want 5", s)
+	}
+
+	asStr := `▼
+├─ 0...100
+│  └─ 3...13
+└─ 41...102
+   └─ 42...67
+      └─ 48...50
+`
+	if s := tree.String(); s != asStr {
+		t.Errorf("tree.String()\nwant:\n%sgot:\n%s", asStr, s)
 	}
 }
 
