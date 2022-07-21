@@ -65,6 +65,10 @@ func ExampleSort() {
 		fmt.Println(iv)
 	}
 	// Output:
+	// 2...9
+	// 3...5
+	// 3...4
+	// 7...9
 }
 
 func TestTreeNil(t *testing.T) {
