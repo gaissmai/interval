@@ -37,7 +37,7 @@ type Tree[T Interface[T]] struct {
 // NewTree takes a slice of intervals and returns the tree handle.
 // The algorithm prohibits duplicates and these are therefore sorted out.
 func NewTree[T Interface[T]](items []T) *Tree[T] {
-	t := &Tree[T]{}
+	t := new(Tree[T])
 
 	if len(items) == 0 {
 		return t
