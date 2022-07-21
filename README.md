@@ -3,11 +3,11 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/gaissmai/interval)](https://goreportcard.com/report/github.com/gaissmai/interval)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-`package interval` provides fast lookups on generic one-dimensional intervals.
+`package interval` provides fast lookups and various methods on one dimensional intervals.
 
-## INTERFACE
+## Interface
 
-To apply this library to types of intervals, they must implement the following interface:
+To apply this library to types of one-dimensional intervals, they must just implement the following small interface:
 
 ```go
 type Interface[T any] interface {
@@ -36,3 +36,33 @@ func (t *Tree[T]) String() string
 
 ```
 
+## Example
+
+```go
+// simplest interval
+type ival struct {
+  lo, hi int 
+}
+
+// implementing interval.Interface
+
+func (a ival) CompareFirst(b ival) int {
+  if a.lo == b.lo {
+    return 0
+  }
+  if a.lo < b.lo {
+    return -1
+  }
+  return 1
+}
+
+func (a ival) CompareLast(b ival) int {
+  if a.hi == b.hi {
+    return 0
+  }
+  if a.hi < b.hi {
+    return -1
+  }
+  return 1
+}
+```
