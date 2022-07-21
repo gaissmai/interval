@@ -39,7 +39,7 @@ func (t *Tree[T]) String() string
 ## Example
 
 ```go
-// simplest interval
+// simple interval
 type ival struct {
   lo, hi int 
 }
