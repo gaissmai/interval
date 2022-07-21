@@ -21,40 +21,6 @@ func ExampleSort() {
 	// 7...9
 }
 
-func ExampleTree_Shortest() {
-	tree := interval.NewTree(ivals)
-	fmt.Println(tree)
-	item := ival{3, 4}
-	m, ok := tree.Shortest(item)
-	fmt.Printf("item: %v, shortest: %v, OK: %v\n", item, m, ok)
-
-	// Output:
-	// ▼
-	// └─ 2...9
-	//    ├─ 3...5
-	//    │  └─ 3...4
-	//    └─ 7...9
-	//
-	// item: 3...4, shortest: 3...4, OK: true
-}
-
-func ExampleTree_Largest() {
-	tree := interval.NewTree(ivals)
-	fmt.Println(tree)
-	item := ival{3, 4}
-	m, ok := tree.Largest(item)
-	fmt.Printf("item: %v, largest: %v, OK: %v\n", item, m, ok)
-
-	// Output:
-	// ▼
-	// └─ 2...9
-	//    ├─ 3...5
-	//    │  └─ 3...4
-	//    └─ 7...9
-	//
-	// item: 3...4, largest: 2...9, OK: true
-}
-
 func ExampleTree_Supersets() {
 	tree := interval.NewTree(ivals)
 	fmt.Println(tree)
