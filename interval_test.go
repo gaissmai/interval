@@ -54,7 +54,7 @@ func generateIvals(n int) []ival {
 }
 
 func TestTreeNil(t *testing.T) {
-	var tree interval.Tree[ival]
+	tree := interval.NewTree[ival](nil)
 
 	if s := tree.String(); s != "" {
 		t.Errorf("tree.String() = %v, want \"\"", s)
@@ -114,7 +114,12 @@ func TestTreeLookup(t *testing.T) {
 
 	item = ival{47, 62}
 	if got, _ := tree.Shortest(item); got != is[0] {
-		t.Errorf("Shortest(%v) = %v, want %v", item, got, ival{1, 100})
+		t.Errorf("Shortest(%v) = %v, want %v", item, got, is[0])
+	}
+
+	item = ival{45, 60}
+	if got, _ := tree.Shortest(item); got != is[1] {
+		t.Errorf("Shortest(%v) = %v, want %v", item, got, is[1])
 	}
 }
 

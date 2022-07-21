@@ -37,7 +37,8 @@ type Tree[T Interface[T]] struct {
 // NewTree takes a slice of intervals and returns the tree handle.
 // The algorithm prohibits duplicates and these are therefore sorted out.
 func NewTree[T Interface[T]](items []T) *Tree[T] {
-	t := new(Tree[T])
+	t := &Tree[T]{}
+
 	if len(items) == 0 {
 		return t
 	}
@@ -166,9 +167,6 @@ func sortLast[T Interface[T]](items []T) {
 // If the value to be searched for would be inserted directly under root,
 // the zero value and false will be returned.
 func (t *Tree[T]) Shortest(item T) (match T, ok bool) {
-	if t == nil {
-		return
-	}
 	// rec-descent
 	return t.lookup(root, item)
 }
@@ -231,10 +229,6 @@ func (t *Tree[T]) lookup(p int, item T) (match T, ok bool) {
 // If the value to be searched is not covered or equal by any interval in the tree,
 // the zero value and false will be returned.
 func (t *Tree[T]) Largest(item T) (match T, ok bool) {
-	if t == nil {
-		return
-	}
-
 	// dereference root level slice
 	rs := t.idxTree[root]
 
@@ -278,10 +272,6 @@ func (t *Tree[T]) Largest(item T) (match T, ok bool) {
 
 // Supersets returns all intervals that cover or equal the element, otherwise it returns nil.
 func (t *Tree[T]) Supersets(item T) []T {
-	if t == nil {
-		return nil
-	}
-
 	// idx is first interval where t.items[i].first > item.first
 	idxFirst := sort.Search(len(t.items), func(i int) bool { return t.items[i].CompareFirst(item) > 0 })
 
@@ -306,10 +296,6 @@ func (t *Tree[T]) Supersets(item T) []T {
 
 // Subsets returns all intervals in tree covered by item, maybe nil.
 func (t *Tree[T]) Subsets(item T) []T {
-	if t == nil {
-		return nil
-	}
-
 	// idx is first interval where t.items.first >= item.first
 	// item: 3...8
 	// t.items:    [0...6 0...5 1...8 1...7 1...5 1...4 2...8 2...7 4...8 6...7 7...9]
@@ -360,7 +346,7 @@ func (t *Tree[T]) Subsets(item T) []T {
 //
 // If the interval items don't implement fmt.Stringer they are stringified with their default format %v.
 func (t *Tree[T]) String() string {
-	if t == nil || len(t.items) == 0 {
+	if len(t.items) == 0 {
 		return ""
 	}
 
