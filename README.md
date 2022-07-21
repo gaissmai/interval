@@ -1,2 +1,2 @@
 # interval
-generic, fast lookup on one dimensional intervals.
+`package interval` provides fast lookups on generic one-dimensional intervals.
