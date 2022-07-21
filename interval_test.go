@@ -1,44 +1,11 @@
 package interval_test
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 
 	"github.com/gaissmai/interval"
 )
-
-// simple test interval
-type ival struct {
-	lo, hi int
-}
-
-// implementing interval.Interface
-
-func (a ival) CompareFirst(b ival) int {
-	if a.lo == b.lo {
-		return 0
-	}
-	if a.lo < b.lo {
-		return -1
-	}
-	return 1
-}
-
-func (a ival) CompareLast(b ival) int {
-	if a.hi == b.hi {
-		return 0
-	}
-	if a.hi < b.hi {
-		return -1
-	}
-	return 1
-}
-
-// fmt.Stringer
-func (a ival) String() string {
-	return fmt.Sprintf("%d...%d", a.lo, a.hi)
-}
 
 func generateIvals(n int) []ival {
 	is := make([]ival, n)
