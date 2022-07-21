@@ -1,4 +1,8 @@
 # package interval
+[![Go Reference](https://pkg.go.dev/badge/github.com/gaissmai/interval.svg)](https://pkg.go.dev/github.com/gaissmai/interval#section-documentation)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gaissmai/interval)](https://goreportcard.com/report/github.com/gaissmai/interval)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 `package interval` provides fast lookups on generic one-dimensional intervals.
 
 ## INTERFACE
