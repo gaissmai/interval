@@ -53,6 +53,20 @@ func generateIvals(n int) []ival {
 	return is
 }
 
+func ExampleSort() {
+	ivals := []ival{
+		{2, 9},
+		{3, 5},
+		{3, 4},
+		{7, 9},
+	}
+	interval.Sort(ivals)
+	for _, iv := range ivals {
+		fmt.Println(iv)
+	}
+	// Output:
+}
+
 func TestTreeNil(t *testing.T) {
 	tree := interval.NewTree[ival](nil)
 
