@@ -136,12 +136,13 @@ func sortLast[T Interface[T]](items []T) {
 // LOOKUP, use the provided interface methods
 // ######################################################################################
 
-// Shortest returns the shortest interval that covers item or is equal. ok is true on success.
+// Shortest returns the shortest interval that covers item.
+// ok is true on success.
 //
-// Returns the identical interval after which to search, if it exists in the tree,
+// Returns the identical interval if it exists in the tree,
 // or the interval at which the item would be inserted.
 //
-// If the interval tree consists of IP CIDRs, shortest is identical to longest-prefix-match.
+// If the interval tree consists of IP CIDRs, shortest is identical to the longest-prefix-match.
 //
 // The meaning of 'shortest' is best explained with an example
 //
@@ -164,8 +165,8 @@ func sortLast[T Interface[T]](items []T) {
 //	 tree.Shortest(ival{3,6}) returns ival{2,7}, true
 //	 tree.Shortest(ival{6,9}) returns ival{},    false
 //
-// If the value to be searched for would be inserted directly under root,
-// the zero value and false will be returned.
+// If the item would be inserted directly under root,
+// the zero value and false is be returned.
 func (t *Tree[T]) Shortest(item T) (match T, ok bool) {
 	// rec-descent
 	return t.lookup(root, item)
@@ -201,8 +202,7 @@ func (t *Tree[T]) lookup(p int, item T) (match T, ok bool) {
 	return t.items[p], true
 }
 
-// Largest returns the *biggest* superset (top-down).
-// Search for the first interval that the search element covers (or is equal to), starting at root.
+// Largest returns the first superset (top-down) that covers item.
 // ok is true on success.
 //
 // The meaning of 'largest' is best explained with an example
@@ -222,12 +222,13 @@ func (t *Tree[T]) lookup(p int, item T) (match T, ok bool) {
 //		 │        └─ 6...7
 //		 └─ 7...9
 //
+//	 tree.Largest(ival{0,6}) returns ival{0,6}, true
 //	 tree.Largest(ival{0,5}) returns ival{0,6}, true
 //	 tree.Largest(ival{3,7}) returns ival{1,8}, true
 //	 tree.Largest(ival{6,9}) returns ival{},    false
 //
-// If the value to be searched is not covered or equal by any interval in the tree,
-// the zero value and false will be returned.
+// If the item is not covered by any interval in the tree,
+// the zero value and false is returned.
 func (t *Tree[T]) Largest(item T) (match T, ok bool) {
 	// dereference root level slice
 	rs := t.idxTree[root]
@@ -270,7 +271,7 @@ func (t *Tree[T]) Largest(item T) (match T, ok bool) {
 	return
 }
 
-// Supersets returns all intervals that cover or equal the element, otherwise it returns nil.
+// Supersets returns all intervals that covers the item.
 func (t *Tree[T]) Supersets(item T) []T {
 	// idx is first interval where t.items[i].first > item.first
 	idxFirst := sort.Search(len(t.items), func(i int) bool { return t.items[i].CompareFirst(item) > 0 })
@@ -294,7 +295,7 @@ func (t *Tree[T]) Supersets(item T) []T {
 	return append([]T(nil), sl[idxLast:]...)
 }
 
-// Subsets returns all intervals in tree covered by item, maybe nil.
+// Subsets returns all intervals in tree that are covered by item.
 func (t *Tree[T]) Subsets(item T) []T {
 	// idx is first interval where t.items.first >= item.first
 	// item: 3...8
