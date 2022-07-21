@@ -6,11 +6,7 @@ import (
 	"github.com/gaissmai/interval"
 )
 
-// simple test interval
-type ival struct {
-	lo, hi int
-}
-
+// little helper, compare two ints
 func cmp(a, b int) int {
 	if a == b {
 		return 0
@@ -21,11 +17,16 @@ func cmp(a, b int) int {
 	return 1
 }
 
-// implementing interval.Interface
+// simple test interval
+type ival struct {
+	lo, hi int
+}
 
+// implementing the interval.Interface for type ival
 func (a ival) CompareFirst(b ival) int { return cmp(a.lo, b.lo) }
 func (a ival) CompareLast(b ival) int  { return cmp(a.hi, b.hi) }
 
+// example data
 var ivals = []ival{
 	{3, 4},
 	{2, 9},
@@ -33,6 +34,7 @@ var ivals = []ival{
 	{3, 5},
 }
 
+// fmt.Stringer for formattting, not required
 func (i ival) String() string {
 	return fmt.Sprintf("%d...%d", i.lo, i.hi)
 }
