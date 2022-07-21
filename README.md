@@ -5,7 +5,13 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/gaissmai/interval)](https://goreportcard.com/report/github.com/gaissmai/interval)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-`package interval` provides fast lookups and various methods on one dimensional intervals.
+`package interval` provides fast lookups and various methods on generic one-dimensional intervals.
+
+The author of the library uses it for IP-Range lookups in Access-Control-Lists (ACL)
+and in the authors own IP-Address-Management (IPAM) and network-management software.
+
+But the library is also useful for all one-dimensional arrays, e.g. time intervals.
+Thanks to generics this could be abstracted with minimal constraints.
 
 ## Interface
 
@@ -36,35 +42,4 @@ func (t *Tree[T]) Supersets(item T) []T
 func (t *Tree[T]) Size() int
 func (t *Tree[T]) String() string
 
-```
-
-## Example
-
-```go
-// simple interval
-type ival struct {
-  lo, hi int 
-}
-
-// implementing interval.Interface
-
-func (a ival) CompareFirst(b ival) int {
-  if a.lo == b.lo {
-    return 0
-  }
-  if a.lo < b.lo {
-    return -1
-  }
-  return 1
-}
-
-func (a ival) CompareLast(b ival) int {
-  if a.hi == b.hi {
-    return 0
-  }
-  if a.hi < b.hi {
-    return -1
-  }
-  return 1
-}
 ```
