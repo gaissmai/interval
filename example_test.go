@@ -17,32 +17,32 @@ func cmp(a, b int) int {
 	return 1
 }
 
-// simple test interval
-type ival struct {
-	lo, hi int
+// example interval
+type period struct {
+	start int
+	stop  int
 }
 
-// implementing the interval.Interface for type ival
-func (a ival) CompareFirst(b ival) int { return cmp(a.lo, b.lo) }
-func (a ival) CompareLast(b ival) int  { return cmp(a.hi, b.hi) }
+// implementing the interval.Interface for type period
+func (p period) CompareFirst(q period) int { return cmp(p.start, q.start) }
+func (p period) CompareLast(q period) int  { return cmp(p.stop, q.stop) }
 
 // example data
-var ivals = []ival{
+var periods = []period{
 	{3, 4},
 	{2, 9},
 	{7, 9},
 	{3, 5},
 }
 
-// fmt.Stringer for formattting, not required
-func (i ival) String() string {
-	return fmt.Sprintf("%d...%d", i.lo, i.hi)
+// fmt.Stringer for formattting, not required for interval.Interface
+func (p period) String() string {
+	return fmt.Sprintf("%d...%d", p.start, p.stop)
 }
 
 func Example() {
-	tree := interval.NewTree(ivals)
-	fmt.Println(tree.String())
-
+	tree := interval.NewTree(periods)
+	fmt.Println(tree)
 	// Output:
 	// ▼
 	// └─ 2...9

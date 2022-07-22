@@ -8,12 +8,10 @@ import (
 
 func ExampleSort() {
 	// sort in place
-	interval.Sort(ivals)
-
-	for _, iv := range ivals {
-		fmt.Println(iv)
+	interval.Sort(periods)
+	for _, p := range periods {
+		fmt.Println(p)
 	}
-
 	// Output:
 	// 2...9
 	// 3...5
@@ -22,18 +20,16 @@ func ExampleSort() {
 }
 
 func ExampleTree_Supersets() {
-	tree := interval.NewTree(ivals)
-	fmt.Println(tree)
-	item := ival{3, 4}
-
+	tree := interval.NewTree(periods)
+	item := period{3, 4}
 	supersets := tree.Supersets(item)
-	interval.Sort(supersets)
 
+	fmt.Println(tree)
 	fmt.Printf("Supersets for item: %v\n", item)
-	for _, iv := range supersets {
-		fmt.Println(iv)
+	interval.Sort(supersets)
+	for _, p := range supersets {
+		fmt.Println(p)
 	}
-
 	// Output:
 	// ▼
 	// └─ 2...9
@@ -48,18 +44,16 @@ func ExampleTree_Supersets() {
 }
 
 func ExampleTree_Subsets() {
-	tree := interval.NewTree(ivals)
-	fmt.Println(tree)
-	item := ival{3, 10}
-
+	tree := interval.NewTree(periods)
+	item := period{3, 10}
 	subsets := tree.Subsets(item)
-	interval.Sort(subsets)
 
+	fmt.Println(tree)
 	fmt.Printf("Subsets for item: %v\n", item)
-	for _, iv := range subsets {
-		fmt.Println(iv)
+	interval.Sort(subsets)
+	for _, p := range subsets {
+		fmt.Println(p)
 	}
-
 	// Output:
 	// ▼
 	// └─ 2...9
