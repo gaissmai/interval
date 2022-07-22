@@ -22,11 +22,12 @@ import (
 const root = -1
 
 // Interface for generic one dimensional intervals.
-//
-// Compare the lower and upper points of two intervals.
 type Interface[T any] interface {
+	// compare the lower points, must return -1, 0, 1
 	CompareLower(T) int
-	CompareUpper(T) int
+
+	// compare the upper points, must return -1, 0, 1
+	CompareUpper(T) int // compare the upper points
 }
 
 // Tree is the handle to perform various methods on a slice of intervals.
