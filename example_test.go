@@ -23,9 +23,9 @@ type period struct {
 	stop  int
 }
 
-// implementing the interval.Interface for type period
-func (p period) CompareFirst(q period) int { return cmp(p.start, q.start) }
-func (p period) CompareLast(q period) int  { return cmp(p.stop, q.stop) }
+// implementing the interval.Interface
+func (p period) CompareLower(q period) int { return cmp(p.start, q.start) }
+func (p period) CompareUpper(q period) int { return cmp(p.stop, q.stop) }
 
 // example data
 var periods = []period{

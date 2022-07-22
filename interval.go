@@ -21,16 +21,12 @@ import (
 // parent index of all childs
 const root = -1
 
-// Interface for one dimensional intervals. This is the minimum known interface for one dimension,
-// everything else can be derived from it.
+// Interface for generic one dimensional intervals.
 //
-// To keep the constraint small String() is not a requirement.
+// Compare the lower and upper points of two intervals.
 type Interface[T any] interface {
-	// CompareFirst must compare the first points of two intervals.
-	CompareFirst(T) int
-
-	// CompareLast must compare the last points of two intervals.
-	CompareLast(T) int
+	CompareLower(T) int
+	CompareUpper(T) int
 }
 
 // Tree is the handle to perform various methods on a slice of intervals.
@@ -97,7 +93,7 @@ func (t *Tree[T]) Size() int {
 
 // equal reports whether a == b. Operator == not available.
 func equal[T Interface[T]](a, b T) bool {
-	return a.CompareFirst(b) == 0 && a.CompareLast(b) == 0
+	return a.CompareLower(b) == 0 && a.CompareUpper(b) == 0
 }
 
 // covers reports whether a truly covers b (not equal).
@@ -105,32 +101,32 @@ func covers[T Interface[T]](a, b T) bool {
 	if equal(a, b) {
 		return false
 	}
-	return a.CompareFirst(b) <= 0 && a.CompareLast(b) >= 0
+	return a.CompareLower(b) <= 0 && a.CompareUpper(b) >= 0
 }
 
-// compareDefault, compare the first points,
+// compareDefault, compare the lower points,
 // sort supersets to the left as tiebreaker
 //
-// a wrapper for CompareFirst[T] with added functionality for superset sorting
+// a wrapper for CompareLower[T] with added functionality for superset sorting
 func compareDefault[T Interface[T]](a, b T) int {
 	if equal(a, b) {
 		return 0
 	}
 
-	// cmp first
-	if cmp := a.CompareFirst(b); cmp != 0 {
+	// cmp lower
+	if cmp := a.CompareLower(b); cmp != 0 {
 		return cmp
 	}
 
-	// first is equal, sort supersets to the left
-	return -(a.CompareLast(b))
+	// lower is equal, sort supersets to the left
+	return -(a.CompareUpper(b))
 }
 
 // ######################################################################################
 // SORTING
 // ######################################################################################
 
-// Sort the slice in place, with first points ascending.
+// Sort the slice in place, with lower points ascending.
 // As tie breaker sort supersets to the left.
 //
 //	[2...9 3...5 3...4 7...9]
@@ -138,9 +134,9 @@ func Sort[T Interface[T]](items []T) {
 	sort.Slice(items, func(i, j int) bool { return compareDefault(items[i], items[j]) < 0 })
 }
 
-// sortLast sorts the slice in place, with last point ascending
-func sortLast[T Interface[T]](items []T) {
-	sort.Slice(items, func(i, j int) bool { return items[i].CompareLast(items[j]) < 0 })
+// sortUpper sorts the slice in place, with upper point ascending
+func sortUpper[T Interface[T]](items []T) {
+	sort.Slice(items, func(i, j int) bool { return items[i].CompareUpper(items[j]) < 0 })
 }
 
 // ######################################################################################
@@ -187,11 +183,11 @@ func (t *Tree[T]) lookup(p int, item T) (match T, ok bool) {
 	// dereference
 	cs := t.idxTree[p]
 
-	// find pos in slice on this level where t.items.first > item.first
+	// find pos in slice on this level where t.items.lower > item.lower
 	// item: 0...5
 	// t.items:    [0...6 0...5 1...8 1...7 1...5 1...4 2...8 2...7 4...8 6...7 7...9]
 	// idx: 2                   ^
-	idx := sort.Search(len(cs), func(i int) bool { return t.items[cs[i]].CompareFirst(item) > 0 })
+	idx := sort.Search(len(cs), func(i int) bool { return t.items[cs[i]].CompareLower(item) > 0 })
 
 	// child before idx may be equal or covers item
 	if idx > 0 {
@@ -213,7 +209,7 @@ func (t *Tree[T]) lookup(p int, item T) (match T, ok bool) {
 	return t.items[p], true
 }
 
-// Largest returns the first superset (top-down) that covers item.
+// Largest returns the lower superset (top-down) that covers item.
 // ok is true on success.
 //
 // The meaning of 'largest' is best explained with an example
@@ -244,11 +240,11 @@ func (t *Tree[T]) Largest(item T) (match T, ok bool) {
 	// dereference root level slice
 	rs := t.idxTree[root]
 
-	// find pos in slice on root level where t.items.first > item.first
+	// find pos in slice on root level where t.items.lower > item.lower
 	// t.items: [0...6 1...8 7...9]
 	// item:           2...5
 	// idx:                  !
-	idx := sort.Search(len(rs), func(i int) bool { return t.items[rs[i]].CompareFirst(item) > 0 })
+	idx := sort.Search(len(rs), func(i int) bool { return t.items[rs[i]].CompareLower(item) > 0 })
 
 	if idx == 0 {
 		return
@@ -284,53 +280,53 @@ func (t *Tree[T]) Largest(item T) (match T, ok bool) {
 
 // Supersets returns all intervals that covers the item.
 func (t *Tree[T]) Supersets(item T) []T {
-	// idx is first interval where t.items[i].first > item.first
-	idxFirst := sort.Search(len(t.items), func(i int) bool { return t.items[i].CompareFirst(item) > 0 })
+	// idx is first interval where t.items[i].lower > item.lower
+	idxLower := sort.Search(len(t.items), func(i int) bool { return t.items[i].CompareLower(item) > 0 })
 
 	// resort remaining intervals [:idxFirst]
-	// clone and sortLast
-	sl := make([]T, idxFirst)
-	copy(sl, t.items[:idxFirst])
-	sortLast(sl)
+	// clone and sortUpper
+	sl := make([]T, idxLower)
+	copy(sl, t.items[:idxLower])
+	sortUpper(sl)
 
-	// idx is first interval where sl[i].last is >= item.last
+	// idx is first interval where sl[i].upper is >= item.upper
 	// lower limit of supersets
-	idxLast := sort.Search(len(sl), func(i int) bool { return sl[i].CompareLast(item) >= 0 })
+	idxUpper := sort.Search(len(sl), func(i int) bool { return sl[i].CompareUpper(item) >= 0 })
 
 	// sort.Search: ... if there is no such index, Search returns n.
-	if idxLast == len(sl) {
+	if idxUpper == len(sl) {
 		return nil
 	}
 
 	// maybe nil
-	return append([]T(nil), sl[idxLast:]...)
+	return append([]T(nil), sl[idxUpper:]...)
 }
 
 // Subsets returns all intervals in tree that are covered by item.
 func (t *Tree[T]) Subsets(item T) []T {
-	// idx is first interval where t.items.first >= item.first
+	// idx is first interval where t.items.lower >= item.lower
 	// item: 3...8
 	// t.items:    [0...6 0...5 1...8 1...7 1...5 1...4 2...8 2...7 4...8 6...7 7...9]
 	// idx: 8                                                 ^
-	idxFirst := sort.Search(len(t.items), func(i int) bool { return t.items[i].CompareFirst(item) >= 0 })
+	idxLower := sort.Search(len(t.items), func(i int) bool { return t.items[i].CompareLower(item) >= 0 })
 
 	// remaining intervals [idx:]
 	// t.items: [2...7 4...8 6...7 7...9]
 
-	// resort remaining intervals [idxFirst:]
-	// clone and sortLast
-	sl := make([]T, len(t.items)-idxFirst)
-	copy(sl, t.items[idxFirst:])
-	sortLast(sl)
+	// resort remaining intervals [idxLower:]
+	// clone and sortUpper
+	sl := make([]T, len(t.items)-idxLower)
+	copy(sl, t.items[idxLower:])
+	sortUpper(sl)
 
-	// idx is first interval where sl[i].last is > item.last
+	// idx is first interval where sl[i].upper is > item.upper
 	// item: 3...8
 	// sl:         [6...7 4...8 7...9]
 	// idx: 2                       ^
-	idxLast := sort.Search(len(sl), func(i int) bool { return sl[i].CompareLast(item) > 0 })
+	idxUpper := sort.Search(len(sl), func(i int) bool { return sl[i].CompareUpper(item) > 0 })
 
 	// [6...7 4...8]
-	return append([]T(nil), sl[:idxLast]...) // maybe nil
+	return append([]T(nil), sl[:idxUpper]...) // maybe nil
 }
 
 // String returns the ordered tree as a directory graph.
@@ -409,7 +405,7 @@ func (t *Tree[T]) walkAndStringify(p int, pad string, w io.StringWriter) {
 // Just building the tree with the slice indices, the items itself are not moved.
 //
 //		e.g.
-//		 items in sort order first-left:
+//		 items in sort order lower-left:
 //		  [0...300 0...100 9...18 13...18 15...19 200...400 201...230 203...300]
 //
 //	  map[parent][]child indices, root == -1
@@ -449,7 +445,7 @@ func (t *Tree[T]) buildIndexTree() {
 				break
 			}
 
-			// sort order is first-left: if next item wasn't covered, remove it from stack
+			// sort order is lower-left: if next item wasn't covered, remove it from stack
 			stack = stack[:j]
 		}
 

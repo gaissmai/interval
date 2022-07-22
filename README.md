@@ -18,12 +18,10 @@ Thanks to generics this could be abstracted with minimal constraints.
 To apply this library to types of one-dimensional intervals, they must just implement the following small interface:
 
 ```go
+// Compare the lower and upper points of two intervals.
 type Interface[T any] interface {
-	// CompareFirst must compare the first points of two intervals.
-	CompareFirst(T) int
-
-	// CompareLast must compare the last points of two intervals.
-	CompareLast(T) int
+	CompareLower(T) int
+	CompareUpper(T) int
 }
 ```
 
