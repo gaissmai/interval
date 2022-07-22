@@ -16,6 +16,7 @@ func ExampleTree_Supersets() {
 	for _, p := range supersets {
 		fmt.Println(p)
 	}
+
 	// Output:
 	// ▼
 	// └─ 2...9
@@ -39,6 +40,7 @@ func ExampleTree_Subsets() {
 	for _, p := range subsets {
 		fmt.Println(p)
 	}
+
 	// Output:
 	// ▼
 	// └─ 2...9

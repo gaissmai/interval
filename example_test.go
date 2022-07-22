@@ -43,6 +43,7 @@ func (p period) String() string {
 func Example() {
 	tree := interval.NewTree(periods)
 	fmt.Println(tree)
+
 	// Output:
 	// ▼
 	// └─ 2...9
