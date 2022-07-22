@@ -39,8 +39,7 @@ type Tree[T Interface[T]] struct {
 	// the sorted items, immutable, stored as slice, not as tree, duplicates removed
 	items []T
 
-	// top-down parentIdx -> []childIdx idxTree
-	// only needed for string representation, lazy built
+	// item indices: parent -> []child
 	idxTree map[int][]int
 }
 
@@ -53,10 +52,13 @@ func NewTree[T Interface[T]](items []T) *Tree[T] {
 		return t
 	}
 
-	// the underlying data structure is a sorted slice
+	// the underlying data structure is a sorted slice ...
 	t.items = make([]T, len(items))
 
-	// clone and sort
+	// ... and a parent -> []child tree with the items indices
+	t.idxTree = make(map[int][]int)
+
+	// clone and sort the items
 	copy(t.items, items)
 	Sort(t.items)
 
@@ -79,7 +81,6 @@ func NewTree[T Interface[T]](items []T) *Tree[T] {
 	t.items = t.items[:pos:pos]
 
 	// build parent -> child(s) relationship
-	t.idxTree = make(map[int][]int)
 	t.buildIndexTree()
 
 	return t
