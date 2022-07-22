@@ -8,6 +8,17 @@ import (
 	"github.com/gaissmai/interval"
 )
 
+// little helper, compare two ints
+func cmp(a, b int) int {
+	if a == b {
+		return 0
+	}
+	if a < b {
+		return -1
+	}
+	return 1
+}
+
 func generateIvals(n int) []period {
 	is := make([]period, n)
 	for i := 0; i < n; i++ {
