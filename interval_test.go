@@ -148,14 +148,12 @@ func TestTreeRandom(t *testing.T) {
 		if subsets = tree.Subsets(item); subsets == nil {
 			t.Errorf("Subsets(%v), got %v", item, subsets)
 		}
-		interval.Sort(subsets)
 		if subsets[0] != shortest {
 			t.Errorf("Subsets(%v).[0], want %v, got %v", item, shortest, subsets[0])
 		}
 		if supersets = tree.Supersets(item); supersets == nil {
 			t.Errorf("Supersets(%v), got %v", item, supersets)
 		}
-		interval.Sort(supersets)
 		if supersets[0] != largest {
 			t.Errorf("Supersets(%v).[0], want %v, got %v", item, largest, supersets[0])
 		}

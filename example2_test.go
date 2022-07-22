@@ -6,19 +6,6 @@ import (
 	"github.com/gaissmai/interval"
 )
 
-func ExampleSort() {
-	// sort in place
-	interval.Sort(periods)
-	for _, p := range periods {
-		fmt.Println(p)
-	}
-	// Output:
-	// 2...9
-	// 3...5
-	// 3...4
-	// 7...9
-}
-
 func ExampleTree_Supersets() {
 	tree := interval.NewTree(periods)
 	item := period{3, 4}
@@ -26,7 +13,6 @@ func ExampleTree_Supersets() {
 
 	fmt.Println(tree)
 	fmt.Printf("Supersets for item: %v\n", item)
-	interval.Sort(supersets)
 	for _, p := range supersets {
 		fmt.Println(p)
 	}
@@ -50,7 +36,6 @@ func ExampleTree_Subsets() {
 
 	fmt.Println(tree)
 	fmt.Printf("Subsets for item: %v\n", item)
-	interval.Sort(subsets)
 	for _, p := range subsets {
 		fmt.Println(p)
 	}

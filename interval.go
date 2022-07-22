@@ -56,7 +56,7 @@ func NewTree[T Interface[T]](items []T) *Tree[T] {
 
 	// clone and sort the items
 	copy(t.items, items)
-	Sort(t.items)
+	sortDefault(t.items)
 
 	// skip/drop duplicates
 	pos := 0
@@ -126,11 +126,11 @@ func compareDefault[T Interface[T]](a, b T) int {
 // SORTING
 // ######################################################################################
 
-// Sort the slice in place, with lower points ascending.
+// sortDefault the slice in place, with lower points ascending.
 // As tie breaker sort supersets to the left.
 //
 //	[2...9 3...5 3...4 7...9]
-func Sort[T Interface[T]](items []T) {
+func sortDefault[T Interface[T]](items []T) {
 	sort.Slice(items, func(i, j int) bool { return compareDefault(items[i], items[j]) < 0 })
 }
 
@@ -278,7 +278,7 @@ func (t *Tree[T]) Largest(item T) (match T, ok bool) {
 	return
 }
 
-// Supersets returns all intervals that covers the item.
+// Supersets returns all intervals that covers the item in sorted order.
 func (t *Tree[T]) Supersets(item T) []T {
 	// idx is first interval where t.items[i].lower > item.lower
 	idxLower := sort.Search(len(t.items), func(i int) bool { return t.items[i].CompareLower(item) > 0 })
@@ -299,10 +299,15 @@ func (t *Tree[T]) Supersets(item T) []T {
 	}
 
 	// maybe nil
-	return append([]T(nil), sl[idxUpper:]...)
+	result := append([]T(nil), sl[idxUpper:]...)
+
+	// sort before return
+	sortDefault(result)
+
+	return result
 }
 
-// Subsets returns all intervals in tree that are covered by item.
+// Subsets returns all intervals in tree that are covered by item in sorted order.
 func (t *Tree[T]) Subsets(item T) []T {
 	// idx is first interval where t.items.lower >= item.lower
 	// item: 3...8
@@ -326,7 +331,12 @@ func (t *Tree[T]) Subsets(item T) []T {
 	idxUpper := sort.Search(len(sl), func(i int) bool { return sl[i].CompareUpper(item) > 0 })
 
 	// [6...7 4...8]
-	return append([]T(nil), sl[:idxUpper]...) // maybe nil
+	result := append([]T(nil), sl[:idxUpper]...) // maybe nil
+
+	// sort before return
+	sortDefault(result)
+
+	return result
 }
 
 // String returns the ordered tree as a directory graph.
