@@ -40,7 +40,7 @@ func (p period) String() string {
 	return fmt.Sprintf("%d...%d", p.start, p.stop)
 }
 
-func Example() {
+func ExampleInterface() {
 	tree := interval.NewTree(periods)
 	fmt.Println(tree)
 
