@@ -12,6 +12,17 @@ type period struct {
 	stop  int
 }
 
+// little helper, compare two ints
+func cmp(a, b int) int {
+	switch {
+	case a == b:
+		return 0
+	case a < b:
+		return -1
+	}
+	return 1
+}
+
 // implementing the interval.Interface
 func (p period) CompareLower(q period) int { return cmp(p.start, q.start) }
 func (p period) CompareUpper(q period) int { return cmp(p.stop, q.stop) }
