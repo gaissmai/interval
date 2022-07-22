@@ -1,6 +1,7 @@
 package interval_test
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 
@@ -158,4 +159,66 @@ func TestTreeRandom(t *testing.T) {
 			t.Errorf("Supersets(%v).[0], want %v, got %v", item, largest, supersets[0])
 		}
 	}
+}
+
+func ExampleTree_Supersets() {
+	periods := []period{
+		{3, 4},
+		{2, 9},
+		{7, 9},
+		{3, 5},
+	}
+
+	tree := interval.NewTree(periods)
+	item := period{3, 4}
+	supersets := tree.Supersets(item)
+
+	fmt.Println(tree)
+	fmt.Printf("Supersets for item: %v\n", item)
+	for _, p := range supersets {
+		fmt.Println(p)
+	}
+
+	// Output:
+	// ▼
+	// └─ 2...9
+	//    ├─ 3...5
+	//    │  └─ 3...4
+	//    └─ 7...9
+	//
+	// Supersets for item: 3...4
+	// 2...9
+	// 3...5
+	// 3...4
+}
+
+func ExampleTree_Subsets() {
+	periods := []period{
+		{3, 4},
+		{2, 9},
+		{7, 9},
+		{3, 5},
+	}
+
+	tree := interval.NewTree(periods)
+	item := period{3, 10}
+	subsets := tree.Subsets(item)
+
+	fmt.Println(tree)
+	fmt.Printf("Subsets for item: %v\n", item)
+	for _, p := range subsets {
+		fmt.Println(p)
+	}
+
+	// Output:
+	// ▼
+	// └─ 2...9
+	//    ├─ 3...5
+	//    │  └─ 3...4
+	//    └─ 7...9
+	//
+	// Subsets for item: 3...10
+	// 3...5
+	// 3...4
+	// 7...9
 }
