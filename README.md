@@ -27,8 +27,6 @@ type Interface[T any] interface {
 
 ## API
 ```golang
-func Sort[T Interface[T]](items []T)
-
 func NewTree[T Interface[T]](items []T) *Tree[T]
 
 func (t *Tree[T]) Shortest(item T) (match T, ok bool)
