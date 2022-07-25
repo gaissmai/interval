@@ -9,7 +9,8 @@
 `package interval` provides fast lookups and various methods on generic one-dimensional intervals.
 
 The author of the library uses it for IP-Range lookups in Access-Control-Lists (ACL)
-and in the authors own IP-Address-Management (IPAM) and network-management software.
+and in the authors own IP-Address-Management (IPAM) and network-management software,
+see also: https://github.com/gaissmai/iprange
 
 But the library is also useful for all one-dimensional arrays, e.g. time intervals.
 Thanks to generics this could be abstracted with minimal constraints.
