@@ -31,15 +31,17 @@ type Interface[T any] interface {
 ```go
 import "github.com/gaissmai/interval"
 
-func NewTree[T Interface[T]](items []T) *Tree[T]
+type Tree[T Interface[T]] struct{ ... }
 
-func (t *Tree[T]) Shortest(item T) (match T, ok bool)
-func (t *Tree[T]) Largest(item T) (match T, ok bool)
+  func NewTree[T Interface[T]](items []T) *Tree[T]
 
-func (t *Tree[T]) Subsets(item T) []T
-func (t *Tree[T]) Supersets(item T) []T
+  func (t *Tree[T]) Shortest(item T) (match T, ok bool)
+  func (t *Tree[T]) Largest(item T) (match T, ok bool)
 
-func (t *Tree[T]) Size() int
-func (t *Tree[T]) String() string
+  func (t *Tree[T]) Subsets(item T) []T
+  func (t *Tree[T]) Supersets(item T) []T
+
+  func (t *Tree[T]) Size() int
+  func (t *Tree[T]) String() string
 
 ```
