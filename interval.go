@@ -5,7 +5,7 @@
 // Access-Control-Lists (ACL) and in the authors own
 // IP-Address-Management (IPAM) and network-management software.
 //
-// But the library is also useful for all one-dimensional arrays,
+// But the library is also useful for all one-dimensional intervals,
 // e.g. time intervals.
 //
 // Thanks to generics this could be abstracted with minimal constraints.
