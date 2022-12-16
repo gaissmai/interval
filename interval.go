@@ -186,8 +186,10 @@ func (t *Tree[T]) lookup(p int, item T) (match T, ok bool) {
 
 	// find pos in slice on this level where t.items.lower > item.lower
 	// item: 0...5
-	// t.items:    [0...6 0...5 1...8 1...7 1...5 1...4 2...8 2...7 4...8 6...7 7...9]
+	// t.items:    [0...6 1...8 7...9]
+	// item:              2...4
 	// idx: 2                   ^
+	//
 	idx := sort.Search(len(cs), func(i int) bool { return t.items[cs[i]].CompareLower(item) > 0 })
 
 	// child before idx may be equal or covers item
@@ -244,7 +246,8 @@ func (t *Tree[T]) Largest(item T) (match T, ok bool) {
 	// find pos in slice on root level where t.items.lower > item.lower
 	// t.items: [0...6 1...8 7...9]
 	// item:           2...5
-	// idx:                  !
+	// idx: 2                ^
+	//
 	idx := sort.Search(len(rs), func(i int) bool { return t.items[rs[i]].CompareLower(item) > 0 })
 
 	if idx == 0 {
