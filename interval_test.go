@@ -22,7 +22,7 @@ func generateIvals(n int) []period {
 
 func TestTreeNil(t *testing.T) {
 	t.Parallel()
-	tree := interval.NewTree[period](nil)
+	tree := interval.NewTree[period]()
 
 	if s := tree.String(); s != "" {
 		t.Errorf("tree.String() = %v, want \"\"", s)
@@ -51,7 +51,7 @@ func TestTreeNil(t *testing.T) {
 
 func TestTreeWithDups(t *testing.T) {
 	t.Parallel()
-	tree := interval.NewTree([]period{{0, 100}, {41, 102}, {42, 67}, {42, 67}, {48, 50}, {3, 13}})
+	tree := interval.NewTree([]period{{0, 100}, {41, 102}, {42, 67}, {42, 67}, {48, 50}, {3, 13}}...)
 	if s := tree.Size(); s != 5 {
 		t.Errorf("tree.Size() = %v, want 5", s)
 	}
@@ -75,7 +75,7 @@ func TestTreeLookup(t *testing.T) {
 		{45, 60},
 	}
 
-	tree := interval.NewTree(is)
+	tree := interval.NewTree(is...)
 
 	item := period{0, 6}
 	if got, ok := tree.Shortest(item); ok {
@@ -101,7 +101,7 @@ func TestTreeSuperset(t *testing.T) {
 		{46, 80},
 	}
 
-	tree := interval.NewTree(is)
+	tree := interval.NewTree(is...)
 
 	item := period{0, 6}
 	if got, ok := tree.Largest(item); ok {
@@ -131,8 +131,8 @@ func TestTreeSuperset(t *testing.T) {
 
 func TestTreeRandom(t *testing.T) {
 	t.Parallel()
-	is := generateIvals(10)
-	tree := interval.NewTree(is)
+	is := generateIvals(1000)
+	tree := interval.NewTree(is...)
 
 	rand.Shuffle(len(is), func(i, j int) { is[i], is[j] = is[j], is[i] })
 

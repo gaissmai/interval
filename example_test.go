@@ -41,7 +41,7 @@ func (p period) String() string {
 }
 
 func ExampleInterface() {
-	tree := interval.NewTree(periods)
+	tree := interval.NewTree(periods...)
 	fmt.Println(tree)
 
 	// Output:
@@ -53,7 +53,7 @@ func ExampleInterface() {
 }
 
 func ExampleTree_Supersets() {
-	tree := interval.NewTree(periods)
+	tree := interval.NewTree(periods...)
 	item := period{3, 4}
 	supersets := tree.Supersets(item)
 
@@ -77,7 +77,7 @@ func ExampleTree_Supersets() {
 }
 
 func ExampleTree_Subsets() {
-	tree := interval.NewTree(periods)
+	tree := interval.NewTree(periods...)
 	item := period{3, 10}
 	subsets := tree.Subsets(item)
 
