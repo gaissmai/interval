@@ -5,24 +5,25 @@ import (
 	"testing"
 
 	"github.com/gaissmai/interval"
+	"github.com/gaissmai/interval/internal/period"
 )
 
-func generateIvals(n int) []period {
-	is := make([]period, n)
+func generateIvals(n int) []period.Ival {
+	is := make([]period.Ival, n)
 	for i := 0; i < n; i++ {
 		a := rand.Intn(n)
 		b := rand.Intn(n)
 		if a > b {
 			a, b = b, a
 		}
-		is = append(is, period{a, b})
+		is = append(is, period.Ival{a, b})
 	}
 	return is
 }
 
 func TestTreeNil(t *testing.T) {
 	t.Parallel()
-	tree := interval.NewTree[period]()
+	tree := interval.NewTree[period.Ival]()
 
 	if s := tree.String(); s != "" {
 		t.Errorf("tree.String() = %v, want \"\"", s)
@@ -32,26 +33,26 @@ func TestTreeNil(t *testing.T) {
 		t.Errorf("tree.Size() = %v, want 0", s)
 	}
 
-	if _, ok := tree.Shortest(period{}); ok {
+	if _, ok := tree.Shortest(period.Ival{}); ok {
 		t.Errorf("tree.Shortest(), got: %v, want: false", ok)
 	}
 
-	if _, ok := tree.Largest(period{}); ok {
+	if _, ok := tree.Largest(period.Ival{}); ok {
 		t.Errorf("tree.Largest(), got: %v, want: false", ok)
 	}
 
-	if s := tree.Subsets(period{}); s != nil {
+	if s := tree.Subsets(period.Ival{}); s != nil {
 		t.Errorf("tree.Subsets(), got: %v, want: nil", s)
 	}
 
-	if s := tree.Supersets(period{}); s != nil {
+	if s := tree.Supersets(period.Ival{}); s != nil {
 		t.Errorf("tree.Supersets(), got: %v, want: nil", s)
 	}
 }
 
 func TestTreeWithDups(t *testing.T) {
 	t.Parallel()
-	tree := interval.NewTree([]period{{0, 100}, {41, 102}, {42, 67}, {42, 67}, {48, 50}, {3, 13}}...)
+	tree := interval.NewTree([]period.Ival{{0, 100}, {41, 102}, {42, 67}, {42, 67}, {48, 50}, {3, 13}}...)
 	if s := tree.Size(); s != 5 {
 		t.Errorf("tree.Size() = %v, want 5", s)
 	}
@@ -70,24 +71,24 @@ func TestTreeWithDups(t *testing.T) {
 
 func TestTreeLookup(t *testing.T) {
 	t.Parallel()
-	is := []period{
+	is := []period.Ival{
 		{1, 100},
 		{45, 60},
 	}
 
 	tree := interval.NewTree(is...)
 
-	item := period{0, 6}
+	item := period.Ival{0, 6}
 	if got, ok := tree.Shortest(item); ok {
 		t.Errorf("Shortest(%v) = %v, want %v", item, got, !ok)
 	}
 
-	item = period{47, 62}
+	item = period.Ival{47, 62}
 	if got, _ := tree.Shortest(item); got != is[0] {
 		t.Errorf("Shortest(%v) = %v, want %v", item, got, is[0])
 	}
 
-	item = period{45, 60}
+	item = period.Ival{45, 60}
 	if got, _ := tree.Shortest(item); got != is[1] {
 		t.Errorf("Shortest(%v) = %v, want %v", item, got, is[1])
 	}
@@ -95,7 +96,7 @@ func TestTreeLookup(t *testing.T) {
 
 func TestTreeSuperset(t *testing.T) {
 	t.Parallel()
-	is := []period{
+	is := []period.Ival{
 		{1, 100},
 		{45, 120},
 		{46, 80},
@@ -103,27 +104,27 @@ func TestTreeSuperset(t *testing.T) {
 
 	tree := interval.NewTree(is...)
 
-	item := period{0, 6}
+	item := period.Ival{0, 6}
 	if got, ok := tree.Largest(item); ok {
 		t.Errorf("Largest(%v) = %v, want %v", item, got, !ok)
 	}
 
-	item = period{99, 200}
+	item = period.Ival{99, 200}
 	if got, ok := tree.Largest(item); ok {
 		t.Errorf("Largest(%v) = %v, want %v", item, got, !ok)
 	}
 
-	item = period{1, 100}
+	item = period.Ival{1, 100}
 	if got, ok := tree.Largest(item); got != is[0] || !ok {
 		t.Errorf("Largest(%v) = %v, want %v", item, got, is[0])
 	}
 
-	item = period{46, 80}
+	item = period.Ival{46, 80}
 	if got, ok := tree.Largest(item); got != is[0] || !ok {
 		t.Errorf("Largest(%v) = %v, want %v", item, got, is[0])
 	}
 
-	item = period{47, 62}
+	item = period.Ival{47, 62}
 	if got, ok := tree.Largest(item); got != is[0] || !ok {
 		t.Errorf("Largest(%v) = %v, want %v", item, got, is[0])
 	}
@@ -138,10 +139,10 @@ func TestTreeRandom(t *testing.T) {
 
 	for _, item := range is {
 		var (
-			shortest  period
-			largest   period
-			subsets   []period
-			supersets []period
+			shortest  period.Ival
+			largest   period.Ival
+			subsets   []period.Ival
+			supersets []period.Ival
 			ok        bool
 		)
 		if shortest, ok = tree.Shortest(item); !ok {

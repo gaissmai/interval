@@ -239,17 +239,17 @@ func (t *Tree[T]) preorderStringify(pad string, w io.StringWriter) {
 //
 // randomly balanced BST tree printed
 //
-//  R 0...5
-//  ├─l 0...6
-//  └─r 1...4
-//      ├─l 1...8
-//      │   └─r 1...7
-//      │       └─r 1...5
-//      └─r 7...9
-//          └─l 6...7
-//              └─l 2...7
-//                  ├─l 2...8
-//                  └─r 4...8
+//  R 0...5            [priority: 0.9405]
+//  ├─l 0...6            [priority: 0.6047]
+//  └─r 1...4            [priority: 0.6868]
+//      ├─l 1...8            [priority: 0.6646]
+//      │   └─r 1...7            [priority: 0.4377]
+//      │       └─r 1...5            [priority: 0.4246]
+//      └─r 7...9            [priority: 0.5152]
+//          └─l 6...7            [priority: 0.3009]
+//              └─l 2...7            [priority: 0.1565]
+//                  ├─l 2...8            [priority: 0.06564]
+//                  └─r 4...8            [priority: 0.09697]
 //
 // Interval tree, parent->child relation printed
 //  ▼

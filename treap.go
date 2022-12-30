@@ -1,7 +1,6 @@
 package interval
 
 import (
-	"fmt"
 	"math/rand"
 )
 
@@ -20,8 +19,8 @@ type Tree[T Interval[T]] struct {
 	maxUpper *Tree[T] // pointer to tree in subtree with max upper value
 	//
 	// augment the treap for some statistics
-	size   int // descendents of tree
-	height int // tree height of tree
+	size   int // descendents at this node
+	height int // height at this node
 	//
 	// base treap fields, in memory efficient order
 	left  *Tree[T]
@@ -75,9 +74,9 @@ func (t *Tree[T]) Height() int {
 // Duplicate items are silently dropped during insert.
 func (t *Tree[T]) Insert(items ...T) *Tree[T] {
 	for i := range items {
-		n := &Tree[T]{item: items[i], prio: rand.Float64()}
-		n.augment()
-		t = t.insert(n)
+		other := &Tree[T]{item: items[i], prio: rand.Float64()}
+		other.augment()
+		t = t.insert(other)
 	}
 	return t
 }
@@ -119,9 +118,7 @@ func (t *Tree[T]) insert(other *Tree[T]) *Tree[T] {
 // Delete removes an item if it exists, returns the new tree and true, false if not found.
 func (t *Tree[T]) Delete(item T) (*Tree[T], bool) {
 	l, m, r := t.split(item)
-	fmt.Printf("l:\n%s\nm\n:%s\nr\n%s\n", l.PrintBST(), m.PrintBST(), r.PrintBST())
 	t = join(l, r)
-	fmt.Printf("join(l,r):\n%s", t.PrintBST())
 	if m == nil {
 		return t, false
 	}
