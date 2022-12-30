@@ -457,6 +457,10 @@ func (t *Tree[T]) Descend(visitFn Visitor[T]) {
 
 // join combines two disjunct treaps. All nodes in treap a have keys <= that of trep b
 // for this algorithm to work correctly.
+//
+//
+//
+//
 func join[T Interval[T]](a, b *Tree[T]) *Tree[T] {
 	// recursion stop condition
 	if a == nil {
@@ -467,16 +471,22 @@ func join[T Interval[T]](a, b *Tree[T]) *Tree[T] {
 	}
 
 	if a.prio > b.prio {
-		// immutable join, copy node
+		//     a
+		//    l r    b
+		//          l r
+		//
 		a = a.copyNode()
 		a.right = join(a.right, b)
-		a.augment() // node has changed, augment
+		a.augment()
 		return a
 	} else {
-		// immutable join, copy node
+		//            b
+		//      a    l r
+		//     l r
+		//
 		b = b.copyNode()
 		b.left = join(a, b.left)
-		b.augment() // node has changed, augment
+		b.augment()
 		return b
 	}
 }
