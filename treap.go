@@ -1,8 +1,6 @@
 package interval
 
-import (
-	"math/rand"
-)
+import "math/rand"
 
 // Interval is the type constraint for generic interval items.
 type Interval[T any] interface {
@@ -34,11 +32,25 @@ type Tree[T Interval[T]] struct {
 func NewTree[T Interval[T]](items ...T) *Tree[T] {
 	var t *Tree[T]
 	for i := range items {
-		n := &Tree[T]{item: items[i], prio: rand.Float64()}
-		n.augment()
-		t = t.insert(n)
+		t = t.insert(makeNode(items[i]))
 	}
 	return t
+}
+
+// makeNode, create new node with item and random priority and augment it.
+func makeNode[T Interval[T]](item T) *Tree[T] {
+	n := new(Tree[T])
+	n.item = item
+	n.prio = rand.Float64()
+	n.augment()
+
+	return n
+}
+
+// copyNode, make a shallow copy.
+func (t *Tree[T]) copyNode() *Tree[T] {
+	n := *t
+	return &n
 }
 
 // Item returns the item field.
@@ -74,9 +86,7 @@ func (t *Tree[T]) Height() int {
 // Duplicate items are silently dropped during insert.
 func (t *Tree[T]) Insert(items ...T) *Tree[T] {
 	for i := range items {
-		other := &Tree[T]{item: items[i], prio: rand.Float64()}
-		other.augment()
-		t = t.insert(other)
+		t = t.insert(makeNode(items[i]))
 	}
 	return t
 }
@@ -94,13 +104,12 @@ func (t *Tree[T]) insert(other *Tree[T]) *Tree[T] {
 			return t
 		}
 		other.left, other.right = left, right
-		other.augment()
+		other.augment() // node has changed, augment
 		return other
 	}
 
 	// immutable insert, copy node
-	root := &Tree[T]{item: t.item, prio: t.prio, left: t.left, right: t.right}
-	root.augment()
+	root := t.copyNode()
 
 	cmp := compare(other.item, root.item)
 	switch {
@@ -111,7 +120,7 @@ func (t *Tree[T]) insert(other *Tree[T]) *Tree[T] {
 	default: // drop duplicate
 	}
 
-	root.augment()
+	root.augment() // node has changed, augment
 	return root
 }
 
@@ -151,26 +160,25 @@ func (t *Tree[T]) split(item T) (left, mid, right *Tree[T]) {
 		return
 	}
 
-	// immutable split
-	root := &Tree[T]{item: t.item, prio: t.prio, left: t.left, right: t.right}
-	root.augment()
+	// immutable split, copy node
+	root := t.copyNode()
 
 	cmp := compare(root.item, item)
 	switch {
 	case cmp < 0:
 		l, m, r := root.right.split(item)
 		root.right = l
-		root.augment()
+		root.augment() // node has changed, augment
 		return root, m, r
 	case cmp > 0:
 		l, m, r := root.left.split(item)
 		root.left = r
-		root.augment()
+		root.augment() // node has changed, augment
 		return l, m, root
 	default:
 		l, r := root.left, root.right
 		root.left, root.right = nil, nil
-		root.augment()
+		root.augment() // node has changed, augment
 		return l, root, r
 	}
 }
@@ -459,21 +467,22 @@ func join[T Interval[T]](a, b *Tree[T]) *Tree[T] {
 	}
 
 	if a.prio > b.prio {
-		// immutable meld
-		a = &Tree[T]{item: a.item, prio: a.prio, left: a.left, right: a.right}
+		// immutable join, copy node
+		a = a.copyNode()
 		a.right = join(a.right, b)
-		a.augment()
+		a.augment() // node has changed, augment
 		return a
 	} else {
-		// immutable meld
-		b = &Tree[T]{item: b.item, prio: b.prio, left: b.left, right: b.right}
+		// immutable join, copy node
+		b = b.copyNode()
 		b.left = join(a, b.left)
-		b.augment()
+		b.augment() // node has changed, augment
 		return b
 	}
 }
 
-// augment the treap as an interval tree with Min/Max upper value in subtree.
+// augment the treap node after each creation/modification as an interval tree with Min/Max upper value in descendants.
+// Only one level deeper must be considered. The treap datastructure is very easy to augment.
 func (t *Tree[T]) augment() {
 	if t == nil {
 		return

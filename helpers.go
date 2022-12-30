@@ -176,19 +176,20 @@ func walkAndStringify[T Interval[T]](pcm parentChildsMap[T], parent *Tree[T], pa
 // 0.x.y. In future versions this will be removed without increasing the main
 // semantic version, so please do not rely on it for now.
 //
-// e.g.
+// e.g. with left/right, item and [height:size:priority]
 //
-//  R 0...5 [h:6|s:11]
-//  ├─l 0...6 [h:1|s:1]
-//  └─r 1...4 [h:5|s:9]
-//      ├─l 1...8 [h:3|s:3]
-//      │   └─r 1...7 [h:2|s:2]
-//      │       └─r 1...5 [h:1|s:1]
-//      └─r 7...9 [h:4|s:5]
-//          └─l 6...7 [h:3|s:4]
-//              └─l 2...7 [h:2|s:3]
-//                  ├─l 2...8 [h:1|s:1]
-//                  └─r 4...8 [h:1|s:1]
+//  R 0...5 [h:6|s:11|p:0.9405]
+//  ├─l 0...6 [h:1|s:1|p:0.6047]
+//  └─r 1...4 [h:5|s:9|p:0.6868]
+//      ├─l 1...8 [h:3|s:3|p:0.6646]
+//      │   └─r 1...7 [h:2|s:2|p:0.4377]
+//      │       └─r 1...5 [h:1|s:1|p:0.4246]
+//      └─r 7...9 [h:4|s:5|p:0.5152]
+//          └─l 6...7 [h:3|s:4|p:0.3009]
+//              └─l 2...7 [h:2|s:3|p:0.1565]
+//                  ├─l 2...8 [h:1|s:1|p:0.06564]
+//                  └─r 4...8 [h:1|s:1|p:0.09697]
+//
 //
 func (t *Tree[T]) PrintBST() string {
 	if t == nil {
