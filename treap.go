@@ -255,12 +255,11 @@ func (t *Tree[T]) Shortest(item T) (result T, ok bool) {
 		return
 	}
 
-	// shortcut
-	if m := t.find(item); m != nil {
+	// the shortest interval covering item must have t.tem <= item
+	l, m, _ := t.split(item)
+	if m != nil {
 		return m.item, true
 	}
-
-	l, _, _ := t.split(item)
 	return l.shortest(item)
 }
 
