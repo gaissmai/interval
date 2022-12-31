@@ -13,8 +13,8 @@ type Interval[T any] interface {
 type Tree[T Interval[T]] struct {
 	//
 	// augment the treap for interval lookups
-	minUpper *Tree[T] // pointer to tree in subtree with min upper value
-	maxUpper *Tree[T] // pointer to tree in subtree with max upper value
+	minUpper *Tree[T] // points to node in subtree with min upper value, just needed for Subsets()
+	maxUpper *Tree[T] // points to node in subtree with max upper value
 	//
 	// augment the treap for some statistics
 	size   int // descendents at this node
@@ -37,17 +37,17 @@ func NewTree[T Interval[T]](items ...T) *Tree[T] {
 	return t
 }
 
-// makeNode, create new node with item and random priority and augment it.
+// makeNode, create new node with item and random priority.
 func makeNode[T Interval[T]](item T) *Tree[T] {
 	n := new(Tree[T])
 	n.item = item
 	n.prio = rand.Float64()
-	n.augment()
+	n.recalc() // initial calculation of augmented fields, size, height, finger pointers...
 
 	return n
 }
 
-// copyNode, make a shallow copy.
+// copyNode, make a shallow copy, no recalculation necessary.
 func (t *Tree[T]) copyNode() *Tree[T] {
 	n := *t
 	return &n
@@ -91,36 +91,52 @@ func (t *Tree[T]) Insert(items ...T) *Tree[T] {
 	return t
 }
 
-func (t *Tree[T]) insert(other *Tree[T]) *Tree[T] {
+func (t *Tree[T]) insert(b *Tree[T]) *Tree[T] {
 	if t == nil {
-		return other
+		return b
 	}
 
-	// other is the new root node?
-	if other.prio >= t.prio {
-		left, dupe, right := t.split(other.item)
+	//           b
+	//     a
+	//    l r
+	//
+	if b.prio >= t.prio {
+		left, dupe, right := t.split(b.item)
 		if dupe != nil {
-			// duplicate, drop other
+			// duplicate, drop b
 			return t
 		}
-		other.left, other.right = left, right
-		other.augment() // node has changed, augment
-		return other
+		//     b
+		//    l r
+		//
+		b.left, b.right = left, right
+		b.recalc() // node has changed, recalc
+		return b
 	}
 
 	// immutable insert, copy node
 	root := t.copyNode()
 
-	cmp := compare(other.item, root.item)
+	cmp := compare(b.item, root.item)
 	switch {
 	case cmp < 0: // rec-descent
-		root.left = root.left.insert(other)
+		root.left = root.left.insert(b)
+		//
+		//       R
+		// b    l r
+		//     l   r
+		//
 	case cmp > 0: // rec-descent
-		root.right = root.right.insert(other)
-	default: // drop duplicate
+		root.right = root.right.insert(b)
+		//
+		//   R
+		//  l r    b
+		// l   r
+		//
+	default: // equal, drop duplicate
 	}
 
-	root.augment() // node has changed, augment
+	root.recalc() // node has changed, recalc
 	return root
 }
 
@@ -153,9 +169,9 @@ func (t *Tree[T]) find(item T) *Tree[T] {
 }
 
 // split the treap into all nodes that compare less-than, equal
-// and greater-than the provided key. The resulting nodes are
+// and greater-than the provided item (BST key). The resulting nodes are
 // properly formed treaps or nil.
-func (t *Tree[T]) split(item T) (left, mid, right *Tree[T]) {
+func (t *Tree[T]) split(key T) (left, mid, right *Tree[T]) {
 	if t == nil {
 		return
 	}
@@ -163,23 +179,41 @@ func (t *Tree[T]) split(item T) (left, mid, right *Tree[T]) {
 	// immutable split, copy node
 	root := t.copyNode()
 
-	cmp := compare(root.item, item)
+	cmp := compare(root.item, key)
 	switch {
 	case cmp < 0:
-		l, m, r := root.right.split(item)
+		l, m, r := root.right.split(key)
 		root.right = l
-		root.augment() // node has changed, augment
+		root.recalc() // node has changed, recalc
 		return root, m, r
+		//
+		//       (k)
+		//      R
+		//     l r   ==> (R.r, m, r) = R.r.split(k)
+		//    l   r
+		//
 	case cmp > 0:
-		l, m, r := root.left.split(item)
+		l, m, r := root.left.split(key)
 		root.left = r
-		root.augment() // node has changed, augment
+		root.recalc() // node has changed, recalc
 		return l, m, root
+		//
+		//   (k)
+		//      R
+		//     l r   ==> (l, m, R.l) = R.l.split(k)
+		//    l   r
+		//
 	default:
 		l, r := root.left, root.right
 		root.left, root.right = nil, nil
-		root.augment() // node has changed, augment
+		root.recalc() // node has changed, recalc
 		return l, root, r
+		//
+		//     (k)
+		//      R
+		//     l r   ==> (R.l, R, R.r)
+		//    l   r
+		//
 	}
 }
 
@@ -456,11 +490,7 @@ func (t *Tree[T]) Descend(visitFn Visitor[T]) {
 }
 
 // join combines two disjunct treaps. All nodes in treap a have keys <= that of trep b
-// for this algorithm to work correctly.
-//
-//
-//
-//
+// for this algorithm to work correctly. The join is immutable, first copy concerned nodes.
 func join[T Interval[T]](a, b *Tree[T]) *Tree[T] {
 	// recursion stop condition
 	if a == nil {
@@ -475,34 +505,34 @@ func join[T Interval[T]](a, b *Tree[T]) *Tree[T] {
 		//    l r    b
 		//          l r
 		//
-		a = a.copyNode()
+		a = a.copyNode() // immutable join, copy node
 		a.right = join(a.right, b)
-		a.augment()
+		a.recalc()
 		return a
 	} else {
 		//            b
 		//      a    l r
 		//     l r
 		//
-		b = b.copyNode()
+		b = b.copyNode() // immutable join, copy node
 		b.left = join(a, b.left)
-		b.augment()
+		b.recalc()
 		return b
 	}
 }
 
-// augment the treap node after each creation/modification as an interval tree with Min/Max upper value in descendants.
+// recalc the augmented fields in treap node after each creation/modification with values in descendants.
 // Only one level deeper must be considered. The treap datastructure is very easy to augment.
-func (t *Tree[T]) augment() {
+func (t *Tree[T]) recalc() {
 	if t == nil {
 		return
 	}
 
-	// augment the node for some statistics, not really needed for interval algo
+	// recalc some statistics, not really needed for interval algo
 	t.size = 1 + t.left.Size() + t.right.Size()
 	t.height = 1 + max(t.left.Height(), t.right.Height())
 
-	// start with upper min/max to self
+	// start with upper min/max pointing to self
 	t.minUpper = t
 	t.maxUpper = t
 
