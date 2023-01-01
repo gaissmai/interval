@@ -106,12 +106,13 @@ func (t *Tree[T]) insert(b *Tree[T]) *Tree[T] {
 			// duplicate, drop b
 			return t
 		}
-		//     b
-		//    l r
-		//
+
 		b.left, b.right = left, right
 		b.recalc() // node has changed, recalc
 		return b
+		//     b
+		//    l r
+		//
 	}
 
 	// immutable insert, copy node
@@ -138,6 +139,17 @@ func (t *Tree[T]) insert(b *Tree[T]) *Tree[T] {
 
 	root.recalc() // node has changed, recalc
 	return root
+}
+
+// Upsert, replace/insert item in tree, returns the new tree.
+// Duplicate items are silently dropped during insert.
+func (t *Tree[T]) Upsert(item T) *Tree[T] {
+	k := makeNode(item)
+	if t == nil {
+		return k
+	}
+	l, _, r := t.split(item)
+	return join(l, join(k, r))
 }
 
 // Delete removes an item if it exists, returns the new tree and true, false if not found.
