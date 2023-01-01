@@ -168,8 +168,9 @@ func (t *Tree[T]) Delete(item T) (*Tree[T], bool) {
 // and greater-than the provided item (BST key). The resulting nodes are
 // properly formed treaps or nil.
 func (t *Tree[T]) split(key T) (left, mid, right *Tree[T]) {
+	// recursion stop condition
 	if t == nil {
-		return
+		return nil, nil, nil
 	}
 
 	// immutable split, copy node
