@@ -21,7 +21,7 @@ func max(a, b int) int {
 }
 
 // compare is a wrapper for CompareLower, CompareUpper with added functionality for superset sorting
-func compare[T Interval[T]](a, b T) int {
+func compare[T Interface[T]](a, b T) int {
 	cmpLower := a.CompareLower(b)
 	cmpUpper := a.CompareUpper(b)
 
@@ -40,7 +40,7 @@ func compare[T Interval[T]](a, b T) int {
 }
 
 // covers reports whether a truly covers b (not equal).
-func covers[T Interval[T]](a, b T) bool {
+func covers[T Interface[T]](a, b T) bool {
 	cmpLower := a.CompareLower(b)
 	cmpUpper := a.CompareUpper(b)
 
@@ -140,7 +140,7 @@ func (t *Tree[T]) Fprint(w io.Writer) error {
 	return walkAndStringify(w, pcm, nil, "")
 }
 
-func walkAndStringify[T Interval[T]](w io.Writer, pcm parentChildsMap[T], parent *Tree[T], pad string) error {
+func walkAndStringify[T Interface[T]](w io.Writer, pcm parentChildsMap[T], parent *Tree[T], pad string) error {
 	// the prefix (pad + glyphe) is already printed on the line on upper level
 	if parent != nil {
 		if _, err := fmt.Fprintf(w, "%v\n", parent.item); err != nil {
@@ -282,7 +282,7 @@ func (t *Tree[T]) preorderStringify(w io.Writer, pad string) error {
 //  │        └─ 6...7
 //  └─ 7...9
 //
-type parentChildsMap[T Interval[T]] struct {
+type parentChildsMap[T Interface[T]] struct {
 	pcMap map[*Tree[T]][]*Tree[T] // parent -> []child map
 	stack []*Tree[T]              // just needed for the algo
 }

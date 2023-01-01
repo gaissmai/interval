@@ -2,15 +2,15 @@ package interval
 
 import "math/rand"
 
-// Interval is the type constraint for generic interval items.
-type Interval[T any] interface {
+// Interface is the type constraint for generic interval items.
+type Interface[T any] interface {
 	CompareLower(T) int
 	CompareUpper(T) int
 }
 
 // Tree is the basic recursive data structure, augmented for fast interval lookups.
 // This is a generic type, the implementation constraint is defined by the interval.Interface.
-type Tree[T Interval[T]] struct {
+type Tree[T Interface[T]] struct {
 	//
 	// augment the treap for interval lookups
 	minUpper *Tree[T] // finger pointer to node in subtree with min upper value, just needed for Subsets()
@@ -29,7 +29,7 @@ type Tree[T Interval[T]] struct {
 
 // NewTree takes zero or more intervals and returns the new tree.
 // Duplicate items are silently dropped during insert.
-func NewTree[T Interval[T]](items ...T) *Tree[T] {
+func NewTree[T Interface[T]](items ...T) *Tree[T] {
 	var t *Tree[T]
 	for i := range items {
 		t = t.insert(makeNode(items[i]))
@@ -38,7 +38,7 @@ func NewTree[T Interval[T]](items ...T) *Tree[T] {
 }
 
 // makeNode, create new node with item and random priority.
-func makeNode[T Interval[T]](item T) *Tree[T] {
+func makeNode[T Interface[T]](item T) *Tree[T] {
 	n := new(Tree[T])
 	n.item = item
 	n.prio = rand.Float64()
@@ -144,13 +144,13 @@ func (t *Tree[T]) insert(b *Tree[T]) *Tree[T] {
 }
 
 // Upsert, replace/insert item in tree, returns the new tree.
-func (t *Tree[T]) Upsert(b T) *Tree[T] {
-	k := makeNode(b)
+func (t *Tree[T]) Upsert(item T) *Tree[T] {
+	k := makeNode(item)
 	if t == nil {
 		return k
 	}
-	// don't use middle, replace it with b
-	l, _, r := t.split(b)
+	// don't use middle, replace it with k
+	l, _, r := t.split(item)
 	return join(l, join(k, r))
 }
 
@@ -470,7 +470,7 @@ func (t *Tree[T]) subsets(item T) (result []T) {
 }
 
 // Visitor function, returning false stops the iteration.
-type Visitor[T Interval[T]] func(t *Tree[T]) bool
+type Visitor[T Interface[T]] func(t *Tree[T]) bool
 
 // Ascend traverses the tree in ascencding order, calls the visitFn for every subtree until visitFn returns false.
 func (t *Tree[T]) Ascend(visitFn Visitor[T]) {
@@ -490,7 +490,7 @@ func (t *Tree[T]) Descend(visitFn Visitor[T]) {
 
 // join combines two disjunct treaps. All nodes in treap a have keys <= that of treap b
 // for this algorithm to work correctly. The join is immutable, first copy concerned nodes.
-func join[T Interval[T]](a, b *Tree[T]) *Tree[T] {
+func join[T Interface[T]](a, b *Tree[T]) *Tree[T] {
 	// recursion stop condition
 	if a == nil {
 		return b
