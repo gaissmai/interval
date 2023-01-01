@@ -2,6 +2,7 @@ package interval_test
 
 import (
 	"math/rand"
+	"strings"
 	"testing"
 
 	"github.com/gaissmai/interval"
@@ -25,8 +26,10 @@ func TestTreeNil(t *testing.T) {
 	t.Parallel()
 	tree := interval.NewTree[period.Ival]()
 
-	if s := tree.String(); s != "" {
-		t.Errorf("tree.String() = %v, want \"\"", s)
+	w := new(strings.Builder)
+	tree.Fprint(w)
+	if w.String() != "" {
+		t.Errorf("tree.Write(w) = %v, want \"\"", w.String())
 	}
 
 	if s := tree.Size(); s != 0 {
@@ -64,8 +67,10 @@ func TestTreeWithDups(t *testing.T) {
    └─ 42...67
       └─ 48...50
 `
-	if s := tree.String(); s != asStr {
-		t.Errorf("tree.String()\nwant:\n%sgot:\n%s", asStr, s)
+	w := new(strings.Builder)
+	tree.Fprint(w)
+	if w.String() != asStr {
+		t.Errorf("tree.String()\nwant:\n%sgot:\n%s", asStr, w.String())
 	}
 }
 

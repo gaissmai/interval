@@ -2,6 +2,7 @@ package interval_test
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/gaissmai/interval"
 	"github.com/gaissmai/interval/internal/period"
@@ -17,7 +18,7 @@ var periods = []period.Ival{
 
 func ExampleInterface() {
 	tree := interval.NewTree(periods...)
-	fmt.Println(tree)
+	tree.Fprint(os.Stdout)
 
 	// Output:
 	// ▼
@@ -29,12 +30,11 @@ func ExampleInterface() {
 
 func ExampleTree_Supersets() {
 	tree := interval.NewTree(periods...)
-	item := period.Ival{3, 4}
-	supersets := tree.Supersets(item)
+	tree.Fprint(os.Stdout)
 
-	fmt.Println(tree)
-	fmt.Printf("Supersets for item: %v\n", item)
-	for _, p := range supersets {
+	item := period.Ival{3, 4}
+	fmt.Printf("\nSupersets for item: %v\n", item)
+	for _, p := range tree.Supersets(item) {
 		fmt.Println(p)
 	}
 
@@ -53,12 +53,11 @@ func ExampleTree_Supersets() {
 
 func ExampleTree_Subsets() {
 	tree := interval.NewTree(periods...)
-	item := period.Ival{3, 10}
-	subsets := tree.Subsets(item)
+	tree.Fprint(os.Stdout)
 
-	fmt.Println(tree)
-	fmt.Printf("Subsets for item: %v\n", item)
-	for _, p := range subsets {
+	item := period.Ival{3, 10}
+	fmt.Printf("\nSubsets for item: %v\n", item)
+	for _, p := range tree.Subsets(item) {
 		fmt.Println(p)
 	}
 

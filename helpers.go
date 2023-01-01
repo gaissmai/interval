@@ -3,7 +3,6 @@ package interval
 import (
 	"fmt"
 	"io"
-	"strings"
 )
 
 type traverseOrder int
@@ -99,7 +98,7 @@ func (t *Tree[T]) traverse(order traverseOrder, visitFn Visitor[T]) {
 	}
 }
 
-// String returns the ordered tree as a directory graph.
+// Fprint writes a hierarchical tree diagram of the ordered intervals to w.
 //
 // example: IP CIDRs as intervals
 //
@@ -125,28 +124,28 @@ func (t *Tree[T]) traverse(order traverseOrder, visitFn Visitor[T]) {
 // If the interval items don't implement fmt.Stringer they are stringified with
 // their default format %v.
 //
-func (t *Tree[T]) String() string {
+func (t *Tree[T]) Fprint(w io.Writer) error {
 	pcm := t.buildParentChildsMap()
 
 	if len(pcm.pcMap) == 0 {
-		return ""
+		return nil
 	}
 
-	w := new(strings.Builder)
-
 	// start symbol
-	w.WriteString("▼\n")
+	if _, err := fmt.Fprint(w, "▼\n"); err != nil {
+		return err
+	}
 
 	// start recursion with root and empty padding
-	walkAndStringify(pcm, nil, "", w)
-
-	return w.String()
+	return walkAndStringify(w, pcm, nil, "")
 }
 
-func walkAndStringify[T Interval[T]](pcm parentChildsMap[T], parent *Tree[T], pad string, w io.StringWriter) {
+func walkAndStringify[T Interval[T]](w io.Writer, pcm parentChildsMap[T], parent *Tree[T], pad string) error {
 	// the prefix (pad + glyphe) is already printed on the line on upper level
 	if parent != nil {
-		w.WriteString(fmt.Sprintf("%v\n", parent.item)) //nolint:errcheck
+		if _, err := fmt.Fprintf(w, "%v\n", parent.item); err != nil {
+			return err
+		}
 	}
 
 	glyphe := "├─ "
@@ -156,21 +155,27 @@ func walkAndStringify[T Interval[T]](pcm parentChildsMap[T], parent *Tree[T], pa
 	childs := pcm.pcMap[parent]
 
 	// for all childs do, but ...
-	for i, c := range childs {
+	for i := range childs {
 		// ... treat last child special
 		if i == len(childs)-1 {
 			glyphe = "└─ "
 			spacer = "   "
 		}
 		// print prefix for next item
-		w.WriteString(pad + glyphe) //nolint:errcheck
+		if _, err := fmt.Fprint(w, pad+glyphe); err != nil {
+			return err
+		}
 
 		// recdescent down
-		walkAndStringify(pcm, c, pad+spacer, w)
+		if err := walkAndStringify(w, pcm, childs[i], pad+spacer); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-// PrintBST, returns the string representation of the balanced BST.
+// FprintBST writes a horizontal tree diagram of the binary search tree (BST) to w.
 //
 // Note: This is for debugging purposes only during development in semver
 // 0.x.y. In future versions this will be removed without increasing the main
@@ -191,24 +196,25 @@ func walkAndStringify[T Interval[T]](pcm parentChildsMap[T], parent *Tree[T], pa
 //                  └─r 4...8 [h:1|s:1|p:0.09697]
 //
 //
-func (t *Tree[T]) PrintBST() string {
+func (t *Tree[T]) FprintBST(w io.Writer) error {
 	if t == nil {
-		return ""
+		return nil
 	}
 
-	w := new(strings.Builder)
+	if _, err := fmt.Fprint(w, "R "); err != nil {
+		return err
+	}
 
-	// start recursion with root and empty padding
-	w.WriteString("R ")
-	t.preorderStringify("", w)
-
-	return w.String()
+	// start recursion with empty padding
+	return t.preorderStringify(w, "")
 }
 
 // preorderStringify, traverse the tree, stringify the nodes in preorder
-func (t *Tree[T]) preorderStringify(pad string, w io.StringWriter) {
-	// stringify this
-	w.WriteString(fmt.Sprintf("%v [h:%d|s:%d|p:%.4g]\n", t.item, t.height, t.size, t.prio)) //nolint:errcheck
+func (t *Tree[T]) preorderStringify(w io.Writer, pad string) error {
+	// stringify this node
+	if _, err := fmt.Fprintf(w, "%v [h:%d|s:%d|p:%.4g]\n", t.item, t.height, t.size, t.prio); err != nil {
+		return err
+	}
 
 	// prepare glyphe, spacer and padding for next level
 	var glyphe string
@@ -223,17 +229,27 @@ func (t *Tree[T]) preorderStringify(pad string, w io.StringWriter) {
 			glyphe = "└─l "
 			spacer = "    "
 		}
-		w.WriteString(pad + glyphe) //nolint:errcheck
-		t.left.preorderStringify(pad+spacer, w)
+		if _, err := fmt.Fprint(w, pad+glyphe); err != nil {
+			return err
+		}
+		if err := t.left.preorderStringify(w, pad+spacer); err != nil {
+			return err
+		}
 	}
 
 	// right wing
 	if t.right != nil {
 		glyphe = "└─r "
 		spacer = "    "
-		w.WriteString(pad + glyphe) //nolint:errcheck
-		t.right.preorderStringify(pad+spacer, w)
+		if _, err := fmt.Fprint(w, pad+glyphe); err != nil {
+			return err
+		}
+		if err := t.right.preorderStringify(w, pad+spacer); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 // parentChildsMap, needed for interval tree printing, this is not BST printing!

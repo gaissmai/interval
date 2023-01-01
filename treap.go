@@ -13,8 +13,8 @@ type Interval[T any] interface {
 type Tree[T Interval[T]] struct {
 	//
 	// augment the treap for interval lookups
-	minUpper *Tree[T] // points to node in subtree with min upper value, just needed for Subsets()
-	maxUpper *Tree[T] // points to node in subtree with max upper value
+	minUpper *Tree[T] // finger pointer to node in subtree with min upper value, just needed for Subsets()
+	maxUpper *Tree[T] // finger pointer to node in subtree with max upper value
 	//
 	// augment the treap for some statistics
 	size   int // descendents at this node
@@ -91,11 +91,12 @@ func (t *Tree[T]) Insert(items ...T) *Tree[T] {
 	return t
 }
 
+// insert into tree, changing nodes are copied, new treap is returned, old treap isn't modified.
 func (t *Tree[T]) insert(b *Tree[T]) *Tree[T] {
 	if t == nil {
 		return b
 	}
-
+	//
 	//           b
 	//     a
 	//    l r
@@ -110,6 +111,7 @@ func (t *Tree[T]) insert(b *Tree[T]) *Tree[T] {
 		b.left, b.right = left, right
 		b.recalc() // node has changed, recalc
 		return b
+		//
 		//     b
 		//    l r
 		//
@@ -142,13 +144,13 @@ func (t *Tree[T]) insert(b *Tree[T]) *Tree[T] {
 }
 
 // Upsert, replace/insert item in tree, returns the new tree.
-// Duplicate items are silently dropped during insert.
-func (t *Tree[T]) Upsert(item T) *Tree[T] {
-	k := makeNode(item)
+func (t *Tree[T]) Upsert(b T) *Tree[T] {
+	k := makeNode(b)
 	if t == nil {
 		return k
 	}
-	l, _, r := t.split(item)
+	// don't use middle, replace it with b
+	l, _, r := t.split(b)
 	return join(l, join(k, r))
 }
 
@@ -160,24 +162,6 @@ func (t *Tree[T]) Delete(item T) (*Tree[T], bool) {
 		return t, false
 	}
 	return t, true
-}
-
-// find the item in the tree, return the node.
-func (t *Tree[T]) find(item T) *Tree[T] {
-	for {
-		if t == nil {
-			return nil
-		}
-		cmp := compare(t.item, item)
-		switch {
-		case cmp == 0:
-			return t
-		case cmp < 0:
-			t = t.right
-		case cmp > 0:
-			t = t.left
-		}
-	}
 }
 
 // split the treap into all nodes that compare less-than, equal
@@ -267,38 +251,41 @@ func (t *Tree[T]) Shortest(item T) (result T, ok bool) {
 		return
 	}
 
-	// the shortest interval covering item must have t.tem <= item
+	// the shortest interval covering item must have t.item <= item
 	l, m, _ := t.split(item)
+
+	// item is in tree, return it as shortest.
 	if m != nil {
 		return m.item, true
 	}
 	return l.shortest(item)
 }
 
+// shortest, find rec-descent, use augmented maxUpper finger pointer.
 func (t *Tree[T]) shortest(item T) (result T, ok bool) {
 	if t == nil {
 		return
 	}
 
-	// nope, subtree has too small max upper interval value
+	// nope, whole subtree has too small max upper interval value
 	if item.CompareUpper(t.maxUpper.item) > 0 {
 		return
 	}
 
 	// reverse-order traversal for shortest
-	// try right wing for smallest containing hull
+	// try right tree for smallest containing hull
 	if t.right != nil && item.CompareUpper(t.right.maxUpper.item) <= 0 {
 		if result, ok = t.right.shortest(item); ok {
 			return result, ok
 		}
 	}
 
-	// this item
+	// no match in right tree, try this item
 	if item.CompareUpper(t.item) <= 0 {
 		return t.item, true
 	}
 
-	// recursive call to left wing
+	// recursive call to left tree
 	if t.left != nil && item.CompareUpper(t.left.maxUpper.item) <= 0 {
 		if result, ok = t.left.shortest(item); ok {
 			return result, ok
@@ -366,7 +353,7 @@ func (t *Tree[T]) largest(item T) (result T, ok bool) {
 	}
 
 	// in-order traversal for longest
-	// try left wing for largest containing hull
+	// try left tree for largest containing hull
 	if t.left != nil && item.CompareUpper(t.left.maxUpper.item) <= 0 {
 		if result, ok = t.left.largest(item); ok {
 			return result, ok
@@ -378,7 +365,7 @@ func (t *Tree[T]) largest(item T) (result T, ok bool) {
 		return t.item, true
 	}
 
-	// recursive call to right wing
+	// recursive call to right tree
 	if t.right != nil && item.CompareUpper(t.right.maxUpper.item) <= 0 {
 		if result, ok = t.right.largest(item); ok {
 			return result, ok
@@ -417,7 +404,7 @@ func (t *Tree[T]) supersets(item T) (result []T) {
 		return
 	}
 
-	// in-order traversal for supersets, recursive call to left wing
+	// in-order traversal for supersets, recursive call to left tree
 	if t.left != nil && item.CompareUpper(t.left.maxUpper.item) <= 0 {
 		result = append(result, t.left.supersets(item)...)
 	}
@@ -427,7 +414,7 @@ func (t *Tree[T]) supersets(item T) (result []T) {
 		result = append(result, t.item)
 	}
 
-	// recursive call to right wing
+	// recursive call to right tree
 	if t.right != nil && item.CompareUpper(t.right.maxUpper.item) <= 0 {
 		result = append(result, t.right.supersets(item)...)
 	}
@@ -463,7 +450,7 @@ func (t *Tree[T]) subsets(item T) (result []T) {
 		return
 	}
 
-	// in-order traversal for subsets, recursive call to left wing
+	// in-order traversal for subsets, recursive call to left tree
 	if t.left != nil && item.CompareUpper(t.left.minUpper.item) >= 0 {
 		result = append(result, t.left.subsets(item)...)
 	}
@@ -473,7 +460,7 @@ func (t *Tree[T]) subsets(item T) (result []T) {
 		result = append(result, t.item)
 	}
 
-	// recursive call to right wing
+	// recursive call to right tree
 	if t.right != nil && item.CompareUpper(t.right.minUpper.item) >= 0 {
 		result = append(result, t.right.subsets(item)...)
 	}
@@ -500,7 +487,7 @@ func (t *Tree[T]) Descend(visitFn Visitor[T]) {
 	t.traverse(reverse, visitFn)
 }
 
-// join combines two disjunct treaps. All nodes in treap a have keys <= that of trep b
+// join combines two disjunct treaps. All nodes in treap a have keys <= that of treap b
 // for this algorithm to work correctly. The join is immutable, first copy concerned nodes.
 func join[T Interval[T]](a, b *Tree[T]) *Tree[T] {
 	// recursion stop condition
