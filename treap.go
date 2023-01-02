@@ -548,7 +548,7 @@ func (t *Tree[T]) Visit(start, stop T, visitFn func(t T) bool) {
 	}
 
 	order := inorder
-	if start.CompareLower(stop) > 0 {
+	if compare(start, stop) > 0 {
 		start, stop = stop, start
 		order = reverse
 	}
