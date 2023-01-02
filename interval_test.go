@@ -9,6 +9,21 @@ import (
 	"github.com/gaissmai/interval/internal/period"
 )
 
+// test data
+var ps = []period.Ival{
+	{0, 6},
+	{0, 5},
+	{1, 8},
+	{1, 7},
+	{1, 5},
+	{1, 4},
+	{2, 8},
+	{2, 7},
+	{4, 8},
+	{6, 7},
+	{7, 9},
+}
+
 func generateIvals(n int) []period.Ival {
 	is := make([]period.Ival, n)
 	for i := 0; i < n; i++ {
@@ -20,6 +35,37 @@ func generateIvals(n int) []period.Ival {
 		is = append(is, period.Ival{a, b})
 	}
 	return is
+}
+
+func TestTreeNullValue(t *testing.T) {
+	t.Parallel()
+	var tree *interval.Tree[period.Ival]
+
+	w := new(strings.Builder)
+	tree.Fprint(w)
+	if w.String() != "" {
+		t.Errorf("tree.Write(w) = %v, want \"\"", w.String())
+	}
+
+	if s := tree.Size(); s != 0 {
+		t.Errorf("tree.Size() = %v, want 0", s)
+	}
+
+	if _, ok := tree.Shortest(period.Ival{}); ok {
+		t.Errorf("tree.Shortest(), got: %v, want: false", ok)
+	}
+
+	if _, ok := tree.Largest(period.Ival{}); ok {
+		t.Errorf("tree.Largest(), got: %v, want: false", ok)
+	}
+
+	if s := tree.Subsets(period.Ival{}); s != nil {
+		t.Errorf("tree.Subsets(), got: %v, want: nil", s)
+	}
+
+	if s := tree.Supersets(period.Ival{}); s != nil {
+		t.Errorf("tree.Supersets(), got: %v, want: nil", s)
+	}
 }
 
 func TestTreeNil(t *testing.T) {
@@ -168,5 +214,29 @@ func TestTreeRandom(t *testing.T) {
 		if supersets[0] != largest {
 			t.Errorf("Supersets(%v).[0], want %v, got %v", item, largest, supersets[0])
 		}
+	}
+}
+
+func TestMinMaxMinUpperMaxUpper(t *testing.T) {
+	t.Parallel()
+	tree := interval.NewTree(ps...)
+	want := period.Ival{0, 6}
+	if tree.Min().Item() != want {
+		t.Fatalf("Min(), want: %v, got: %v", want, tree.Min().Item())
+	}
+
+	want = period.Ival{7, 9}
+	if tree.Max().Item() != want {
+		t.Fatalf("Max(), want: %v, got: %v", want, tree.Max().Item())
+	}
+
+	want = period.Ival{1, 4}
+	if tree.MinUpper().Item() != want {
+		t.Fatalf("MinUpper(), want: %v, got: %v", want, tree.MinUpper().Item())
+	}
+
+	want = period.Ival{7, 9}
+	if tree.MaxUpper().Item() != want {
+		t.Fatalf("MaxUpper(), want: %v, got: %v", want, tree.MaxUpper().Item())
 	}
 }

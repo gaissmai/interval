@@ -28,6 +28,42 @@ func ExampleInterface() {
 	//    └─ 7...9
 }
 
+func ExampleTree_Max() {
+	tree := interval.NewTree(periods...)
+	tree.Fprint(os.Stdout)
+
+	fmt.Println("\nInterval with max lower value in tree:")
+	fmt.Println(tree.Max().Item())
+
+	// Output:
+	// ▼
+	// └─ 2...9
+	//    ├─ 3...5
+	//    │  └─ 3...4
+	//    └─ 7...9
+	//
+	//Interval with max lower value in tree:
+	//7...9
+}
+
+func ExampleTree_MinUpper() {
+	tree := interval.NewTree(periods...)
+	tree.Fprint(os.Stdout)
+
+	fmt.Println("\nInterval with min upper value in tree:")
+	fmt.Println(tree.MinUpper().Item())
+
+	// Output:
+	// ▼
+	// └─ 2...9
+	//    ├─ 3...5
+	//    │  └─ 3...4
+	//    └─ 7...9
+	//
+	//Interval with min upper value in tree:
+	//3...4
+}
+
 func ExampleTree_Supersets() {
 	tree := interval.NewTree(periods...)
 	tree.Fprint(os.Stdout)
@@ -72,4 +108,39 @@ func ExampleTree_Subsets() {
 	// 3...5
 	// 3...4
 	// 7...9
+}
+
+func ExampleTree_Visit() {
+	tree := interval.NewTree(periods...)
+	fmt.Println("parent/child printing")
+	tree.Fprint(os.Stdout)
+
+	start := period.Ival{3, 5}
+	stop := period.Ival{7, 9}
+	visitFn := func(item period.Ival) bool {
+		fmt.Printf("%v\n", item)
+		return true
+	}
+
+	fmt.Println("visit ascending")
+	tree.Visit(start, stop, visitFn)
+
+	fmt.Println("visit descending")
+	tree.Visit(stop, start, visitFn)
+
+	// Output:
+	// parent/child printing
+	// ▼
+	// └─ 2...9
+	//    ├─ 3...5
+	//    │  └─ 3...4
+	//    └─ 7...9
+	// visit ascending
+	// 3...5
+	// 3...4
+	// 7...9
+	// visit descending
+	// 7...9
+	// 3...4
+	// 3...5
 }
