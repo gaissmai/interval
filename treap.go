@@ -8,7 +8,8 @@ type Interface[T any] interface {
 	CompareUpper(T) int
 }
 
-// Tree is the basic recursive data structure, augmented for fast interval lookups.
+// Tree is the basic recursive data structure, usable without initialization.
+//
 // This is a generic type, the implementation constraint is defined by the interval.Interface.
 type Tree[T Interface[T]] struct {
 	//
@@ -469,25 +470,6 @@ func (t *Tree[T]) subsets(item T) (result []T) {
 	return
 }
 
-// Visitor function, returning false stops the iteration.
-type Visitor[T Interface[T]] func(t *Tree[T]) bool
-
-// Ascend traverses the tree in ascencding order, calls the visitFn for every subtree until visitFn returns false.
-func (t *Tree[T]) Ascend(visitFn Visitor[T]) {
-	if t == nil {
-		return
-	}
-	t.traverse(inorder, visitFn)
-}
-
-// Descend traverses the tree in descending order, calls the visitFn for every subtree until visitFn returns false.
-func (t *Tree[T]) Descend(visitFn Visitor[T]) {
-	if t == nil {
-		return
-	}
-	t.traverse(reverse, visitFn)
-}
-
 // join combines two disjunct treaps. All nodes in treap a have keys <= that of treap b
 // for this algorithm to work correctly. The join is immutable, first copy concerned nodes.
 func join[T Interface[T]](a, b *Tree[T]) *Tree[T] {
@@ -554,4 +536,62 @@ func (t *Tree[T]) recalc() {
 			t.maxUpper = t.left.maxUpper
 		}
 	}
+}
+
+// Visit traverses the tree with item >= start until item <= stop in ascending order,
+// if start > stop, the order is reversed.
+//
+// The visit function is called for each item. The traversion stops prematurely if the visit function returns false.
+func (t *Tree[T]) Visit(start, stop T, visitFn func(t T) bool) {
+	if t == nil {
+		return
+	}
+
+	order := inorder
+	if start.CompareLower(stop) > 0 {
+		start, stop = stop, start
+		order = reverse
+	}
+
+	// treaps are really cool datastructures!
+	_, mid1, r := t.split(start)
+	l, mid2, _ := r.split(stop)
+
+	span := join(mid1, join(l, mid2))
+
+	span.traverse(order, visitFn)
+}
+
+// Min returns the node with min item in tree.
+func (t *Tree[T]) Min() *Tree[T] {
+	if t == nil {
+		return t
+	}
+
+	for t.left != nil {
+		t = t.left
+	}
+	return t
+}
+
+// Max returns the node with max item in tree.
+func (t *Tree[T]) Max() *Tree[T] {
+	if t == nil {
+		return t
+	}
+
+	for t.right != nil {
+		t = t.right
+	}
+	return t
+}
+
+// MinUpper returns the node with item with min upper value.
+func (t *Tree[T]) MinUpper() *Tree[T] {
+	return t.minUpper
+}
+
+// MaxUpper returns the node with item with max upper value.
+func (t *Tree[T]) MaxUpper() *Tree[T] {
+	return t.maxUpper
 }

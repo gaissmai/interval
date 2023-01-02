@@ -54,47 +54,33 @@ func covers[T Interface[T]](a, b T) bool {
 
 // traverse the BST in some order, call the visitor function for each node.
 // Prematurely stop traversion if visitor function returns false.
-func (t *Tree[T]) traverse(order traverseOrder, visitFn Visitor[T]) {
+func (t *Tree[T]) traverse(order traverseOrder, visitFn func(t T) bool) {
+	if t == nil {
+		return
+	}
+
 	switch order {
 	case inorder:
-		// left
-		if t.left != nil {
-			t.left.traverse(order, visitFn)
-		}
-		// this
-		if !visitFn(t) {
+		// left, do-it, right
+		t.left.traverse(order, visitFn)
+		if !visitFn(t.item) {
 			return
 		}
-		// right
-		if t.right != nil {
-			t.right.traverse(order, visitFn)
-		}
+		t.right.traverse(order, visitFn)
 	case preorder:
-		// this
-		if !visitFn(t) {
+		// do-it, left, right
+		if !visitFn(t.item) {
 			return
 		}
-		// left
-		if t.left != nil {
-			t.left.traverse(order, visitFn)
-		}
-		// right
-		if t.right != nil {
-			t.right.traverse(order, visitFn)
-		}
+		t.left.traverse(order, visitFn)
+		t.right.traverse(order, visitFn)
 	case reverse:
-		// right
-		if t.right != nil {
-			t.right.traverse(order, visitFn)
-		}
-		// this
-		if !visitFn(t) {
+		// right, do-it, left
+		t.right.traverse(order, visitFn)
+		if !visitFn(t.item) {
 			return
 		}
-		// left
-		if t.left != nil {
-			t.left.traverse(order, visitFn)
-		}
+		t.left.traverse(order, visitFn)
 	}
 }
 
@@ -125,7 +111,13 @@ func (t *Tree[T]) traverse(order traverseOrder, visitFn Visitor[T]) {
 // their default format %v.
 //
 func (t *Tree[T]) Fprint(w io.Writer) error {
-	pcm := t.buildParentChildsMap()
+	// pcm = parent-child-mapping
+	var pcm parentChildsMap[T]
+
+	// init map
+	pcm.pcMap = make(map[*Tree[T]][]*Tree[T])
+
+	pcm = t.buildParentChildsMap(pcm)
 
 	if len(pcm.pcMap) == 0 {
 		return nil
@@ -287,45 +279,47 @@ type parentChildsMap[T Interface[T]] struct {
 	stack []*Tree[T]              // just needed for the algo
 }
 
-func (t *Tree[T]) buildParentChildsMap() parentChildsMap[T] {
-	var pcm parentChildsMap[T]
-
+// buildParentChildsMap, in-order traversal
+func (t *Tree[T]) buildParentChildsMap(pcm parentChildsMap[T]) parentChildsMap[T] {
 	if t == nil {
 		return pcm
 	}
 
-	pcm = parentChildsMap[T]{pcMap: make(map[*Tree[T]][]*Tree[T])}
+	// in-order traversal, left tree
+	pcm = t.left.buildParentChildsMap(pcm)
 
-	// this function is called in-order for every node
-	visitFn := func(n *Tree[T]) bool {
-		// if this item is covered by a prev item on stack
-		for j := len(pcm.stack) - 1; j >= 0; j-- {
+	// detect parent-child-mapping for this node
+	pcm = t.pcmForNode(pcm)
 
-			that := pcm.stack[j]
-			if covers(that.item, n.item) {
-				// item in node j is parent to item
-				pcm.pcMap[that] = append(pcm.pcMap[that], n)
-				break
-			}
+	// in-order traversal, right tree
+	return t.right.buildParentChildsMap(pcm)
+}
 
-			// Remember: sort order of intervals is lower-left, superset to the left:
-			// if this item wasn't covered by j, remove node at j from stack
-			pcm.stack = pcm.stack[:j]
+// pcmForNode, find parent in stack, remove items from stack, put this item on stack.
+func (t *Tree[T]) pcmForNode(pcm parentChildsMap[T]) parentChildsMap[T] {
+	// if this item is covered by a prev item on stack
+	for j := len(pcm.stack) - 1; j >= 0; j-- {
+
+		that := pcm.stack[j]
+		if covers(that.item, t.item) {
+			// item in node j is parent to item
+			pcm.pcMap[that] = append(pcm.pcMap[that], t)
+			break
 		}
 
-		// stack is emptied, no item on stack covers current item
-		if len(pcm.stack) == 0 {
-			// parent is root
-			pcm.pcMap[nil] = append(pcm.pcMap[nil], n)
-		}
-
-		// put current item on stack für next round
-		pcm.stack = append(pcm.stack, n)
-
-		return true
+		// Remember: sort order of intervals is lower-left, superset to the left:
+		// if this item wasn't covered by j, remove node at j from stack
+		pcm.stack = pcm.stack[:j]
 	}
 
-	t.traverse(inorder, visitFn)
+	// stack is emptied, no item on stack covers current item
+	if len(pcm.stack) == 0 {
+		// parent is root
+		pcm.pcMap[nil] = append(pcm.pcMap[nil], t)
+	}
+
+	// put current neode on stack for next node
+	pcm.stack = append(pcm.stack, t)
 
 	return pcm
 }
