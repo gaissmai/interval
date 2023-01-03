@@ -1,8 +1,9 @@
 // Package interval is an immutable datastructure for fast lookups in one dimensional intervals.
 //
-// The implementation is based on Treaps, augmented for fast interval lookups.
+// The implementation is based on Treaps, augmented for interval.
 //
-// Immutability is achived because insert/delete will return a new Treap which will share some nodes with the original Treap.
+// Immutability is achived because insert/upsert/delete will return a new Treap which will
+// share some nodes with the original Treap.
 // All nodes are read-only after creation, allowing concurrent readers to operate safely with concurrent writers.
 //
 // The time complexity is O(k*log(n)) where k is the number of returned items.

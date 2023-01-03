@@ -32,7 +32,7 @@ func generateIvals(n int) []period.Ival {
 		if a > b {
 			a, b = b, a
 		}
-		is = append(is, period.Ival{a, b})
+		is[i] = period.Ival{a, b}
 	}
 	return is
 }
@@ -213,12 +213,12 @@ func TestMinMax(t *testing.T) {
 	t.Parallel()
 	tree := interval.NewTree(ps...)
 	want := period.Ival{0, 6}
-	if tree.Min().Item() != want {
-		t.Fatalf("Min(), want: %v, got: %v", want, tree.Min().Item())
+	if tree.Min() != want {
+		t.Fatalf("Min(), want: %v, got: %v", want, tree.Min())
 	}
 
 	want = period.Ival{7, 9}
-	if tree.Max().Item() != want {
-		t.Fatalf("Max(), want: %v, got: %v", want, tree.Max().Item())
+	if tree.Max() != want {
+		t.Fatalf("Max(), want: %v, got: %v", want, tree.Max())
 	}
 }

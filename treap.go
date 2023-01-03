@@ -1,6 +1,8 @@
 package interval
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
 // Interface is the type constraint for generic interval items.
 type Interface[T any] interface {
@@ -196,6 +198,9 @@ func (t *Tree[T]) split(key T) (left, mid, right *Tree[T]) {
 // Returns the identical interval if it exists in the tree, or the interval at
 // which the item would be inserted.
 //
+// If the item would be inserted directly under root, the zero value and false
+// is returned.
+//
 // If the interval tree consists of IP CIDRs, shortest is identical to the
 // longest-prefix-match.
 //
@@ -219,9 +224,6 @@ func (t *Tree[T]) split(key T) (left, mid, right *Tree[T]) {
 //      tree.Shortest(ival{0,5}) returns ival{0,5}, true
 //      tree.Shortest(ival{3,6}) returns ival{2,7}, true
 //      tree.Shortest(ival{6,9}) returns ival{},    false
-//
-// If the item would be inserted directly under root, the zero value and false
-// is returned.
 //
 func (t *Tree[T]) Shortest(item T) (result T, ok bool) {
 	if t == nil {
@@ -273,8 +275,8 @@ func (t *Tree[T]) shortest(item T) (result T, ok bool) {
 	return
 }
 
-// Largest returns the largest superset (top-down in tree) that covers item.
-// ok is true on success, otherwise the interval isn't contained in the tree.
+// Largest returns the largest interval (top-down in tree) that covers item.
+// ok is true on success, otherwise the item isn't contained in the tree.
 //
 // The meaning of 'largest' is best explained with an example
 //
@@ -300,7 +302,6 @@ func (t *Tree[T]) shortest(item T) (result T, ok bool) {
 //
 // If the item is not covered by any interval in the tree,
 // the zero value and false is returned.
-//
 //
 func (t *Tree[T]) Largest(item T) (result T, ok bool) {
 	if t == nil {
@@ -507,61 +508,4 @@ func (t *Tree[T]) recalc() {
 			t.maxUpper = t.left.maxUpper
 		}
 	}
-}
-
-// Visit traverses the tree with item >= start until item <= stop in ascending order,
-// if start > stop, the order is reversed.
-//
-// The visit function is called for each item. The traversion stops prematurely if the visit function returns false.
-func (t *Tree[T]) Visit(start, stop T, visitFn func(t T) bool) {
-	if t == nil {
-		return
-	}
-
-	order := inorder
-	if compare(start, stop) > 0 {
-		start, stop = stop, start
-		order = reverse
-	}
-
-	// treaps are really cool datastructures!
-	_, mid1, r := t.split(start)
-	l, mid2, _ := r.split(stop)
-
-	span := join(mid1, join(l, mid2))
-
-	span.traverse(order, visitFn)
-}
-
-func (t *Tree[T]) Size() int {
-	var size int
-	t.traverse(inorder, func(item T) bool {
-		size++
-		return true
-	})
-	return size
-}
-
-// Min returns the node with min item in tree.
-func (t *Tree[T]) Min() *Tree[T] {
-	if t == nil {
-		return t
-	}
-
-	for t.left != nil {
-		t = t.left
-	}
-	return t
-}
-
-// Max returns the node with max item in tree.
-func (t *Tree[T]) Max() *Tree[T] {
-	if t == nil {
-		return t
-	}
-
-	for t.right != nil {
-		t = t.right
-	}
-	return t
 }

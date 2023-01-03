@@ -3,6 +3,7 @@ package interval
 import (
 	"fmt"
 	"io"
+	"math"
 )
 
 type traverseOrder int
@@ -47,7 +48,7 @@ func covers[T Interface[T]](a, b T) bool {
 
 // traverse the BST in some order, call the visitor function for each node.
 // Prematurely stop traversion if visitor function returns false.
-func (t *Tree[T]) traverse(order traverseOrder, visitFn func(t T) bool) {
+func (t *Tree[T]) traverse(order traverseOrder, depth int, visitFn func(n *Tree[T], depth int) bool) {
 	if t == nil {
 		return
 	}
@@ -55,25 +56,25 @@ func (t *Tree[T]) traverse(order traverseOrder, visitFn func(t T) bool) {
 	switch order {
 	case inorder:
 		// left, do-it, right
-		t.left.traverse(order, visitFn)
-		if !visitFn(t.item) {
+		t.left.traverse(order, depth+1, visitFn)
+		if !visitFn(t, depth) {
 			return
 		}
-		t.right.traverse(order, visitFn)
+		t.right.traverse(order, depth+1, visitFn)
 	case preorder:
 		// do-it, left, right
-		if !visitFn(t.item) {
+		if !visitFn(t, depth) {
 			return
 		}
-		t.left.traverse(order, visitFn)
-		t.right.traverse(order, visitFn)
+		t.left.traverse(order, depth+1, visitFn)
+		t.right.traverse(order, depth+1, visitFn)
 	case reverse:
 		// right, do-it, left
-		t.right.traverse(order, visitFn)
-		if !visitFn(t.item) {
+		t.right.traverse(order, depth+1, visitFn)
+		if !visitFn(t, depth) {
 			return
 		}
-		t.left.traverse(order, visitFn)
+		t.left.traverse(order, depth+1, visitFn)
 	}
 }
 
@@ -315,4 +316,96 @@ func (t *Tree[T]) pcmForNode(pcm parentChildsMap[T]) parentChildsMap[T] {
 	pcm.stack = append(pcm.stack, t)
 
 	return pcm
+}
+
+// Statistics, returns the maxDepth, average and standard deviation of the nodes.
+func (t *Tree[T]) Statistics() (maxDepth int, average, deviation float64) {
+	// key is depth, value is the sum of nodes with this depth
+	depths := make(map[int]int)
+
+	// get the depths
+	t.traverse(inorder, 0, func(t *Tree[T], depth int) bool {
+		depths[depth] += 1
+		return true
+	})
+
+	var weightedSum, sum int
+	for k, v := range depths {
+		weightedSum += k * v
+		sum += v
+		if k > maxDepth {
+			maxDepth = k
+		}
+	}
+
+	average = float64(weightedSum) / float64(sum)
+
+	var variance float64
+	for k := range depths {
+		variance += math.Pow(float64(k)-average, 2.0)
+	}
+	variance = variance / float64(sum)
+	deviation = math.Sqrt(variance)
+
+	return maxDepth, average, deviation
+}
+
+// Min returns the min item in tree.
+func (t *Tree[T]) Min() (min T) {
+	if t == nil {
+		return
+	}
+
+	for t.left != nil {
+		t = t.left
+	}
+	return t.item
+}
+
+// Max returns the node with max item in tree.
+func (t *Tree[T]) Max() (max T) {
+	if t == nil {
+		return
+	}
+
+	for t.right != nil {
+		t = t.right
+	}
+	return t.item
+}
+
+// Size returns the number of items in tree.
+func (t *Tree[T]) Size() int {
+	var size int
+	t.traverse(inorder, 0, func(t *Tree[T], dummy int) bool {
+		size++
+		return true
+	})
+	return size
+}
+
+// Visit traverses the tree with item >= start until item <= stop in ascending order,
+// if start > stop, the order is reversed.
+//
+// The visit function is called for each item. The traversion stops prematurely if the visit function returns false.
+func (t *Tree[T]) Visit(start, stop T, visitFn func(t T) bool) {
+	if t == nil {
+		return
+	}
+
+	order := inorder
+	if compare(start, stop) > 0 {
+		start, stop = stop, start
+		order = reverse
+	}
+
+	// treaps are really cool datastructures!
+	_, mid1, r := t.split(start)
+	l, mid2, _ := r.split(stop)
+
+	span := join(mid1, join(l, mid2))
+
+	span.traverse(order, 0, func(t *Tree[T], dummy int) bool {
+		return visitFn(t.item)
+	})
 }

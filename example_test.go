@@ -33,7 +33,7 @@ func ExampleTree_Max() {
 	tree.Fprint(os.Stdout)
 
 	fmt.Println("\nInterval with max lower value in tree:")
-	fmt.Println(tree.Max().Item())
+	fmt.Println(tree.Max())
 
 	// Output:
 	// ▼
