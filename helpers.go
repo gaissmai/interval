@@ -13,13 +13,6 @@ const (
 	reverse
 )
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 // compare is a wrapper for CompareLower, CompareUpper with added functionality for superset sorting
 func compare[T Interface[T]](a, b T) int {
 	cmpLower := a.CompareLower(b)
