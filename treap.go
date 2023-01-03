@@ -61,7 +61,7 @@ func (t *Tree[T]) Item() (item T) {
 }
 
 // Insert items into the tree, returns the new tree.
-// Duplicate items are silently dropped during insert.
+// Unlike Upsert(), duplicate elements are silently dropped during insertion.
 func (t *Tree[T]) Insert(items ...T) *Tree[T] {
 	for i := range items {
 		t = t.insert(makeNode(items[i]))
