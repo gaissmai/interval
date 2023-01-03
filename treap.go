@@ -17,10 +17,6 @@ type Tree[T Interface[T]] struct {
 	minUpper *Tree[T] // finger pointer to node in subtree with min upper value, just needed for Subsets()
 	maxUpper *Tree[T] // finger pointer to node in subtree with max upper value
 	//
-	// augment the treap for some statistics
-	size   int // descendents at this node
-	height int // height at this node
-	//
 	// base treap fields, in memory efficient order
 	left  *Tree[T]
 	right *Tree[T]
@@ -60,27 +56,6 @@ func (t *Tree[T]) Item() (item T) {
 		return
 	}
 	return t.item
-}
-
-// Size returns the number of descendents at this position in the tree.
-func (t *Tree[T]) Size() int {
-	if t == nil {
-		return 0
-	}
-	return t.size
-}
-
-// Height returns the height at this position in the tree.
-//
-// Note:
-// This is for statistical purposes only during development in semver 0.x.y.
-// In future versions this may be removed without increasing the main semantic version,
-// so please do not rely on it for now.
-func (t *Tree[T]) Height() int {
-	if t == nil {
-		return 0
-	}
-	return t.height
 }
 
 // Insert items into the tree, returns the new tree.
@@ -509,10 +484,6 @@ func (t *Tree[T]) recalc() {
 		return
 	}
 
-	// recalc some statistics, not really needed for interval algo
-	t.size = 1 + t.left.Size() + t.right.Size()
-	t.height = 1 + max(t.left.Height(), t.right.Height())
-
 	// start with upper min/max pointing to self
 	t.minUpper = t
 	t.maxUpper = t
@@ -560,6 +531,15 @@ func (t *Tree[T]) Visit(start, stop T, visitFn func(t T) bool) {
 	span := join(mid1, join(l, mid2))
 
 	span.traverse(order, visitFn)
+}
+
+func (t *Tree[T]) Size() int {
+	var size int
+	t.traverse(inorder, func(item T) bool {
+		size++
+		return true
+	})
+	return size
 }
 
 // Min returns the node with min item in tree.

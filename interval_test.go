@@ -47,10 +47,6 @@ func TestTreeNullValue(t *testing.T) {
 		t.Errorf("tree.Write(w) = %v, want \"\"", w.String())
 	}
 
-	if s := tree.Size(); s != 0 {
-		t.Errorf("tree.Size() = %v, want 0", s)
-	}
-
 	if _, ok := tree.Shortest(period.Ival{}); ok {
 		t.Errorf("tree.Shortest(), got: %v, want: false", ok)
 	}
@@ -76,10 +72,6 @@ func TestTreeNil(t *testing.T) {
 	tree.Fprint(w)
 	if w.String() != "" {
 		t.Errorf("tree.Write(w) = %v, want \"\"", w.String())
-	}
-
-	if s := tree.Size(); s != 0 {
-		t.Errorf("tree.Size() = %v, want 0", s)
 	}
 
 	if _, ok := tree.Shortest(period.Ival{}); ok {

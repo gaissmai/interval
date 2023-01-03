@@ -204,7 +204,7 @@ func (t *Tree[T]) FprintBST(w io.Writer) error {
 // preorderStringify, traverse the tree, stringify the nodes in preorder
 func (t *Tree[T]) preorderStringify(w io.Writer, pad string) error {
 	// stringify this node
-	if _, err := fmt.Fprintf(w, "%v [h:%d|s:%d|p:%.4g]\n", t.item, t.height, t.size, t.prio); err != nil {
+	if _, err := fmt.Fprintf(w, "%v [p:%.4g]\n", t.item, t.prio); err != nil {
 		return err
 	}
 
