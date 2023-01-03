@@ -217,7 +217,7 @@ func TestTreeRandom(t *testing.T) {
 	}
 }
 
-func TestMinMaxMinUpperMaxUpper(t *testing.T) {
+func TestMinMax(t *testing.T) {
 	t.Parallel()
 	tree := interval.NewTree(ps...)
 	want := period.Ival{0, 6}
@@ -228,15 +228,5 @@ func TestMinMaxMinUpperMaxUpper(t *testing.T) {
 	want = period.Ival{7, 9}
 	if tree.Max().Item() != want {
 		t.Fatalf("Max(), want: %v, got: %v", want, tree.Max().Item())
-	}
-
-	want = period.Ival{1, 4}
-	if tree.MinUpper().Item() != want {
-		t.Fatalf("MinUpper(), want: %v, got: %v", want, tree.MinUpper().Item())
-	}
-
-	want = period.Ival{7, 9}
-	if tree.MaxUpper().Item() != want {
-		t.Fatalf("MaxUpper(), want: %v, got: %v", want, tree.MaxUpper().Item())
 	}
 }

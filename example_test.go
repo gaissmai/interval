@@ -46,24 +46,6 @@ func ExampleTree_Max() {
 	//7...9
 }
 
-func ExampleTree_MinUpper() {
-	tree := interval.NewTree(periods...)
-	tree.Fprint(os.Stdout)
-
-	fmt.Println("\nInterval with min upper value in tree:")
-	fmt.Println(tree.MinUpper().Item())
-
-	// Output:
-	// ▼
-	// └─ 2...9
-	//    ├─ 3...5
-	//    │  └─ 3...4
-	//    └─ 7...9
-	//
-	//Interval with min upper value in tree:
-	//3...4
-}
-
 func ExampleTree_Supersets() {
 	tree := interval.NewTree(periods...)
 	tree.Fprint(os.Stdout)

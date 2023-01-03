@@ -585,13 +585,3 @@ func (t *Tree[T]) Max() *Tree[T] {
 	}
 	return t
 }
-
-// MinUpper returns the node with item with min upper value.
-func (t *Tree[T]) MinUpper() *Tree[T] {
-	return t.minUpper
-}
-
-// MaxUpper returns the node with item with max upper value.
-func (t *Tree[T]) MaxUpper() *Tree[T] {
-	return t.maxUpper
-}
