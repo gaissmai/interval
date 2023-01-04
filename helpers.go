@@ -167,20 +167,19 @@ func walkAndStringify[T Interface[T]](w io.Writer, pcm parentChildsMap[T], paren
 // 0.x.y. In future versions this will be removed without increasing the main
 // semantic version, so please do not rely on it for now.
 //
-// e.g. with left/right, item and [height:size:priority]
+// e.g. with left/right, item priority [prio] and pointers [this|left|right]
 //
-//  R 0...5 [h:6|s:11|p:0.9405]
-//  ├─l 0...6 [h:1|s:1|p:0.6047]
-//  └─r 1...4 [h:5|s:9|p:0.6868]
-//      ├─l 1...8 [h:3|s:3|p:0.6646]
-//      │   └─r 1...7 [h:2|s:2|p:0.4377]
-//      │       └─r 1...5 [h:1|s:1|p:0.4246]
-//      └─r 7...9 [h:4|s:5|p:0.5152]
-//          └─l 6...7 [h:3|s:4|p:0.3009]
-//              └─l 2...7 [h:2|s:3|p:0.1565]
-//                  ├─l 2...8 [h:1|s:1|p:0.06564]
-//                  └─r 4...8 [h:1|s:1|p:0.09697]
-//
+//  R 0...5 [p:0.9405] [p:0xc000024940|0xc000024140|0xc000024980]
+//  ├─l 0...6 [p:0.6047] [p:0xc000024140|0x0|0x0]
+//  └─r 1...4 [p:0.6868] [p:0xc000024980|0xc000024440|0xc000024900]
+//      ├─l 1...8 [p:0.6646] [p:0xc000024440|0x0|0xc000024480]
+//      │   └─r 1...7 [p:0.4377] [p:0xc000024480|0x0|0xc0000244c0]
+//      │       └─r 1...5 [p:0.4246] [p:0xc0000244c0|0x0|0x0]
+//      └─r 7...9 [p:0.5152] [p:0xc000024900|0xc0000249c0|0x0]
+//          └─l 6...7 [p:0.3009] [p:0xc0000249c0|0xc000024880|0x0]
+//              └─l 2...7 [p:0.1565] [p:0xc000024880|0xc000024680|0xc0000248c0]
+//                  ├─l 2...8 [p:0.06564] [p:0xc000024680|0x0|0x0]
+//                  └─r 4...8 [p:0.09697] [p:0xc0000248c0|0x0|0x0]
 //
 func (t *Tree[T]) FprintBST(w io.Writer) error {
 	if t == nil {
@@ -240,21 +239,7 @@ func (t *Tree[T]) preorderStringify(w io.Writer, pad string) error {
 
 // parentChildsMap, needed for interval tree printing, this is not BST printing!
 //
-// randomly balanced BST tree printed
-//
-//  R 0...5            [priority: 0.9405]
-//  ├─l 0...6            [priority: 0.6047]
-//  └─r 1...4            [priority: 0.6868]
-//      ├─l 1...8            [priority: 0.6646]
-//      │   └─r 1...7            [priority: 0.4377]
-//      │       └─r 1...5            [priority: 0.4246]
-//      └─r 7...9            [priority: 0.5152]
-//          └─l 6...7            [priority: 0.3009]
-//              └─l 2...7            [priority: 0.1565]
-//                  ├─l 2...8            [priority: 0.06564]
-//                  └─r 4...8            [priority: 0.09697]
-//
-// Interval tree, parent->child relation printed
+// Interval tree, parent->childs relation printed. A parent interval covers a child interval.
 //  ▼
 //  ├─ 0...6
 //  │  └─ 0...5
@@ -389,10 +374,17 @@ func (t *Tree[T]) Size() int {
 	return size
 }
 
-// Visit traverses the tree with item >= start until item <= stop in ascending order,
-// if start > stop, the order is reversed.
+// Visit traverses the tree with item >= start to item <= stop in ascending order,
+// or if start > stop, then the order is reversed. The visit function is called for each item.
 //
-// The visit function is called for each item. The traversion stops prematurely if the visit function returns false.
+// For example, the entire tree can be traversed as follows
+//  t.Visit(t.Min(), t.Max(), visitFn)
+//
+// or in reverse order by
+//  t.Visit(t.Max(), t.Min(), visitFn).
+//
+// The traversion terminates prematurely if the visit function returns false.
+//
 func (t *Tree[T]) Visit(start, stop T, visitFn func(t T) bool) {
 	if t == nil {
 		return
@@ -404,7 +396,7 @@ func (t *Tree[T]) Visit(start, stop T, visitFn func(t T) bool) {
 		order = reverse
 	}
 
-	// treaps are really cool datastructures!
+	// treaps are really cool datastructures!!!
 	_, mid1, r := t.split(start)
 	l, mid2, _ := r.split(stop)
 
@@ -415,7 +407,7 @@ func (t *Tree[T]) Visit(start, stop T, visitFn func(t T) bool) {
 	})
 }
 
-// Clone the tree.
+// Clone, deep cloning of the tree structure, the items are copied.
 func (t *Tree[T]) Clone() *Tree[T] {
 	if t == nil {
 		return t
