@@ -46,24 +46,29 @@ func TestTreeZeroValue(t *testing.T) {
 
 	w := new(strings.Builder)
 	zero.Fprint(w)
+
 	if w.String() != "" {
-		t.Errorf("tree.Write(w) = %v, want \"\"", w.String())
+		t.Errorf("Write(w) = %v, want \"\"", w.String())
 	}
 
 	if _, ok := zero.Shortest(period.Ival{}); ok {
-		t.Errorf("tree.Shortest(), got: %v, want: false", ok)
+		t.Errorf("Shortest(), got: %v, want: false", ok)
 	}
 
 	if _, ok := zero.Largest(period.Ival{}); ok {
-		t.Errorf("tree.Largest(), got: %v, want: false", ok)
+		t.Errorf("Largest(), got: %v, want: false", ok)
 	}
 
 	if s := zero.Subsets(period.Ival{}); s != nil {
-		t.Errorf("tree.Subsets(), got: %v, want: nil", s)
+		t.Errorf("Subsets(), got: %v, want: nil", s)
 	}
 
 	if s := zero.Supersets(period.Ival{}); s != nil {
-		t.Errorf("tree.Supersets(), got: %v, want: nil", s)
+		t.Errorf("Supersets(), got: %v, want: nil", s)
+	}
+
+	if s := zero.Clone(); s != nil {
+		t.Errorf("Clone(), got: %v, want: nil", s)
 	}
 }
 
@@ -93,6 +98,7 @@ func TestTreeWithDups(t *testing.T) {
 `
 	w := new(strings.Builder)
 	tree.Fprint(w)
+
 	if w.String() != asStr {
 		t.Errorf("Fprint()\nwant:\n%sgot:\n%s", asStr, w.String())
 	}
@@ -108,7 +114,7 @@ func TestClone(t *testing.T) {
 	}
 }
 
-func TestTreeLookup(t *testing.T) {
+func TestLookup(t *testing.T) {
 	t.Parallel()
 	is := []period.Ival{
 		{1, 100},
@@ -133,7 +139,7 @@ func TestTreeLookup(t *testing.T) {
 	}
 }
 
-func TestTreeSuperset(t *testing.T) {
+func TestSuperset(t *testing.T) {
 	t.Parallel()
 
 	is := []period.Ival{
@@ -170,7 +176,7 @@ func TestTreeSuperset(t *testing.T) {
 	}
 }
 
-func TestTreeRandom(t *testing.T) {
+func TestRandom(t *testing.T) {
 	t.Parallel()
 	is := generateIvals(1000)
 	tree := treap.Insert(is...)

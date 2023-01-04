@@ -32,7 +32,7 @@ func makeNode[T Interface[T]](item T) *Tree[T] {
 	n := new(Tree[T])
 	n.item = item
 	n.prio = rand.Float64()
-	n.recalc() // initial calculation of augmented fields, size, height, finger pointers...
+	n.recalc() // initial calculation of finger pointers...
 
 	return n
 }
