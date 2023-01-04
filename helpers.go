@@ -6,7 +6,7 @@ import (
 	"math"
 )
 
-type traverseOrder int
+type traverseOrder uint8
 
 const (
 	preorder traverseOrder = iota

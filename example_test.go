@@ -16,8 +16,10 @@ var periods = []period.Ival{
 	{3, 5},
 }
 
+var tree *interval.Tree[period.Ival]
+
 func ExampleInterface() {
-	tree := interval.NewTree(periods...)
+	tree = tree.Insert(periods...)
 	tree.Fprint(os.Stdout)
 
 	// Output:
@@ -29,7 +31,7 @@ func ExampleInterface() {
 }
 
 func ExampleTree_Max() {
-	tree := interval.NewTree(periods...)
+	tree = tree.Insert(periods...)
 	tree.Fprint(os.Stdout)
 
 	fmt.Println("\nInterval with max lower value in tree:")
@@ -47,7 +49,7 @@ func ExampleTree_Max() {
 }
 
 func ExampleTree_Supersets() {
-	tree := interval.NewTree(periods...)
+	tree = tree.Insert(periods...)
 	tree.Fprint(os.Stdout)
 
 	item := period.Ival{3, 4}
@@ -70,7 +72,7 @@ func ExampleTree_Supersets() {
 }
 
 func ExampleTree_Subsets() {
-	tree := interval.NewTree(periods...)
+	tree = tree.Insert(periods...)
 	tree.Fprint(os.Stdout)
 
 	item := period.Ival{3, 10}
@@ -93,7 +95,7 @@ func ExampleTree_Subsets() {
 }
 
 func ExampleTree_Visit() {
-	tree := interval.NewTree(periods...)
+	tree = tree.Insert(periods...)
 	fmt.Println("parent/child printing")
 	tree.Fprint(os.Stdout)
 
