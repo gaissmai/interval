@@ -26,16 +26,6 @@ type Tree[T Interface[T]] struct {
 	item  T       // generic key/value
 }
 
-// NewTree takes zero or more intervals and returns the new tree.
-// Duplicate items are silently dropped during insert.
-func NewTree[T Interface[T]](items ...T) *Tree[T] {
-	var t *Tree[T]
-	for i := range items {
-		t = t.insert(makeNode(items[i]))
-	}
-	return t
-}
-
 // makeNode, create new node with item and random priority.
 func makeNode[T Interface[T]](item T) *Tree[T] {
 	n := new(Tree[T])
@@ -52,16 +42,9 @@ func (t *Tree[T]) copyNode() *Tree[T] {
 	return &n
 }
 
-// Item returns the item field.
-func (t *Tree[T]) Item() (item T) {
-	if t == nil {
-		return
-	}
-	return t.item
-}
-
 // Insert items into the tree, returns the new tree.
-// Unlike Upsert(), duplicate elements are silently dropped during insertion.
+// Unlike [Upsert], duplicate elements are silently dropped during insertion,
+// but Insert is twice as fast as [Upsert].
 func (t *Tree[T]) Insert(items ...T) *Tree[T] {
 	for i := range items {
 		t = t.insert(makeNode(items[i]))
@@ -122,14 +105,21 @@ func (t *Tree[T]) insert(b *Tree[T]) *Tree[T] {
 }
 
 // Upsert, replace/insert item in tree, returns the new tree.
-func (t *Tree[T]) Upsert(item T) *Tree[T] {
-	k := makeNode(item)
+// Upsert takes about twice as long as [Insert].
+func (t *Tree[T]) Upsert(items ...T) *Tree[T] {
+	for i := range items {
+		t = t.upsert(makeNode(items[i]))
+	}
+	return t
+}
+
+func (t *Tree[T]) upsert(b *Tree[T]) *Tree[T] {
 	if t == nil {
-		return k
+		return b
 	}
 	// don't use middle, replace it with k
-	l, _, r := t.split(item)
-	return join(l, join(k, r))
+	l, _, r := t.split(b.item)
+	return join(l, join(b, r))
 }
 
 // Delete removes an item if it exists, returns the new tree and true, false if not found.
