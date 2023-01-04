@@ -38,6 +38,10 @@ func makeNode[T Interface[T]](item T) *Tree[T] {
 
 // copyNode, make a shallow copy, no recalculation necessary.
 func (t *Tree[T]) copyNode() *Tree[T] {
+	if t == nil {
+		return t
+	}
+
 	n := *t
 	return &n
 }

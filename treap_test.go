@@ -2,6 +2,7 @@ package interval_test
 
 import (
 	"math/rand"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -94,6 +95,16 @@ func TestTreeWithDups(t *testing.T) {
 	tree.Fprint(w)
 	if w.String() != asStr {
 		t.Errorf("Fprint()\nwant:\n%sgot:\n%s", asStr, w.String())
+	}
+}
+
+func TestClone(t *testing.T) {
+	t.Parallel()
+	tree1 := treap.Insert(ps...)
+	tree2 := tree1.Clone()
+
+	if !reflect.DeepEqual(tree1, tree2) {
+		t.Fatal("cloned tree is not deep equal to original")
 	}
 }
 

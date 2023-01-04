@@ -198,7 +198,7 @@ func (t *Tree[T]) FprintBST(w io.Writer) error {
 // preorderStringify, traverse the tree, stringify the nodes in preorder
 func (t *Tree[T]) preorderStringify(w io.Writer, pad string) error {
 	// stringify this node
-	if _, err := fmt.Fprintf(w, "%v [p:%.4g]\n", t.item, t.prio); err != nil {
+	if _, err := fmt.Fprintf(w, "%v [p:%.4g] [p:%p|%p|%p]\n", t.item, t.prio, t, t.left, t.right); err != nil {
 		return err
 	}
 
@@ -319,6 +319,11 @@ func (t *Tree[T]) pcmForNode(pcm parentChildsMap[T]) parentChildsMap[T] {
 }
 
 // Statistics, returns the maxDepth, average and standard deviation of the nodes.
+//
+// Note: This is for debugging purposes only during development in semver
+// 0.x.y. In future versions this will be removed without increasing the main
+// semantic version, so please do not rely on it for now.
+//
 func (t *Tree[T]) Statistics() (maxDepth int, average, deviation float64) {
 	// key is depth, value is the sum of nodes with this depth
 	depths := make(map[int]int)
@@ -377,7 +382,7 @@ func (t *Tree[T]) Max() (max T) {
 // Size returns the number of items in tree.
 func (t *Tree[T]) Size() int {
 	var size int
-	t.traverse(inorder, 0, func(t *Tree[T], dummy int) bool {
+	t.traverse(inorder, 0, func(t *Tree[T], _ int) bool {
 		size++
 		return true
 	})
@@ -408,4 +413,16 @@ func (t *Tree[T]) Visit(start, stop T, visitFn func(t T) bool) {
 	span.traverse(order, 0, func(t *Tree[T], dummy int) bool {
 		return visitFn(t.item)
 	})
+}
+
+// Clone the tree.
+func (t *Tree[T]) Clone() *Tree[T] {
+	if t == nil {
+		return t
+	}
+
+	t.left = t.left.Clone()
+	t.right = t.right.Clone()
+
+	return t.copyNode()
 }
