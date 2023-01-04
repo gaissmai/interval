@@ -5,6 +5,7 @@ import (
 )
 
 // Interface is the type constraint for generic interval items.
+// Compare the lower and upper points of two intervals.
 type Interface[T any] interface {
 	CompareLower(T) int
 	CompareUpper(T) int
