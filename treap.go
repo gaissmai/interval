@@ -241,7 +241,7 @@ func (t *Tree[T]) shortest(item T) (result T, ok bool) {
 		return
 	}
 
-	// nope, whole subtree has too small max upper interval value
+	// shortcut, whole subtree has too small max upper interval value
 	if item.CompareUpper(t.maxUpper.item) > 0 {
 		return
 	}
@@ -259,15 +259,8 @@ func (t *Tree[T]) shortest(item T) (result T, ok bool) {
 		return t.item, true
 	}
 
-	// recursive call to left tree
-	if t.left != nil && item.CompareUpper(t.left.maxUpper.item) <= 0 {
-		if result, ok = t.left.shortest(item); ok {
-			return result, ok
-		}
-	}
-
-	// nope
-	return
+	// not in right tree and not in this item, hm..., MUST BE in left tree
+	return t.left.shortest(item)
 }
 
 // Largest returns the largest interval (top-down in tree) that covers item.
@@ -320,12 +313,12 @@ func (t *Tree[T]) largest(item T) (result T, ok bool) {
 		return
 	}
 
-	// nope, subtree has too small upper interval value
+	// shortcut, whole subtree has too small max upper interval value
 	if item.CompareUpper(t.maxUpper.item) > 0 {
 		return
 	}
 
-	// in-order traversal for longest
+	// in-order traversal for largest
 	// try left tree for largest containing hull
 	if t.left != nil && item.CompareUpper(t.left.maxUpper.item) <= 0 {
 		if result, ok = t.left.largest(item); ok {
@@ -338,15 +331,8 @@ func (t *Tree[T]) largest(item T) (result T, ok bool) {
 		return t.item, true
 	}
 
-	// recursive call to right tree
-	if t.right != nil && item.CompareUpper(t.right.maxUpper.item) <= 0 {
-		if result, ok = t.right.largest(item); ok {
-			return result, ok
-		}
-	}
-
-	// nope
-	return
+	// not in left tree and not in this item, hm..., MUST BE in right tree
+	return t.right.largest(item)
 }
 
 // Supersets returns all intervals that covers the item in sorted order.

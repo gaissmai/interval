@@ -9,8 +9,7 @@ import (
 type traverseOrder uint8
 
 const (
-	preorder traverseOrder = iota
-	inorder
+	inorder traverseOrder = iota
 	reverse
 )
 
@@ -60,13 +59,6 @@ func (t *Tree[T]) traverse(order traverseOrder, depth int, visitFn func(n *Tree[
 		if !visitFn(t, depth) {
 			return
 		}
-		t.right.traverse(order, depth+1, visitFn)
-	case preorder:
-		// do-it, left, right
-		if !visitFn(t, depth) {
-			return
-		}
-		t.left.traverse(order, depth+1, visitFn)
 		t.right.traverse(order, depth+1, visitFn)
 	case reverse:
 		// right, do-it, left
@@ -169,17 +161,17 @@ func walkAndStringify[T Interface[T]](w io.Writer, pcm parentChildsMap[T], paren
 //
 // e.g. with left/right, item priority [prio] and pointers [this|left|right]
 //
-//  R 0...5 [p:0.9405] [p:0xc000024940|0xc000024140|0xc000024980]
-//  ├─l 0...6 [p:0.6047] [p:0xc000024140|0x0|0x0]
-//  └─r 1...4 [p:0.6868] [p:0xc000024980|0xc000024440|0xc000024900]
-//      ├─l 1...8 [p:0.6646] [p:0xc000024440|0x0|0xc000024480]
-//      │   └─r 1...7 [p:0.4377] [p:0xc000024480|0x0|0xc0000244c0]
-//      │       └─r 1...5 [p:0.4246] [p:0xc0000244c0|0x0|0x0]
-//      └─r 7...9 [p:0.5152] [p:0xc000024900|0xc0000249c0|0x0]
-//          └─l 6...7 [p:0.3009] [p:0xc0000249c0|0xc000024880|0x0]
-//              └─l 2...7 [p:0.1565] [p:0xc000024880|0xc000024680|0xc0000248c0]
-//                  ├─l 2...8 [p:0.06564] [p:0xc000024680|0x0|0x0]
-//                  └─r 4...8 [p:0.09697] [p:0xc0000248c0|0x0|0x0]
+//  R 0...5 [prio:0.9405] [0xc000024940|l:0xc000024140|r:0xc000024980]
+//  ├─l 0...6 [prio:0.6047] [0xc000024140|l:0x0|r:0x0]
+//  └─r 1...4 [prio:0.6868] [0xc000024980|l:0xc000024440|r:0xc000024900]
+//      ├─l 1...8 [prio:0.6646] [0xc000024440|l:0x0|r:0xc000024480]
+//      │   └─r 1...7 [prio:0.4377] [0xc000024480|l:0x0|r:0xc0000244c0]
+//      │       └─r 1...5 [prio:0.4246] [0xc0000244c0|l:0x0|r:0x0]
+//      └─r 7...9 [prio:0.5152] [0xc000024900|l:0xc0000249c0|r:0x0]
+//          └─l 6...7 [prio:0.3009] [0xc0000249c0|l:0xc000024880|r:0x0]
+//              └─l 2...7 [prio:0.1565] [0xc000024880|l:0xc000024680|r:0xc0000248c0]
+//                  ├─l 2...8 [prio:0.06564] [0xc000024680|l:0x0|r:0x0]
+//                  └─r 4...8 [prio:0.09697] [0xc0000248c0|l:0x0|r:0x0]
 //
 func (t *Tree[T]) FprintBST(w io.Writer) error {
 	if t == nil {
@@ -197,7 +189,7 @@ func (t *Tree[T]) FprintBST(w io.Writer) error {
 // preorderStringify, traverse the tree, stringify the nodes in preorder
 func (t *Tree[T]) preorderStringify(w io.Writer, pad string) error {
 	// stringify this node
-	if _, err := fmt.Fprintf(w, "%v [p:%.4g] [p:%p|%p|%p]\n", t.item, t.prio, t, t.left, t.right); err != nil {
+	if _, err := fmt.Fprintf(w, "%v [prio:%.4g] [%p|l:%p|r:%p]\n", t.item, t.prio, t, t.left, t.right); err != nil {
 		return err
 	}
 

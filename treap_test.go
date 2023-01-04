@@ -10,6 +10,8 @@ import (
 	"github.com/gaissmai/interval/internal/period"
 )
 
+var treap *interval.Tree[period.Ival]
+
 // test data
 var ps = []period.Ival{
 	{0, 6},
@@ -25,8 +27,7 @@ var ps = []period.Ival{
 	{7, 9},
 }
 
-var treap *interval.Tree[period.Ival]
-
+// random test data
 func generateIvals(n int) []period.Ival {
 	is := make([]period.Ival, n)
 	for i := 0; i < n; i++ {
@@ -42,33 +43,64 @@ func generateIvals(n int) []period.Ival {
 
 func TestTreeZeroValue(t *testing.T) {
 	t.Parallel()
-	var zero *interval.Tree[period.Ival]
+
+	var zeroItem period.Ival
+	var zeroTree *interval.Tree[period.Ival]
 
 	w := new(strings.Builder)
-	zero.Fprint(w)
+	zeroTree.Fprint(w)
 
 	if w.String() != "" {
 		t.Errorf("Write(w) = %v, want \"\"", w.String())
 	}
 
-	if _, ok := zero.Shortest(period.Ival{}); ok {
+	if s := zeroTree.Insert(zeroItem); s == nil {
+		t.Errorf("Insert(), got: %v, want: !nil", s)
+	}
+
+	if s := zeroTree.Upsert(zeroItem); s == nil {
+		t.Errorf("Insert(), got: %v, want: !nil", s)
+	}
+
+	if _, ok := zeroTree.Delete(zeroItem); ok {
+		t.Errorf("Delete(), got: %v, want: false", ok)
+	}
+
+	if s := zeroTree.Clone(); s != nil {
+		t.Errorf("Clone(), got: %v, want: nil", s)
+	}
+
+	if _, ok := zeroTree.Shortest(zeroItem); ok {
 		t.Errorf("Shortest(), got: %v, want: false", ok)
 	}
 
-	if _, ok := zero.Largest(period.Ival{}); ok {
+	if _, ok := zeroTree.Largest(zeroItem); ok {
 		t.Errorf("Largest(), got: %v, want: false", ok)
 	}
 
-	if s := zero.Subsets(period.Ival{}); s != nil {
+	if s := zeroTree.Subsets(zeroItem); s != nil {
 		t.Errorf("Subsets(), got: %v, want: nil", s)
 	}
 
-	if s := zero.Supersets(period.Ival{}); s != nil {
+	if s := zeroTree.Supersets(zeroItem); s != nil {
 		t.Errorf("Supersets(), got: %v, want: nil", s)
 	}
 
-	if s := zero.Clone(); s != nil {
-		t.Errorf("Clone(), got: %v, want: nil", s)
+	if s := zeroTree.Min(); s != zeroItem {
+		t.Errorf("Min(), got: %v, want: %v", s, zeroItem)
+	}
+
+	if s := zeroTree.Max(); s != zeroItem {
+		t.Errorf("Max(), got: %v, want: %v", s, zeroItem)
+	}
+
+	var items []period.Ival
+	zeroTree.Visit(zeroItem, zeroItem, func(item period.Ival) bool {
+		items = append(items, item)
+		return true
+	})
+	if len(items) != 0 {
+		t.Errorf("Visit(), got: %v, want: 0", len(items))
 	}
 }
 
@@ -104,7 +136,7 @@ func TestTreeWithDups(t *testing.T) {
 	}
 }
 
-func TestClone(t *testing.T) {
+func TestImmutable(t *testing.T) {
 	t.Parallel()
 	tree1 := treap.Insert(ps...)
 	tree2 := tree1.Clone()
@@ -112,30 +144,122 @@ func TestClone(t *testing.T) {
 	if !reflect.DeepEqual(tree1, tree2) {
 		t.Fatal("cloned tree is not deep equal to original")
 	}
+
+	if _, ok := tree1.Delete(tree2.Min()); !ok {
+		t.Fatal("Delete, could not delete min item")
+	}
+	if !reflect.DeepEqual(tree1, tree2) {
+		t.Fatal("Delete changed receiver")
+	}
+
+	item := period.Ival{-111, 666}
+	tree1.Insert(item)
+	if !reflect.DeepEqual(tree1, tree2) {
+		t.Fatal("Insert changed receiver")
+	}
+
+	tree1.Upsert(item)
+	if !reflect.DeepEqual(tree1, tree2) {
+		t.Fatal("Upsert changed receiver")
+	}
+
+	tree1.Shortest(item)
+	if !reflect.DeepEqual(tree1, tree2) {
+		t.Fatal("Shortest changed receiver")
+	}
+
+	tree1.Largest(item)
+	if !reflect.DeepEqual(tree1, tree2) {
+		t.Fatal("Largest changed receiver")
+	}
+
+	tree1.Subsets(item)
+	if !reflect.DeepEqual(tree1, tree2) {
+		t.Fatal("Subsets changed receiver")
+	}
+
+	tree1.Supersets(item)
+	if !reflect.DeepEqual(tree1, tree2) {
+		t.Fatal("Supersets changed receiver")
+	}
 }
 
 func TestLookup(t *testing.T) {
 	t.Parallel()
-	is := []period.Ival{
-		{1, 100},
-		{45, 60},
-	}
 
-	tree := treap.Insert(is...)
+	// bring some variance into the Treap
+	for i := 0; i < 100; i++ {
+		tree := treap.Insert(ps...)
 
-	item := period.Ival{0, 6}
-	if got, ok := tree.Shortest(item); ok {
-		t.Errorf("Shortest(%v) = %v, want %v", item, got, !ok)
-	}
+		//     	 ▼
+		//     	 ├─ 0...6
+		//     	 │  └─ 0...5
+		//     	 ├─ 1...8
+		//     	 │  ├─ 1...7
+		//     	 │  │  └─ 1...5
+		//     	 │  │     └─ 1...4
+		//     	 │  └─ 2...8
+		//     	 │     ├─ 2...7
+		//     	 │     └─ 4...8
+		//     	 │        └─ 6...7
+		//     	 └─ 7...9
 
-	item = period.Ival{47, 62}
-	if got, _ := tree.Shortest(item); got != is[0] {
-		t.Errorf("Shortest(%v) = %v, want %v", item, got, is[0])
-	}
+		item := period.Ival{0, 5}
+		if got, _ := tree.Shortest(item); got != item {
+			t.Errorf("Shortest(%v) = %v, want %v", item, got, item)
+		}
 
-	item = period.Ival{45, 60}
-	if got, _ := tree.Shortest(item); got != is[1] {
-		t.Errorf("Shortest(%v) = %v, want %v", item, got, is[1])
+		item = period.Ival{5, 5}
+		want := period.Ival{4, 8}
+		if got, _ := tree.Shortest(item); got != want {
+			t.Errorf("Shortest(%v) = %v, want %v", item, got, want)
+		}
+
+		item = period.Ival{8, 9}
+		want = period.Ival{7, 9}
+		if got, _ := tree.Shortest(item); got != want {
+			t.Errorf("Shortest(%v) = %v, want %v", item, got, want)
+		}
+
+		item = period.Ival{3, 8}
+		want = period.Ival{2, 8}
+		if got, _ := tree.Shortest(item); got != want {
+			t.Errorf("Shortest(%v) = %v, want %v", item, got, want)
+		}
+
+		item = period.Ival{19, 55}
+		if got, ok := tree.Shortest(item); ok {
+			t.Errorf("Shortest(%v) = %v, want %v", item, got, !ok)
+		}
+
+		item = period.Ival{-19, 0}
+		if got, ok := tree.Shortest(item); ok {
+			t.Errorf("Shortest(%v) = %v, want %v", item, got, !ok)
+		}
+
+		item = period.Ival{8, 8}
+		want = period.Ival{1, 8}
+		if got, _ := tree.Largest(item); got != want {
+			t.Errorf("Largest(%v) = %v, want %v", item, got, want)
+		}
+
+		item = period.Ival{3, 6}
+		want = period.Ival{0, 6}
+		if got, _ := tree.Largest(item); got != want {
+			t.Errorf("Largest(%v) = %v, want %v", item, got, want)
+		}
+
+		item = period.Ival{3, 7}
+		want = period.Ival{1, 8}
+		if got, _ := tree.Largest(item); got != want {
+			t.Errorf("Largest(%v) = %v, want %v", item, got, want)
+		}
+
+		item = period.Ival{0, 7}
+		if _, ok := tree.Largest(item); ok {
+			t.Errorf("Largest(%v) = %v, want %v", item, ok, false)
+		}
+
 	}
 }
 
