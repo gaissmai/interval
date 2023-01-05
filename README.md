@@ -19,7 +19,6 @@ The time complexity is **O(log(n))** or **O(k*log(n))** where k is the number of
 
 ```
 Insert()    O(log(n))
-Upsert()    O(log(n))
 Delete()    O(log(n))
 Shortest()  O(log(n))
 Largest()   O(log(n))
