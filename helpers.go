@@ -47,26 +47,44 @@ func covers[T Interface[T]](a, b T) bool {
 
 // traverse the BST in some order, call the visitor function for each node.
 // Prematurely stop traversion if visitor function returns false.
-func (t *Tree[T]) traverse(order traverseOrder, depth int, visitFn func(n *Tree[T], depth int) bool) {
+func (t *Tree[T]) traverse(order traverseOrder, depth int, visitFn func(n *Tree[T], depth int) bool) bool {
 	if t == nil {
-		return
+		return true
 	}
 
 	switch order {
 	case inorder:
 		// left, do-it, right
-		t.left.traverse(order, depth+1, visitFn)
-		if !visitFn(t, depth) {
-			return
+		if !t.left.traverse(order, depth+1, visitFn) {
+			return false
 		}
-		t.right.traverse(order, depth+1, visitFn)
+
+		if !visitFn(t, depth) {
+			return false
+		}
+
+		if !t.right.traverse(order, depth+1, visitFn) {
+			return false
+		}
+
+		return true
 	case reverse:
 		// right, do-it, left
-		t.right.traverse(order, depth+1, visitFn)
-		if !visitFn(t, depth) {
-			return
+		if !t.right.traverse(order, depth+1, visitFn) {
+			return false
 		}
-		t.left.traverse(order, depth+1, visitFn)
+
+		if !visitFn(t, depth) {
+			return false
+		}
+
+		if !t.left.traverse(order, depth+1, visitFn) {
+			return false
+		}
+
+		return true
+	default:
+		panic("unreachable")
 	}
 }
 
@@ -297,7 +315,7 @@ func (t *Tree[T]) pcmForNode(pcm parentChildsMap[T]) parentChildsMap[T] {
 
 // Statistics, returns the maxDepth, average and standard deviation of the nodes.
 //
-// Note: This is for debugging purposes only during development in semver
+// Note: This is for debugging and testing purposes only during development in semver
 // 0.x.y. In future versions this will be removed without increasing the main
 // semantic version, so please do not rely on it for now.
 //
