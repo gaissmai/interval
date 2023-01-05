@@ -17,13 +17,13 @@ type Interface[T any] interface {
 type Tree[T Interface[T]] struct {
 	//
 	// augment the treap for interval lookups
-	minUpper *Tree[T] // finger pointer to node in subtree with min upper value, just needed for Subsets()
-	maxUpper *Tree[T] // finger pointer to node in subtree with max upper value
+	minUpper *Tree[T] // pointer to node in subtree with min upper value, just needed for Subsets()
+	maxUpper *Tree[T] // pointer to node in subtree with max upper value, needed for all other lookups
 	//
 	// base treap fields, in memory efficient order
 	left  *Tree[T]
 	right *Tree[T]
-	prio  float64 // automatic balance the tree, random key for binary heap
+	prio  float64 // random key for binary heap, balances the tree
 	item  T       // generic key/value
 }
 
@@ -120,6 +120,44 @@ func (t *Tree[T]) Delete(item T) (*Tree[T], bool) {
 		return t, false
 	}
 	return t, true
+}
+
+// Union combines any two trees. In case of duplicate items, the "overwrite" flag
+// controls whether the union keeps the original or whether it is replaced by the item in the b treap.
+//
+// To create very large trees, it may be time-saving to split the input data into chunks,
+// fan out for Insert and combine the generated subtrees with Union.
+func (t *Tree[T]) Union(b *Tree[T], overwrite bool) *Tree[T] {
+	if t == nil {
+		return b
+	}
+	if b == nil {
+		return t
+	}
+
+	// swap treaps if needed, treap with higher prio remains as new root
+	if t.prio < b.prio {
+		t, b = b, t
+		overwrite = !overwrite
+	}
+
+	// immutable union, copy remaining root
+	t = t.copyNode()
+
+	// the treap with the lower priority is split with the root key in the treap with the higher priority
+	l, dupe, r := b.split(t.item)
+
+	// the treaps may have duplicate items
+	if overwrite && dupe != nil {
+		t.item = dupe.item
+	}
+
+	// rec-descent
+	t.left = t.left.Union(l, overwrite)
+	t.right = t.right.Union(r, overwrite)
+	t.recalc()
+
+	return t
 }
 
 // split the treap into all nodes that compare less-than, equal
@@ -474,39 +512,4 @@ func (t *Tree[T]) recalc() {
 			t.maxUpper = t.left.maxUpper
 		}
 	}
-}
-
-// Union combines any two treaps. In case of duplicates, the "overwrite" flag
-// controls whether the union keeps the original item or whether it is replaced by the item in the b treap.
-func (t *Tree[T]) Union(b *Tree[T], overwrite bool) *Tree[T] {
-	if t == nil {
-		return b
-	}
-	if b == nil {
-		return t
-	}
-
-	// swap trees if needed, tree with higher prio remains as new root
-	if t.prio < b.prio {
-		t, b = b, t
-		overwrite = !overwrite
-	}
-
-	// immutable union, copy remaining root
-	t = t.copyNode()
-
-	// the treap with the lower priority is split with the root key in the treap with the higher priority
-	l, dupe, r := b.split(t.item)
-
-	// the treaps may have duplicate items
-	if overwrite && dupe != nil {
-		t.item = dupe.item
-	}
-
-	// rec-descent
-	t.left = t.left.Union(l, overwrite)
-	t.right = t.right.Union(r, overwrite)
-	t.recalc()
-
-	return t
 }

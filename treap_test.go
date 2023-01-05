@@ -1,8 +1,11 @@
 package interval_test
 
 import (
+	"fmt"
+	"math"
 	"math/rand"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -31,8 +34,8 @@ var ps = []period.Ival{
 func generateIvals(n int) []period.Ival {
 	is := make([]period.Ival, n)
 	for i := 0; i < n; i++ {
-		a := rand.Intn(n)
-		b := rand.Intn(n)
+		a := rand.Intn(1000 * n)
+		b := rand.Intn(1000 * n)
 		if a > b {
 			a, b = b, a
 		}
@@ -48,7 +51,14 @@ func TestTreeZeroValue(t *testing.T) {
 	var zeroTree *interval.Tree[period.Ival]
 
 	w := new(strings.Builder)
-	zeroTree.Fprint(w)
+	_ = zeroTree.Fprint(w)
+
+	if w.String() != "" {
+		t.Errorf("Write(w) = %v, want \"\"", w.String())
+	}
+
+	w.Reset()
+	_ = zeroTree.FprintBST(w)
 
 	if w.String() != "" {
 		t.Errorf("Write(w) = %v, want \"\"", w.String())
@@ -291,40 +301,45 @@ func TestSuperset(t *testing.T) {
 	}
 }
 
-func TestRandom(t *testing.T) {
+func TestVisit(t *testing.T) {
 	t.Parallel()
-	is := generateIvals(1000)
-	tree := treap.Insert(is...)
+	tree := treap.Insert(ps...)
 
-	rand.Shuffle(len(is), func(i, j int) { is[i], is[j] = is[j], is[i] })
+	var collect []period.Ival
+	want := 4
+	tree.Visit(tree.Min(), tree.Max(), func(item period.Ival) bool {
+		collect = append(collect, item)
+		return len(collect) != want
+	})
 
-	for _, item := range is {
-		var (
-			shortest  period.Ival
-			largest   period.Ival
-			subsets   []period.Ival
-			supersets []period.Ival
-			ok        bool
-		)
-		if shortest, ok = tree.Shortest(item); !ok {
-			t.Errorf("Shortest(%v), got %v, %v", item, shortest, ok)
-		}
-		if largest, ok = tree.Largest(item); !ok {
-			t.Errorf("Largest(%v), got %v, %v", item, largest, ok)
-		}
-		if subsets = tree.Subsets(item); subsets == nil {
-			t.Errorf("Subsets(%v), got %v", item, subsets)
-		}
-		if subsets[0] != shortest {
-			t.Errorf("Subsets(%v).[0], want %v, got %v", item, shortest, subsets[0])
-		}
-		if supersets = tree.Supersets(item); supersets == nil {
-			t.Errorf("Supersets(%v), got %v", item, supersets)
-		}
-		if supersets[0] != largest {
-			t.Errorf("Supersets(%v).[0], want %v, got %v", item, largest, supersets[0])
-		}
+	if len(collect) != want {
+		t.Fatalf("Visit() ascending, want to stop after %v visits, got: %v, %v", want, len(collect), collect)
 	}
+
+	collect = nil
+	want = 9
+	tree.Visit(tree.Min(), tree.Max(), func(item period.Ival) bool {
+		collect = append(collect, item)
+		return len(collect) != want
+	})
+
+	if len(collect) != want {
+		t.Fatalf("Visit() ascending, want to stop after %v visits, got: %v, %v", want, len(collect), collect)
+	}
+
+	collect = nil
+	want = 2
+	tree.Visit(tree.Max(), tree.Min(), func(item period.Ival) bool {
+		collect = append(collect, item)
+		return len(collect) != want
+	})
+
+	collect = nil
+	want = 5
+	tree.Visit(tree.Max(), tree.Min(), func(item period.Ival) bool {
+		collect = append(collect, item)
+		return len(collect) != want
+	})
 }
 
 func TestMinMax(t *testing.T) {
@@ -381,5 +396,84 @@ func TestUnion(t *testing.T) {
 	tree.Fprint(w)
 	if w.String() != asStr {
 		t.Errorf("Fprint()\nwant:\n%sgot:\n%s", asStr, w.String())
+	}
+}
+
+func TestStatistics(t *testing.T) {
+	t.Parallel()
+
+	for n := 5_000; n <= 500_000; n *= 10 {
+		count := strconv.Itoa(n)
+		t.Run(count, func(t *testing.T) {
+			is := generateIvals(n)
+
+			tree := treap.Insert(is...)
+
+			_, averageDepth, deviation := tree.Statistics()
+
+			maxAverageDepth := 1.35 * math.Log2(float64(n))
+			if averageDepth > maxAverageDepth {
+				t.Fatalf("n: %d, average > max expected average, got: %.4g, want: < %.4g", n, averageDepth, maxAverageDepth)
+			}
+
+			maxDeviation := 1.0
+			if deviation > maxDeviation {
+				t.Fatalf("n: %d, deviation > max expected deviation, got: %.4g, want: < %.4g", n, deviation, maxDeviation)
+			}
+		})
+	}
+}
+
+func TestRandom(t *testing.T) {
+	t.Parallel()
+	is := generateIvals(100)
+	tree := treap.Insert(is...)
+
+	rand.Shuffle(len(is), func(i, j int) { is[i], is[j] = is[j], is[i] })
+
+	for _, item := range is {
+		tname := fmt.Sprintf("%v", item)
+		t.Run(tname, func(t *testing.T) {
+			t.Parallel()
+			var (
+				shortest  period.Ival
+				largest   period.Ival
+				subsets   []period.Ival
+				supersets []period.Ival
+				ok        bool
+			)
+			if shortest, ok = tree.Shortest(item); !ok {
+				t.Errorf("Shortest(%v), got %v, %v", item, shortest, ok)
+			}
+			if largest, ok = tree.Largest(item); !ok {
+				t.Errorf("Largest(%v), got %v, %v", item, largest, ok)
+			}
+			if subsets = tree.Subsets(item); subsets == nil {
+				t.Errorf("Subsets(%v), got %v", item, subsets)
+			}
+			if subsets[0] != shortest {
+				t.Errorf("Subsets(%v).[0], want %v, got %v", item, shortest, subsets[0])
+			}
+			if supersets = tree.Supersets(item); supersets == nil {
+				t.Errorf("Supersets(%v), got %v", item, supersets)
+			}
+			if supersets[0] != largest {
+				t.Errorf("Supersets(%v).[0], want %v, got %v", item, largest, supersets[0])
+			}
+		})
+	}
+}
+
+func TestPrintBST(t *testing.T) {
+	t.Parallel()
+	tree := treap.Insert(ps...)
+
+	w := new(strings.Builder)
+	_ = tree.FprintBST(w)
+
+	lc := len(strings.Split(w.String(), "\n"))
+	want := 12
+	if lc != want {
+		t.Fatalf("FprintBST(), want line count: %d, got: %d", want, lc)
 	}
 }

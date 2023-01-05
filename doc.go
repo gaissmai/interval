@@ -9,7 +9,6 @@
 // The time complexity is O(k*log(n)) where k is the number of returned items.
 //
 //  Insert()    O(log(n))
-//  Upsert()    O(log(n))
 //  Delete()    O(log(n))
 //  Shortest()  O(log(n))
 //  Largest()   O(log(n))
