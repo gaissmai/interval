@@ -81,6 +81,8 @@ type Tree[T Interface[T]] struct{ ... }
   func (t *Tree[T]) Supersets(item T) []T
 
   func (t *Tree[T]) Clone() *Tree[T]
+  func (t *Tree[T]) Union(b *Tree[T], overwrite bool) *Tree[T]
+
   func (t *Tree[T]) Visit(start, stop T, visitFn func(t T) bool)
   func (t *Tree[T]) Fprint(w io.Writer) error
   func (t *Tree[T]) Size() int
