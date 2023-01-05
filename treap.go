@@ -47,9 +47,7 @@ func (t *Tree[T]) copyNode() *Tree[T] {
 	return &n
 }
 
-// Insert items into the tree, returns the new tree.
-// Unlike [Upsert], duplicate elements are silently dropped during insertion,
-// but Insert is twice as fast as [Upsert].
+// Insert elements into the tree, if an element is a duplicate, it replaces the previous element.
 func (t *Tree[T]) Insert(items ...T) *Tree[T] {
 	for i := range items {
 		t = t.insert(makeNode(items[i]))
@@ -68,13 +66,14 @@ func (t *Tree[T]) insert(b *Tree[T]) *Tree[T] {
 	//    l r
 	//
 	if b.prio >= t.prio {
-		left, dupe, right := t.split(b.item)
+		l, dupe, r := t.split(b.item)
+
 		if dupe != nil {
-			// duplicate, drop b
-			return t
+			// replace duplicate item with b, but b has different prio, join() required
+			return join(l, join(b, r))
 		}
 
-		b.left, b.right = left, right
+		b.left, b.right = l, r
 		b.recalc() // node has changed, recalc
 		return b
 		//
@@ -83,48 +82,34 @@ func (t *Tree[T]) insert(b *Tree[T]) *Tree[T] {
 		//
 	}
 
-	// immutable insert, copy node
-	root := t.copyNode()
+	cmp := compare(b.item, t.item)
+	if cmp == 0 {
+		// replace duplicate item with b, but b has different prio, join() required
+		return join(t.left, join(b, t.right))
+	}
 
-	cmp := compare(b.item, root.item)
+	// immutable insert, copy node
+	t = t.copyNode()
+
 	switch {
 	case cmp < 0: // rec-descent
-		root.left = root.left.insert(b)
+		t.left = t.left.insert(b)
 		//
 		//       R
 		// b    l r
 		//     l   r
 		//
 	case cmp > 0: // rec-descent
-		root.right = root.right.insert(b)
+		t.right = t.right.insert(b)
 		//
 		//   R
 		//  l r    b
 		// l   r
 		//
-	default: // equal, drop duplicate
 	}
 
-	root.recalc() // node has changed, recalc
-	return root
-}
-
-// Upsert, replace/insert item in tree, returns the new tree.
-// Upsert takes about twice as long as [Insert].
-func (t *Tree[T]) Upsert(items ...T) *Tree[T] {
-	for i := range items {
-		t = t.upsert(makeNode(items[i]))
-	}
+	t.recalc() // node has changed, recalc
 	return t
-}
-
-func (t *Tree[T]) upsert(b *Tree[T]) *Tree[T] {
-	if t == nil {
-		return b
-	}
-	// don't use middle, replace it with k
-	l, _, r := t.split(b.item)
-	return join(l, join(b, r))
 }
 
 // Delete removes an item if it exists, returns the new tree and true, false if not found.

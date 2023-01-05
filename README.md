@@ -73,19 +73,19 @@ import "github.com/gaissmai/interval"
 type Tree[T Interface[T]] struct{ ... }
 
   func (t *Tree[T]) Insert(items ...T) *Tree[T]
-  func (t *Tree[T]) Upsert(items ...T) *Tree[T]
-  func (t *Tree[T]) Clone() *Tree[T]
   func (t *Tree[T]) Delete(item T) (*Tree[T], bool)
-
-  func (t *Tree[T]) Size() int
-  func (t *Tree[T]) Min() (min T)
-  func (t *Tree[T]) Max() (max T)
-  func (t *Tree[T]) Fprint(w io.Writer) error
-  func (t *Tree[T]) Visit(start, stop T, visitFn func(t T) bool)
 
   func (t *Tree[T]) Shortest(item T) (result T, ok bool)
   func (t *Tree[T]) Largest(item T) (result T, ok bool)
 
   func (t *Tree[T]) Subsets(item T) []T
   func (t *Tree[T]) Supersets(item T) []T
+
+  func (t *Tree[T]) Clone() *Tree[T]
+  func (t *Tree[T]) Visit(start, stop T, visitFn func(t T) bool)
+  func (t *Tree[T]) Fprint(w io.Writer) error
+  func (t *Tree[T]) Size() int
+  func (t *Tree[T]) Min() (min T)
+  func (t *Tree[T]) Max() (max T)
+
 ```

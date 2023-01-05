@@ -58,10 +58,6 @@ func TestTreeZeroValue(t *testing.T) {
 		t.Errorf("Insert(), got: %v, want: !nil", s)
 	}
 
-	if s := zeroTree.Upsert(zeroItem); s == nil {
-		t.Errorf("Insert(), got: %v, want: !nil", s)
-	}
-
 	if _, ok := zeroTree.Delete(zeroItem); ok {
 		t.Errorf("Delete(), got: %v, want: false", ok)
 	}
@@ -156,11 +152,6 @@ func TestImmutable(t *testing.T) {
 	tree1.Insert(item)
 	if !reflect.DeepEqual(tree1, tree2) {
 		t.Fatal("Insert changed receiver")
-	}
-
-	tree1.Upsert(item)
-	if !reflect.DeepEqual(tree1, tree2) {
-		t.Fatal("Upsert changed receiver")
 	}
 
 	tree1.Shortest(item)
