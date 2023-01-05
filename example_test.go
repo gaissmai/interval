@@ -2,47 +2,25 @@ package interval_test
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/gaissmai/interval"
+	"github.com/gaissmai/interval/internal/period"
 )
 
-// example interval
-type period struct {
-	start int
-	stop  int
-}
-
-// little helper, compare two ints
-func cmp(a, b int) int {
-	switch {
-	case a == b:
-		return 0
-	case a < b:
-		return -1
-	}
-	return 1
-}
-
-// implementing the interval.Interface
-func (p period) CompareLower(q period) int { return cmp(p.start, q.start) }
-func (p period) CompareUpper(q period) int { return cmp(p.stop, q.stop) }
-
 // example data
-var periods = []period{
+var periods = []period.Ival{
 	{3, 4},
 	{2, 9},
 	{7, 9},
 	{3, 5},
 }
 
-// fmt.Stringer for formattting, not required for interval.Interface
-func (p period) String() string {
-	return fmt.Sprintf("%d...%d", p.start, p.stop)
-}
+var tree *interval.Tree[period.Ival]
 
 func ExampleInterface() {
-	tree := interval.NewTree(periods)
-	fmt.Println(tree)
+	tree = tree.Insert(periods...)
+	tree.Fprint(os.Stdout)
 
 	// Output:
 	// ▼
@@ -52,14 +30,31 @@ func ExampleInterface() {
 	//    └─ 7...9
 }
 
-func ExampleTree_Supersets() {
-	tree := interval.NewTree(periods)
-	item := period{3, 4}
-	supersets := tree.Supersets(item)
+func ExampleTree_Max() {
+	tree = tree.Insert(periods...)
+	tree.Fprint(os.Stdout)
 
-	fmt.Println(tree)
-	fmt.Printf("Supersets for item: %v\n", item)
-	for _, p := range supersets {
+	fmt.Println("\nInterval with max lower value in tree:")
+	fmt.Println(tree.Max())
+
+	// Output:
+	// ▼
+	// └─ 2...9
+	//    ├─ 3...5
+	//    │  └─ 3...4
+	//    └─ 7...9
+	//
+	//Interval with max lower value in tree:
+	//7...9
+}
+
+func ExampleTree_Supersets() {
+	tree = tree.Insert(periods...)
+	tree.Fprint(os.Stdout)
+
+	item := period.Ival{3, 4}
+	fmt.Printf("\nSupersets for item: %v\n", item)
+	for _, p := range tree.Supersets(item) {
 		fmt.Println(p)
 	}
 
@@ -77,13 +72,12 @@ func ExampleTree_Supersets() {
 }
 
 func ExampleTree_Subsets() {
-	tree := interval.NewTree(periods)
-	item := period{3, 10}
-	subsets := tree.Subsets(item)
+	tree = tree.Insert(periods...)
+	tree.Fprint(os.Stdout)
 
-	fmt.Println(tree)
-	fmt.Printf("Subsets for item: %v\n", item)
-	for _, p := range subsets {
+	item := period.Ival{3, 10}
+	fmt.Printf("\nSubsets for item: %v\n", item)
+	for _, p := range tree.Subsets(item) {
 		fmt.Println(p)
 	}
 
@@ -98,4 +92,39 @@ func ExampleTree_Subsets() {
 	// 3...5
 	// 3...4
 	// 7...9
+}
+
+func ExampleTree_Visit() {
+	tree = tree.Insert(periods...)
+	fmt.Println("parent/child printing")
+	tree.Fprint(os.Stdout)
+
+	start := period.Ival{3, 5}
+	stop := period.Ival{7, 9}
+	visitFn := func(item period.Ival) bool {
+		fmt.Printf("%v\n", item)
+		return true
+	}
+
+	fmt.Println("visit ascending")
+	tree.Visit(start, stop, visitFn)
+
+	fmt.Println("visit descending")
+	tree.Visit(stop, start, visitFn)
+
+	// Output:
+	// parent/child printing
+	// ▼
+	// └─ 2...9
+	//    ├─ 3...5
+	//    │  └─ 3...4
+	//    └─ 7...9
+	// visit ascending
+	// 3...5
+	// 3...4
+	// 7...9
+	// visit descending
+	// 7...9
+	// 3...4
+	// 3...5
 }
