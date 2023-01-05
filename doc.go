@@ -2,7 +2,7 @@
 //
 // The implementation is based on Treaps, augmented for interval.
 //
-// Immutability is achived because insert/upsert/delete will return a new Treap which will
+// Immutability is achieved because insert/upsert/delete will return a new Treap which will
 // share some nodes with the original Treap.
 // All nodes are read-only after creation, allowing concurrent readers to operate safely with concurrent writers.
 //
