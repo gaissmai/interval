@@ -349,3 +349,46 @@ func TestMinMax(t *testing.T) {
 		t.Fatalf("Max(), want: %v, got: %v", want, tree.Max())
 	}
 }
+
+func TestUnion(t *testing.T) {
+	t.Parallel()
+	tree := treap
+
+	for i := range ps {
+		b := treap.Insert(ps[i])
+		tree = tree.Union(b, false)
+	}
+
+	asStr := `▼
+├─ 0...6
+│  └─ 0...5
+├─ 1...8
+│  ├─ 1...7
+│  │  └─ 1...5
+│  │     └─ 1...4
+│  └─ 2...8
+│     ├─ 2...7
+│     └─ 4...8
+│        └─ 6...7
+└─ 7...9
+`
+
+	w := new(strings.Builder)
+	tree.Fprint(w)
+
+	if w.String() != asStr {
+		t.Errorf("Fprint()\nwant:\n%sgot:\n%s", asStr, w.String())
+	}
+
+	// now with dupe overwrite
+	for i := range ps {
+		b := treap.Insert(ps[i])
+		tree = tree.Union(b, true)
+	}
+
+	w.Reset()
+	tree.Fprint(w)
+	if w.String() != asStr {
+		t.Errorf("Fprint()\nwant:\n%sgot:\n%s", asStr, w.String())
+	}
+}
