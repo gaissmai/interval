@@ -1,6 +1,6 @@
 // Package interval is an immutable datastructure for fast lookups in one dimensional intervals.
 //
-// The implementation is based on treaps, augmented for interval. Treaps are randomized self balancing binary search trees.
+// The implementation is based on treaps, augmented for intervals. Treaps are randomized self balancing binary search trees.
 //
 // Immutability is achieved because insert/upsert/delete will return a new treap which will
 // share some nodes with the original treap. All nodes are read-only after creation,
