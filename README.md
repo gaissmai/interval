@@ -101,7 +101,7 @@ The benchmark for `Insert()` shows the values for inserting an item into trees w
 The trees are randomly generated, as is the item to be inserted.
 
 The trees are immutable, insertions and deletions generate new nodes on the path. The expected depth
-of the trees is O(log(n)) and the allocs/op represent this well.
+of the trees is **O(log(n))** and the **allocs/op** represent this well.
 
 The data structure is a randomized BST, the expected depth is determined with very
 high probability (for large n) but not deterministic.
@@ -142,8 +142,8 @@ BenchmarkDeleteFrom1_000_000 	 1000000	      2561 ns/op	     960 B/op	      15 a
 
 ### Lookups
 
-The lookups on interval treaps are performed by splitting the treap, based on the lower interval value (the BST key)
-and then by a recursive binary search based on the augmented maximum upper value.
+The lookups on interval treaps are performed by first splitting the treap, based on the lower interval value (the BST key)
+followed by a recursive binary search based on the augmented maximum upper value.
 
 Because of the immutable split, allocations also occur during the lookups.
 
