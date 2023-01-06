@@ -92,11 +92,11 @@ type Tree[T Interface[T]] struct{ ... }
 
 ```
 
-## Benchmark
+## Benchmarks
 
 ### Insert
 
-The benchmark for Insert() shows the values for inserting an item into trees with increasing size.
+The benchmark for `Insert()` shows the values for inserting an item into trees with increasing size.
 
 The trees are randomly generated, as is the item to be inserted.
 
@@ -106,6 +106,7 @@ of the trees is O(log(n)) and the allocs/op represent this well.
 The data structure is a randomized BST, the expected depth is determined with very
 high probability (for large n) but not deterministic.
 
+```
 $ go test -benchmem -bench='Insert' -cpu=1
 goos: linux
 goarch: amd64
@@ -118,11 +119,13 @@ BenchmarkInsertInto1_000     	 1335027	       941.0 ns/op	     384 B/op	       6
 BenchmarkInsertInto10_000    	 1000000	      2117 ns/op	     768 B/op	      12 allocs/op
 BenchmarkInsertInto100_000   	 1000000	      2590 ns/op	     960 B/op	      15 allocs/op
 BenchmarkInsertInto1_000_000 	 1000000	      2682 ns/op	    1024 B/op	      16 allocs/op
+```
 
 ### Delete
 
-The benchmark for delete shows the same asymptotic behavior:
+The benchmark for `Delete()` shows the same asymptotic behavior:
 
+```
 $ go test -benchmem -bench='Delete' -cpu=1
 goos: linux
 goarch: amd64
@@ -135,6 +138,7 @@ BenchmarkDeleteFrom1_000     	 1461568	       821.2 ns/op	     320 B/op	       5
 BenchmarkDeleteFrom10_000    	 1000000	      1795 ns/op	     704 B/op	      11 allocs/op
 BenchmarkDeleteFrom100_000   	 1000000	      2358 ns/op	     896 B/op	      14 allocs/op
 BenchmarkDeleteFrom1_000_000 	 1000000	      2561 ns/op	     960 B/op	      15 allocs/op
+```
 
 ### Lookups
 
@@ -143,6 +147,7 @@ and then by a recursive binary search based on the augmented maximum upper value
 
 Because of the immutable split, allocations also occur during the lookups.
 
+```
 $ go test -benchmem -bench='Shortest' -cpu=1
 goos: linux
 goarch: amd64
@@ -168,3 +173,4 @@ BenchmarkLargestIn1_000     	 1503721	       813.3 ns/op	     320 B/op	       5 
 BenchmarkLargestIn10_000    	 1000000	      1807 ns/op	     704 B/op	      11 allocs/op
 BenchmarkLargestIn100_000   	 1000000	      2493 ns/op	     896 B/op	      14 allocs/op
 BenchmarkLargestIn1_000_000 	 1000000	      2630 ns/op	     960 B/op	      15 allocs/op
+```
