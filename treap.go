@@ -1,3 +1,12 @@
+// Package interval provides fast lookups and various other methods for generic one-dimensional intervals.
+//
+// The author of the library uses the package for fast IP range lookups in access control lists (ACL)
+// and in the author's own IP address management (IPAM) and network management software,
+// see also the author's [iprange package].
+//
+// However, the interval package is useful for all one-dimensional intervals, e.g. time intervals.
+//
+// [iprange package]: https://github.com/gaissmai/iprange
 package interval
 
 import (
