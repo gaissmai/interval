@@ -10,9 +10,9 @@
 
 `package interval` is an immutable datastructure for fast lookups in one dimensional intervals.
 
-The implementation is based on Treaps, augmented for fast interval lookups.
+The implementation is based on treaps, augmented for interval. Treaps are randomized self balancing binary search trees.
 
-Immutability is achieved because insert/delete will return a new Treap which will share some nodes with the original Treap.
+Immutability is achieved because insert/delete will return a new treap which will share some nodes with the original treap.
 All nodes are read-only after creation, allowing concurrent readers to operate safely with concurrent writers.
 
 The time complexity is **O(log(n))** or **O(k*log(n))** where k is the number of returned items, the space complexity is **O(n)**.
@@ -27,7 +27,7 @@ Subsets()   O(k*log(n))
 Supersets() O(k*log(n))
 ```
 
-The author is propably the first (december 2022) using augmented Treaps
+The author is propably the first (december 2022) using augmented treaps
 as a very promising [data structure] for the representation of dynamic IP address tables
 for arbitrary ranges, that enables most and least specific range matching and even more lookup methods
 returning sets of intervals.
@@ -36,21 +36,22 @@ The library can be used for all comparable one-dimensional intervals,
 but the author of the library uses it mainly for fast [IP range lookups] in access control lists (ACL)
 and in his own IP address management (IPAM) and network management software.
 
-The augmented Treap is NOT limited to IP CIDR ranges unlike the prefix trie.
+The augmented treap is NOT limited to IP CIDR ranges unlike the prefix trie.
 Arbitrary IP ranges and both IP versions can be handled together in this data structure.
 
-Due to the nature of Treaps the lookups and updates can be concurrently decoupled, without delayed rebalancing.
+Due to the nature of treaps the lookups and updates can be concurrently decoupled,
+without delayed rebalancing, promising to be a perfect match for a software-router or firewall.
 
-To familiarize yourself with Treaps, see the extraordinarily good lectures from
+To familiarize yourself with treaps, see the extraordinarily good lectures from
 Pavel Mravin about Algorithms and Datastructures e.g. "[Treaps, implicit keys]"
-or follow [some links about Treaps] from one of the inventors.
+or follow [some links about treaps] from one of the inventors.
 
 Especially useful is the paper "[Fast Set Operations Using Treaps]" by Guy E. Blelloch and Margaret Reid-Miller.
 
 [IP Range lookups]: https://github.com/gaissmai/iprange
 [data structure]: https://ieeexplore.ieee.org/abstract/document/912716
 [Treaps, implicit keys]: https://youtu.be/svAHk-FAQgM
-[some links about Treaps]: http://faculty.washington.edu/aragon/treaps.html
+[some links about treaps]: http://faculty.washington.edu/aragon/treaps.html
 [Fast Set Operations Using Treaps]: https://www.cs.cmu.edu/~scandal/papers/treaps-spaa98.pdf
 
 ## Interface
