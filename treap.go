@@ -60,26 +60,37 @@ func (t *Tree[T]) insert(b *Tree[T]) *Tree[T] {
 	if t == nil {
 		return b
 	}
-	//
-	//           b
-	//     a
-	//    l r
-	//
+
+	// if b is the new root?
 	if b.prio >= t.prio {
+		//
+		//          b
+		//          | split t in ( <b | dupe? | >b )
+		//          v
+		//       t
+		//      / \
+		//    l     d(upe)
+		//   / \   / \
+		//  l   r l   r
+		//           /
+		//          l
+		//
 		l, dupe, r := t.split(b.item)
 
+		// replace dupe with b. b has same key but different prio than dupe, a join() is required
 		if dupe != nil {
-			// replace duplicate item with b, but b has different prio, join() required
 			return join(l, join(b, r))
 		}
 
-		b.left, b.right = l, r
-		b.recalc() // node has changed, recalc
-		return b
+		// no duplicate, take b as new root
 		//
 		//     b
-		//    l r
+		//   /  \
+		//  <b   >b
 		//
+		b.left, b.right = l, r
+		b.recalc()
+		return b
 	}
 
 	cmp := compare(b.item, t.item)
