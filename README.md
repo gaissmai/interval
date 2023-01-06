@@ -91,3 +91,80 @@ type Tree[T Interface[T]] struct{ ... }
   func (t *Tree[T]) Max() (max T)
 
 ```
+
+## Benchmark
+
+### Insert
+
+The benchmark for Insert() shows the values for inserting an item into trees with increasing size.
+
+The trees are randomly generated, as is the item to be inserted.
+
+The trees are immutable, insertions and deletions generate new nodes on the path. The expected depth
+of the trees is O(log(n)) and the allocs/op represent this well.
+
+The data structure is a randomized BST, the expected depth is determined with very
+high probability (for large n) but not deterministic.
+
+$ go test -benchmem -bench='Insert' -cpu=1
+goos: linux
+goarch: amd64
+pkg: github.com/gaissmai/interval
+cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+BenchmarkInsertInto1         	 3780463	       295.8 ns/op	     128 B/op	       2 allocs/op
+BenchmarkInsertInto10        	 2949376	       477.6 ns/op	     192 B/op	       3 allocs/op
+BenchmarkInsertInto100       	 1000000	      1270 ns/op	     512 B/op	       8 allocs/op
+BenchmarkInsertInto1_000     	 1335027	       941.0 ns/op	     384 B/op	       6 allocs/op
+BenchmarkInsertInto10_000    	 1000000	      2117 ns/op	     768 B/op	      12 allocs/op
+BenchmarkInsertInto100_000   	 1000000	      2590 ns/op	     960 B/op	      15 allocs/op
+BenchmarkInsertInto1_000_000 	 1000000	      2682 ns/op	    1024 B/op	      16 allocs/op
+
+### Delete
+
+The benchmark for delete shows the same asymptotic behavior:
+
+$ go test -benchmem -bench='Delete' -cpu=1
+goos: linux
+goarch: amd64
+pkg: github.com/gaissmai/interval
+cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+BenchmarkDeleteFrom1         	20716108	       137.2 ns/op	      64 B/op	       1 allocs/op
+BenchmarkDeleteFrom10        	 3499713	       338.8 ns/op	     128 B/op	       2 allocs/op
+BenchmarkDeleteFrom100       	 1000000	      1207 ns/op	     448 B/op	       7 allocs/op
+BenchmarkDeleteFrom1_000     	 1461568	       821.2 ns/op	     320 B/op	       5 allocs/op
+BenchmarkDeleteFrom10_000    	 1000000	      1795 ns/op	     704 B/op	      11 allocs/op
+BenchmarkDeleteFrom100_000   	 1000000	      2358 ns/op	     896 B/op	      14 allocs/op
+BenchmarkDeleteFrom1_000_000 	 1000000	      2561 ns/op	     960 B/op	      15 allocs/op
+
+### Lookups
+
+The lookups on interval treaps are performed by splitting the treap, based on the lower interval value (the BST key)
+and then by a recursive binary search based on the augmented maximum upper value.
+
+Because of the immutable split, allocations also occur during the lookups.
+
+$ go test -benchmem -bench='Shortest' -cpu=1
+goos: linux
+goarch: amd64
+pkg: github.com/gaissmai/interval
+cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+BenchmarkShortestIn1         	20832103	       136.6 ns/op	      64 B/op	       1 allocs/op
+BenchmarkShortestIn10        	 3426456	       348.9 ns/op	     128 B/op	       2 allocs/op
+BenchmarkShortestIn100       	 1000000	      1177 ns/op	     448 B/op	       7 allocs/op
+BenchmarkShortestIn1_000     	 1498095	       797.8 ns/op	     320 B/op	       5 allocs/op
+BenchmarkShortestIn10_000    	 1000000	      1820 ns/op	     704 B/op	      11 allocs/op
+BenchmarkShortestIn100_000   	 1000000	      2368 ns/op	     896 B/op	      14 allocs/op
+BenchmarkShortestIn1_000_000 	 1000000	      2657 ns/op	     960 B/op	      15 allocs/op
+
+$ go test -benchmem -bench='Largest' -cpu=1
+goos: linux
+goarch: amd64
+pkg: github.com/gaissmai/interval
+cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+BenchmarkLargestIn1         	20206744	       140.4 ns/op	      64 B/op	       1 allocs/op
+BenchmarkLargestIn10        	 3441198	       348.6 ns/op	     128 B/op	       2 allocs/op
+BenchmarkLargestIn100       	 1000000	      1188 ns/op	     448 B/op	       7 allocs/op
+BenchmarkLargestIn1_000     	 1503721	       813.3 ns/op	     320 B/op	       5 allocs/op
+BenchmarkLargestIn10_000    	 1000000	      1807 ns/op	     704 B/op	      11 allocs/op
+BenchmarkLargestIn100_000   	 1000000	      2493 ns/op	     896 B/op	      14 allocs/op
+BenchmarkLargestIn1_000_000 	 1000000	      2630 ns/op	     960 B/op	      15 allocs/op
