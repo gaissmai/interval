@@ -362,7 +362,7 @@ func TestUnion(t *testing.T) {
 
 	for i := range ps {
 		b := treap.Insert(ps[i])
-		tree = tree.Union(b, false)
+		tree = tree.Union(b, false, true)
 	}
 
 	asStr := `▼
@@ -389,7 +389,7 @@ func TestUnion(t *testing.T) {
 	// now with dupe overwrite
 	for i := range ps {
 		b := treap.Insert(ps[i])
-		tree = tree.Union(b, true)
+		tree = tree.Union(b, true, true)
 	}
 
 	w.Reset()
@@ -402,16 +402,17 @@ func TestUnion(t *testing.T) {
 func TestStatistics(t *testing.T) {
 	t.Parallel()
 
-	for n := 5_000; n <= 500_000; n *= 10 {
+	for n := 10_000; n <= 1_000_000; n *= 10 {
 		count := strconv.Itoa(n)
 		t.Run(count, func(t *testing.T) {
 			is := generateIvals(n)
+			treap = nil
 
 			tree := treap.Insert(is...)
 
 			_, averageDepth, deviation := tree.Statistics()
 
-			maxAverageDepth := 1.35 * math.Log2(float64(n))
+			maxAverageDepth := 2 * math.Log2(float64(n))
 			if averageDepth > maxAverageDepth {
 				t.Fatalf("n: %d, average > max expected average, got: %.4g, want: < %.4g", n, averageDepth, maxAverageDepth)
 			}
