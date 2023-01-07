@@ -139,38 +139,3 @@ BenchmarkDeleteFrom10_000    	 1000000	      1795 ns/op	     704 B/op	      11 a
 BenchmarkDeleteFrom100_000   	 1000000	      2358 ns/op	     896 B/op	      14 allocs/op
 BenchmarkDeleteFrom1_000_000 	 1000000	      2561 ns/op	     960 B/op	      15 allocs/op
 ```
-
-### Lookups
-
-The lookups on interval treaps are performed by first splitting the treap, based on the lower interval value (the BST key)
-followed by a recursive binary search based on the augmented maximum upper value.
-
-Because of the immutable split, allocations also occur during the lookups.
-
-```
-$ go test -benchmem -bench='Shortest' -cpu=1
-goos: linux
-goarch: amd64
-pkg: github.com/gaissmai/interval
-cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkShortestIn1         	20832103	       136.6 ns/op	      64 B/op	       1 allocs/op
-BenchmarkShortestIn10        	 3426456	       348.9 ns/op	     128 B/op	       2 allocs/op
-BenchmarkShortestIn100       	 1000000	      1177 ns/op	     448 B/op	       7 allocs/op
-BenchmarkShortestIn1_000     	 1498095	       797.8 ns/op	     320 B/op	       5 allocs/op
-BenchmarkShortestIn10_000    	 1000000	      1820 ns/op	     704 B/op	      11 allocs/op
-BenchmarkShortestIn100_000   	 1000000	      2368 ns/op	     896 B/op	      14 allocs/op
-BenchmarkShortestIn1_000_000 	 1000000	      2657 ns/op	     960 B/op	      15 allocs/op
-
-$ go test -benchmem -bench='Largest' -cpu=1
-goos: linux
-goarch: amd64
-pkg: github.com/gaissmai/interval
-cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkLargestIn1         	20206744	       140.4 ns/op	      64 B/op	       1 allocs/op
-BenchmarkLargestIn10        	 3441198	       348.6 ns/op	     128 B/op	       2 allocs/op
-BenchmarkLargestIn100       	 1000000	      1188 ns/op	     448 B/op	       7 allocs/op
-BenchmarkLargestIn1_000     	 1503721	       813.3 ns/op	     320 B/op	       5 allocs/op
-BenchmarkLargestIn10_000    	 1000000	      1807 ns/op	     704 B/op	      11 allocs/op
-BenchmarkLargestIn100_000   	 1000000	      2493 ns/op	     896 B/op	      14 allocs/op
-BenchmarkLargestIn1_000_000 	 1000000	      2630 ns/op	     960 B/op	      15 allocs/op
-```
