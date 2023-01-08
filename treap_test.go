@@ -34,14 +34,23 @@ var ps = []period.Ival{
 func generateIvals(n int) []period.Ival {
 	is := make([]period.Ival, n)
 	for i := 0; i < n; i++ {
-		a := rand.Intn(1000 * n)
-		b := rand.Intn(1000 * n)
+		a := rand.Int()
+		b := rand.Int()
 		if a > b {
 			a, b = b, a
 		}
 		is[i] = period.Ival{a, b}
 	}
 	return is
+}
+
+func generateIval() period.Ival {
+	a := rand.Int()
+	b := rand.Int()
+	if a > b {
+		a, b = b, a
+	}
+	return period.Ival{a, b}
 }
 
 func TestTreeZeroValue(t *testing.T) {

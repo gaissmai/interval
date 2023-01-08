@@ -287,12 +287,10 @@ func (t *Tree[T]) Shortest(item T) (result T, ok bool) {
 		return
 	}
 
-	cmp := compare(item, t.item)
+	cmp := compare(t.item, item)
 	switch {
-	case cmp < 0:
-		// rec-descent with t.left
+	case cmp > 0:
 		return t.left.Shortest(item)
-
 	case cmp == 0:
 		// equality is always the shortest containing hull
 		return t.item, true
@@ -360,34 +358,34 @@ func (t *Tree[T]) Shortest(item T) (result T, ok bool) {
 // the zero value and false is returned.
 //
 func (t *Tree[T]) Largest(item T) (result T, ok bool) {
-	if t == nil {
-		return
+	// find node.item < item
+	for {
+		if t == nil {
+			return
+		}
+
+		if compare(t.item, item) > 0 {
+			t = t.left
+			continue
+		}
+		break
 	}
 
-	l, m, _ := t.split(item, true)
-	result, ok = l.largest(item)
-
-	// if key is in treap and no outer hull found
-	if m != nil && !ok {
-		result, ok = item, true
-	}
-
-	return result, ok
+	// start recursion
+	return t.largest(item)
 }
 
-// largest is the recursive workhorse for Largest().
 func (t *Tree[T]) largest(item T) (result T, ok bool) {
 	if t == nil {
 		return
 	}
 
-	// whole subtree has too small max upper interval value
+	// fast exit, node has too small max upper interval value (augmented value)
 	if item.CompareUpper(t.maxUpper.item) > 0 {
 		return
 	}
 
-	// in-order traversal for largest
-	// try left tree for largest containing hull
+	// rec-descent left subtree
 	if result, ok = t.left.largest(item); ok {
 		return result, ok
 	}
@@ -397,7 +395,7 @@ func (t *Tree[T]) largest(item T) (result T, ok bool) {
 		return t.item, true
 	}
 
-	// not in left tree and not in this item, hm..., MUST BE in right tree
+	// rec-descent right
 	return t.right.largest(item)
 }
 

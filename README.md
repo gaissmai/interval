@@ -150,11 +150,29 @@ goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkShortestIn1-8              191996325        6.2 ns/op      0 B/op    0 allocs/op
-BenchmarkShortestIn10-8             33417526        36.0 ns/op      0 B/op    0 allocs/op
-BenchmarkShortestIn100-8            17682121       112.7 ns/op      0 B/op    0 allocs/op
-BenchmarkShortestIn1_000-8           7394497       171.3 ns/op      0 B/op    0 allocs/op
-BenchmarkShortestIn10_000-8          5805819       222.6 ns/op      0 B/op    0 allocs/op
-BenchmarkShortestIn100_000-8         6536728       268.3 ns/op      0 B/op    0 allocs/op
-BenchmarkShortestIn1_000_000-8       4623165       244.4 ns/op      0 B/op    0 allocs/op
+BenchmarkShortestIn1-8             190550422         6.2 ns/op      0 B/op    0 allocs/op
+BenchmarkShortestIn10-8             20306680        53.1 ns/op      0 B/op    0 allocs/op
+BenchmarkShortestIn100-8             5832771       197.6 ns/op      0 B/op    0 allocs/op
+BenchmarkShortestIn1_000-8           3890366       420.6 ns/op      0 B/op    0 allocs/op
+BenchmarkShortestIn10_000-8          3306588       425.0 ns/op      0 B/op    0 allocs/op
+BenchmarkShortestIn100_000-8         2542274       668.7 ns/op      0 B/op    0 allocs/op
+BenchmarkShortestIn1_000_000-8       1763833       995.5 ns/op      0 B/op    0 allocs/op
+```
+
+... and so the benchmark for `Largest()`:
+
+
+```
+$ go test -benchmem -bench='Largest'
+goos: linux
+goarch: amd64
+pkg: github.com/gaissmai/interval
+cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+BenchmarkLargestIn1-8               67820457        17.6 ns/op      0 B/op    0 allocs/op
+BenchmarkLargestIn10-8              25577661       113.0 ns/op      0 B/op    0 allocs/op
+BenchmarkLargestIn100-8             32839588        63.8 ns/op      0 B/op    0 allocs/op
+BenchmarkLargestIn1_000-8           16319536       115.9 ns/op      0 B/op    0 allocs/op
+BenchmarkLargestIn10_000-8          14414833        90.5 ns/op      0 B/op    0 allocs/op
+BenchmarkLargestIn100_000-8          8502637       161.6 ns/op      0 B/op    0 allocs/op
+BenchmarkLargestIn1_000_000-8        7168594       387.4 ns/op      0 B/op    0 allocs/op
 ```
