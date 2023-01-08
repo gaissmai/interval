@@ -282,40 +282,53 @@ func (t *Tree[T]) Shortest(item T) (result T, ok bool) {
 		return
 	}
 
-	// the shortest interval covering item must have t.item <= item
-	l, m, _ := t.split(item, true)
-
-	// item is in tree, return it as shortest.
-	if m != nil {
-		return m.item, true
-	}
-	return l.shortest(item)
-}
-
-// shortest, find rec-descent, use augmented maxUpper finger pointer.
-func (t *Tree[T]) shortest(item T) (result T, ok bool) {
-	if t == nil {
-		return
-	}
-
-	// subtree has too small max upper interval value
+	// fast exit, node has too small max upper interval value (augmented value)
 	if item.CompareUpper(t.maxUpper.item) > 0 {
 		return
 	}
 
-	// reverse-order traversal for shortest
-	// try right tree for smallest containing hull
-	if result, ok = t.right.shortest(item); ok {
-		return result, ok
-	}
+	cmp := compare(item, t.item)
+	switch {
+	case cmp < 0:
+		// rec-descent with t.left
+		return t.left.Shortest(item)
 
-	// no match in right tree, try this item
-	if item.CompareUpper(t.item) <= 0 {
+	case cmp == 0:
+		// equality is always the shortest containing hull
 		return t.item, true
 	}
 
-	// not in right tree and not in this item, hm..., MUST BE in left tree
-	return t.left.shortest(item)
+	// now on proper depth in tree
+	// first try right subtree for shortest containing hull
+	if t.right != nil {
+
+		// rec-descent with t.right
+		if compare(t.right.item, item) <= 0 {
+			result, ok = t.right.Shortest(item)
+			if ok {
+				return result, ok
+			}
+		}
+
+		// try t.right.left subtree for smallest containing hull
+		// take this path only if t.right.left.item > t.item (this node)
+		if t.right.left != nil && compare(t.right.left.item, t.item) > 0 {
+			// rec-descent with t.right.left
+			result, ok = t.right.left.Shortest(item)
+			if ok {
+				return result, ok
+			}
+		}
+
+	}
+
+	// not found in right subtree, try this node
+	if covers(t.item, item) {
+		return t.item, true
+	}
+
+	// rec-descent with t.left
+	return t.left.Shortest(item)
 }
 
 // Largest returns the largest interval (top-down in tree) that covers item.

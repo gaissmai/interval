@@ -139,3 +139,21 @@ BenchmarkDeleteFrom10_000    	 1000000	      1795 ns/op	     704 B/op	      11 a
 BenchmarkDeleteFrom100_000   	 1000000	      2358 ns/op	     896 B/op	      14 allocs/op
 BenchmarkDeleteFrom1_000_000 	 1000000	      2561 ns/op	     960 B/op	      15 allocs/op
 ```
+
+### Lookup
+
+The benchmark for `Shortest()` (a.k.a. longest-prefix-match if the interval is an IP CIDR prefix) is very promising:
+
+```
+goos: linux
+goarch: amd64
+pkg: github.com/gaissmai/interval
+cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+BenchmarkShortestIn1-8           	64952856	        18.36 ns/op	       0 B/op	       0 allocs/op
+BenchmarkShortestIn10-8          	22210141	       122.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkShortestIn100-8         	33358066	       113.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkShortestIn1_000-8       	 7419712	       174.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkShortestIn10_000-8      	 8476441	       335.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkShortestIn100_000-8     	 4940514	       262.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkShortestIn1_000_000-8   	 4152391	       298.0 ns/op	       0 B/op	       0 allocs/op
+```

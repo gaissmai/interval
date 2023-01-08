@@ -188,8 +188,8 @@ func TestImmutable(t *testing.T) {
 func TestLookup(t *testing.T) {
 	t.Parallel()
 
-	// bring some variance into the Treap
 	for i := 0; i < 100; i++ {
+		// bring some variance into the Treap due to the prio randomness
 		tree := treap.Insert(ps...)
 
 		//     	 ▼
@@ -411,6 +411,7 @@ func TestStatistics(t *testing.T) {
 			tree := treap.Insert(is...)
 
 			_, averageDepth, deviation := tree.Statistics()
+			t.Logf("stats: n=%d, averageDepth=%.4g, deviation=%.4g\n", n, averageDepth, deviation)
 
 			maxAverageDepth := 2 * math.Log2(float64(n))
 			if averageDepth > maxAverageDepth {
