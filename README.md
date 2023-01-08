@@ -107,18 +107,18 @@ The data structure is a randomized BST, the expected depth is determined with ve
 high probability (for large n) but not deterministic.
 
 ```
-$ go test -benchmem -bench='Insert' -cpu=1
+$ go test -benchmem -bench='Insert'
 goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkInsertInto1         	 3780463	       295.8 ns/op	     128 B/op	       2 allocs/op
-BenchmarkInsertInto10        	 2949376	       477.6 ns/op	     192 B/op	       3 allocs/op
-BenchmarkInsertInto100       	 1000000	      1270 ns/op	     512 B/op	       8 allocs/op
-BenchmarkInsertInto1_000     	 1335027	       941.0 ns/op	     384 B/op	       6 allocs/op
-BenchmarkInsertInto10_000    	 1000000	      2117 ns/op	     768 B/op	      12 allocs/op
-BenchmarkInsertInto100_000   	 1000000	      2590 ns/op	     960 B/op	      15 allocs/op
-BenchmarkInsertInto1_000_000 	 1000000	      2682 ns/op	    1024 B/op	      16 allocs/op
+BenchmarkInsertInto1-8              8506729        174.8 ns/op   128 B/op     2 allocs/op
+BenchmarkInsertInto10-8             3443077        304.3 ns/op   256 B/op     4 allocs/op
+BenchmarkInsertInto100-8            2419617        836.3 ns/op   640 B/op    10 allocs/op
+BenchmarkInsertInto1_000-8          2900678        713.0 ns/op   512 B/op     8 allocs/op
+BenchmarkInsertInto10_000-8         1222190        964.9 ns/op   768 B/op    12 allocs/op
+BenchmarkInsertInto100_000-8        1019144       1246.0 ns/op   832 B/op    13 allocs/op
+BenchmarkInsertInto1_000_000-8       881776       1423.0 ns/op   896 B/op    14 allocs/op
 ```
 
 ### Delete
@@ -126,18 +126,18 @@ BenchmarkInsertInto1_000_000 	 1000000	      2682 ns/op	    1024 B/op	      16 a
 The benchmark for `Delete()` shows the same asymptotic behavior:
 
 ```
-$ go test -benchmem -bench='Delete' -cpu=1
+$ go test -benchmem -bench='Delete'
 goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkDeleteFrom1         	20716108	       137.2 ns/op	      64 B/op	       1 allocs/op
-BenchmarkDeleteFrom10        	 3499713	       338.8 ns/op	     128 B/op	       2 allocs/op
-BenchmarkDeleteFrom100       	 1000000	      1207 ns/op	     448 B/op	       7 allocs/op
-BenchmarkDeleteFrom1_000     	 1461568	       821.2 ns/op	     320 B/op	       5 allocs/op
-BenchmarkDeleteFrom10_000    	 1000000	      1795 ns/op	     704 B/op	      11 allocs/op
-BenchmarkDeleteFrom100_000   	 1000000	      2358 ns/op	     896 B/op	      14 allocs/op
-BenchmarkDeleteFrom1_000_000 	 1000000	      2561 ns/op	     960 B/op	      15 allocs/op
+BenchmarkDeleteFrom1-8              17313007        59.5 ns/op     64 B/op    1 allocs/op
+BenchmarkDeleteFrom10-8              9414926       251.1 ns/op    192 B/op    3 allocs/op
+BenchmarkDeleteFrom100-8             2230638       504.0 ns/op    448 B/op    7 allocs/op
+BenchmarkDeleteFrom1_000-8           1000000      1157.0 ns/op    832 B/op   13 allocs/op
+BenchmarkDeleteFrom10_000-8           545694      2207.0 ns/op   1792 B/op   28 allocs/op
+BenchmarkDeleteFrom100_000-8          418015      2515.0 ns/op   1856 B/op   29 allocs/op
+BenchmarkDeleteFrom1_000_000-8       1081098      1504.0 ns/op    960 B/op   15 allocs/op
 ```
 
 ### Lookup
@@ -145,15 +145,16 @@ BenchmarkDeleteFrom1_000_000 	 1000000	      2561 ns/op	     960 B/op	      15 a
 The benchmark for `Shortest()` (a.k.a. longest-prefix-match if the interval is an IP CIDR prefix) is very promising:
 
 ```
+$ go test -benchmem -bench='Shortest'
 goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkShortestIn1-8           	64952856	        18.36 ns/op	       0 B/op	       0 allocs/op
-BenchmarkShortestIn10-8          	22210141	       122.1 ns/op	       0 B/op	       0 allocs/op
-BenchmarkShortestIn100-8         	33358066	       113.3 ns/op	       0 B/op	       0 allocs/op
-BenchmarkShortestIn1_000-8       	 7419712	       174.8 ns/op	       0 B/op	       0 allocs/op
-BenchmarkShortestIn10_000-8      	 8476441	       335.7 ns/op	       0 B/op	       0 allocs/op
-BenchmarkShortestIn100_000-8     	 4940514	       262.0 ns/op	       0 B/op	       0 allocs/op
-BenchmarkShortestIn1_000_000-8   	 4152391	       298.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkShortestIn1-8              191996325        6.2 ns/op      0 B/op    0 allocs/op
+BenchmarkShortestIn10-8             33417526        36.0 ns/op      0 B/op    0 allocs/op
+BenchmarkShortestIn100-8            17682121       112.7 ns/op      0 B/op    0 allocs/op
+BenchmarkShortestIn1_000-8           7394497       171.3 ns/op      0 B/op    0 allocs/op
+BenchmarkShortestIn10_000-8          5805819       222.6 ns/op      0 B/op    0 allocs/op
+BenchmarkShortestIn100_000-8         6536728       268.3 ns/op      0 B/op    0 allocs/op
+BenchmarkShortestIn1_000_000-8       4623165       244.4 ns/op      0 B/op    0 allocs/op
 ```

@@ -1,8 +1,6 @@
 package interval_test
 
 import (
-	"sync"
-
 	"github.com/gaissmai/interval"
 )
 
@@ -11,6 +9,7 @@ func mkTree[T interval.Interface[T]](ivals []T) (tree *interval.Tree[T]) {
 	// return insertCC(runtime.NumCPU(), ivals)
 }
 
+/*
 func insertCC[T interval.Interface[T]](workers int, is []T) *interval.Tree[T] {
 	var wg sync.WaitGroup
 	var chunk int = len(is) / workers
@@ -50,3 +49,4 @@ func insertCC[T interval.Interface[T]](workers int, is []T) *interval.Tree[T] {
 	}
 	return union
 }
+*/
