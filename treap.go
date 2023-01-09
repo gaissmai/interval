@@ -36,6 +36,15 @@ type Tree[T Interface[T]] struct {
 	item  T       // generic key/value
 }
 
+func NewTree[T Interface[T]](items ...T) *Tree[T] {
+	var t *Tree[T]
+
+	for i := range items {
+		t = t.insert(makeNode(items[i]), false)
+	}
+	return t
+}
+
 // makeNode, create new node with item and random priority.
 func makeNode[T Interface[T]](item T) *Tree[T] {
 	n := new(Tree[T])

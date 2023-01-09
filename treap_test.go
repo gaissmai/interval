@@ -13,8 +13,6 @@ import (
 	"github.com/gaissmai/interval/internal/period"
 )
 
-var treap *interval.Tree[period.Ival]
-
 // test data
 var ps = []period.Ival{
 	{0, 6},
@@ -44,20 +42,11 @@ func generateIvals(n int) []period.Ival {
 	return is
 }
 
-func generateIval() period.Ival {
-	a := rand.Int()
-	b := rand.Int()
-	if a > b {
-		a, b = b, a
-	}
-	return period.Ival{a, b}
-}
-
-func TestTreeZeroValue(t *testing.T) {
+func TestNewTree(t *testing.T) {
 	t.Parallel()
 
 	var zeroItem period.Ival
-	var zeroTree *interval.Tree[period.Ival]
+	zeroTree := interval.NewTree[period.Ival]()
 
 	w := new(strings.Builder)
 	_ = zeroTree.Fprint(w)
@@ -131,7 +120,7 @@ func TestTreeWithDups(t *testing.T) {
 		{3, 13},
 	}
 
-	tree := treap.Insert(is...)
+	tree := interval.NewTree(is...)
 	if s := tree.Size(); s != 5 {
 		t.Errorf("Size() = %v, want 5", s)
 	}
@@ -153,7 +142,7 @@ func TestTreeWithDups(t *testing.T) {
 
 func TestImmutable(t *testing.T) {
 	t.Parallel()
-	tree1 := treap.Insert(ps...)
+	tree1 := interval.NewTree(ps...)
 	tree2 := tree1.Clone()
 
 	if !reflect.DeepEqual(tree1, tree2) {
@@ -199,7 +188,7 @@ func TestLookup(t *testing.T) {
 
 	for i := 0; i < 100; i++ {
 		// bring some variance into the Treap due to the prio randomness
-		tree := treap.Insert(ps...)
+		tree := interval.NewTree(ps...)
 
 		//     	 ▼
 		//     	 ├─ 0...6
@@ -282,7 +271,7 @@ func TestSuperset(t *testing.T) {
 		{46, 80},
 	}
 
-	tree := treap.Insert(is...)
+	tree := interval.NewTree(is...)
 
 	item := period.Ival{0, 6}
 	if got, ok := tree.Largest(item); ok {
@@ -312,7 +301,7 @@ func TestSuperset(t *testing.T) {
 
 func TestVisit(t *testing.T) {
 	t.Parallel()
-	tree := treap.Insert(ps...)
+	tree := interval.NewTree(ps...)
 
 	var collect []period.Ival
 	want := 4
@@ -353,7 +342,7 @@ func TestVisit(t *testing.T) {
 
 func TestMinMax(t *testing.T) {
 	t.Parallel()
-	tree := treap.Insert(ps...)
+	tree := interval.NewTree(ps...)
 	want := period.Ival{0, 6}
 	if tree.Min() != want {
 		t.Fatalf("Min(), want: %v, got: %v", want, tree.Min())
@@ -367,10 +356,10 @@ func TestMinMax(t *testing.T) {
 
 func TestUnion(t *testing.T) {
 	t.Parallel()
-	tree := treap
+	tree := interval.NewTree[period.Ival]()
 
 	for i := range ps {
-		b := treap.Insert(ps[i])
+		b := interval.NewTree(ps[i])
 		tree = tree.Union(b, false, true)
 	}
 
@@ -397,7 +386,7 @@ func TestUnion(t *testing.T) {
 
 	// now with dupe overwrite
 	for i := range ps {
-		b := treap.Insert(ps[i])
+		b := interval.NewTree(ps[i])
 		tree = tree.Union(b, true, true)
 	}
 
@@ -414,10 +403,7 @@ func TestStatistics(t *testing.T) {
 	for n := 10_000; n <= 1_000_000; n *= 10 {
 		count := strconv.Itoa(n)
 		t.Run(count, func(t *testing.T) {
-			is := generateIvals(n)
-			treap = nil
-
-			tree := treap.Insert(is...)
+			tree := interval.NewTree(generateIvals(n)...)
 
 			_, averageDepth, deviation := tree.Statistics()
 			t.Logf("stats: n=%d, averageDepth=%.4g, deviation=%.4g\n", n, averageDepth, deviation)
@@ -438,7 +424,7 @@ func TestStatistics(t *testing.T) {
 func TestRandom(t *testing.T) {
 	t.Parallel()
 	is := generateIvals(100)
-	tree := treap.Insert(is...)
+	tree := interval.NewTree(is...)
 
 	rand.Shuffle(len(is), func(i, j int) { is[i], is[j] = is[j], is[i] })
 
@@ -477,7 +463,7 @@ func TestRandom(t *testing.T) {
 
 func TestPrintBST(t *testing.T) {
 	t.Parallel()
-	tree := treap.Insert(ps...)
+	tree := interval.NewTree(ps...)
 
 	w := new(strings.Builder)
 	_ = tree.FprintBST(w)
