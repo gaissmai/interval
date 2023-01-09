@@ -47,7 +47,7 @@ func covers[T Interface[T]](a, b T) bool {
 
 // traverse the BST in some order, call the visitor function for each node.
 // Prematurely stop traversion if visitor function returns false.
-func (t *Tree[T]) traverse(order traverseOrder, depth int, visitFn func(n *Tree[T], depth int) bool) bool {
+func (t *Node[T]) traverse(order traverseOrder, depth int, visitFn func(n *Node[T], depth int) bool) bool {
 	if t == nil {
 		return true
 	}
@@ -114,14 +114,14 @@ func (t *Tree[T]) traverse(order traverseOrder, depth int, visitFn func(n *Tree[
 // If the interval items don't implement fmt.Stringer they are stringified with
 // their default format %v.
 //
-func (t *Tree[T]) Fprint(w io.Writer) error {
+func (t Tree[T]) Fprint(w io.Writer) error {
 	// pcm = parent-child-mapping
 	var pcm parentChildsMap[T]
 
 	// init map
-	pcm.pcMap = make(map[*Tree[T]][]*Tree[T])
+	pcm.pcMap = make(map[*Node[T]][]*Node[T])
 
-	pcm = t.buildParentChildsMap(pcm)
+	pcm = t.root.buildParentChildsMap(pcm)
 
 	if len(pcm.pcMap) == 0 {
 		return nil
@@ -136,7 +136,7 @@ func (t *Tree[T]) Fprint(w io.Writer) error {
 	return walkAndStringify(w, pcm, nil, "")
 }
 
-func walkAndStringify[T Interface[T]](w io.Writer, pcm parentChildsMap[T], parent *Tree[T], pad string) error {
+func walkAndStringify[T Interface[T]](w io.Writer, pcm parentChildsMap[T], parent *Node[T], pad string) error {
 	// the prefix (pad + glyphe) is already printed on the line on upper level
 	if parent != nil {
 		if _, err := fmt.Fprintf(w, "%v\n", parent.item); err != nil {
@@ -191,8 +191,9 @@ func walkAndStringify[T Interface[T]](w io.Writer, pcm parentChildsMap[T], paren
 //                  ├─l 2...8 [prio:0.06564] [0xc000024680|l:0x0|r:0x0]
 //                  └─r 4...8 [prio:0.09697] [0xc0000248c0|l:0x0|r:0x0]
 //
-func (t *Tree[T]) FprintBST(w io.Writer) error {
-	if t == nil {
+func (t Tree[T]) FprintBST(w io.Writer) error {
+	n := t.root
+	if n == nil {
 		return nil
 	}
 
@@ -201,11 +202,11 @@ func (t *Tree[T]) FprintBST(w io.Writer) error {
 	}
 
 	// start recursion with empty padding
-	return t.preorderStringify(w, "")
+	return n.preorderStringify(w, "")
 }
 
 // preorderStringify, traverse the tree, stringify the nodes in preorder
-func (t *Tree[T]) preorderStringify(w io.Writer, pad string) error {
+func (t *Node[T]) preorderStringify(w io.Writer, pad string) error {
 	// stringify this node
 	if _, err := fmt.Fprintf(w, "%v [prio:%.4g] [%p|l:%p|r:%p]\n", t.item, t.prio, t, t.left, t.right); err != nil {
 		return err
@@ -264,12 +265,12 @@ func (t *Tree[T]) preorderStringify(w io.Writer, pad string) error {
 //  └─ 7...9
 //
 type parentChildsMap[T Interface[T]] struct {
-	pcMap map[*Tree[T]][]*Tree[T] // parent -> []child map
-	stack []*Tree[T]              // just needed for the algo
+	pcMap map[*Node[T]][]*Node[T] // parent -> []child map
+	stack []*Node[T]              // just needed for the algo
 }
 
 // buildParentChildsMap, in-order traversal
-func (t *Tree[T]) buildParentChildsMap(pcm parentChildsMap[T]) parentChildsMap[T] {
+func (t *Node[T]) buildParentChildsMap(pcm parentChildsMap[T]) parentChildsMap[T] {
 	if t == nil {
 		return pcm
 	}
@@ -285,7 +286,7 @@ func (t *Tree[T]) buildParentChildsMap(pcm parentChildsMap[T]) parentChildsMap[T
 }
 
 // pcmForNode, find parent in stack, remove items from stack, put this item on stack.
-func (t *Tree[T]) pcmForNode(pcm parentChildsMap[T]) parentChildsMap[T] {
+func (t *Node[T]) pcmForNode(pcm parentChildsMap[T]) parentChildsMap[T] {
 	// if this item is covered by a prev item on stack
 	for j := len(pcm.stack) - 1; j >= 0; j-- {
 
@@ -319,12 +320,12 @@ func (t *Tree[T]) pcmForNode(pcm parentChildsMap[T]) parentChildsMap[T] {
 // 0.x.y. In future versions this will be removed without increasing the main
 // semantic version, so please do not rely on it for now.
 //
-func (t *Tree[T]) Statistics() (maxDepth int, average, deviation float64) {
+func (t *Node[T]) Statistics() (maxDepth int, average, deviation float64) {
 	// key is depth, value is the sum of nodes with this depth
 	depths := make(map[int]int)
 
 	// get the depths
-	t.traverse(inorder, 0, func(t *Tree[T], depth int) bool {
+	t.traverse(inorder, 0, func(t *Node[T], depth int) bool {
 		depths[depth] += 1
 		return true
 	})
@@ -351,33 +352,36 @@ func (t *Tree[T]) Statistics() (maxDepth int, average, deviation float64) {
 }
 
 // Min returns the min item in tree.
-func (t *Tree[T]) Min() (min T) {
-	if t == nil {
+func (t Tree[T]) Min() (min T) {
+	n := t.root
+	if n == nil {
 		return
 	}
 
-	for t.left != nil {
-		t = t.left
+	for n.left != nil {
+		n = n.left
 	}
-	return t.item
+	return n.item
 }
 
 // Max returns the node with max item in tree.
-func (t *Tree[T]) Max() (max T) {
-	if t == nil {
+func (t Tree[T]) Max() (max T) {
+	n := t.root
+	if n == nil {
 		return
 	}
 
-	for t.right != nil {
-		t = t.right
+	for n.right != nil {
+		n = n.right
 	}
-	return t.item
+	return n.item
 }
 
 // Size returns the number of items in tree.
-func (t *Tree[T]) Size() int {
+func (t Tree[T]) Size() int {
 	var size int
-	t.traverse(inorder, 0, func(t *Tree[T], _ int) bool {
+	n := t.root
+	n.traverse(inorder, 0, func(k *Node[T], _ int) bool {
 		size++
 		return true
 	})
@@ -395,8 +399,9 @@ func (t *Tree[T]) Size() int {
 //
 // The traversion terminates prematurely if the visit function returns false.
 //
-func (t *Tree[T]) Visit(start, stop T, visitFn func(t T) bool) {
-	if t == nil {
+func (t Tree[T]) Visit(start, stop T, visitFn func(t T) bool) {
+	n := t.root
+	if n == nil {
 		return
 	}
 
@@ -408,24 +413,29 @@ func (t *Tree[T]) Visit(start, stop T, visitFn func(t T) bool) {
 
 	immutable := true
 	// treaps are really cool datastructures!!!
-	_, mid1, r := t.split(start, immutable)
+	_, mid1, r := n.split(start, immutable)
 	l, mid2, _ := r.split(stop, immutable)
 
 	span := join(mid1, join(l, mid2, immutable), immutable)
 
-	span.traverse(order, 0, func(t *Tree[T], dummy int) bool {
+	span.traverse(order, 0, func(t *Node[T], dummy int) bool {
 		return visitFn(t.item)
 	})
 }
 
 // Clone, deep cloning of the tree structure, the items are copied.
-func (t *Tree[T]) Clone() *Tree[T] {
-	if t == nil {
-		return t
+func (t Tree[T]) Clone() Tree[T] {
+	t.root = t.root.clone()
+	return t
+}
+
+func (n *Node[T]) clone() *Node[T] {
+	if n == nil {
+		return n
 	}
 
-	t.left = t.left.Clone()
-	t.right = t.right.Clone()
+	n.left = n.left.clone()
+	n.right = n.right.clone()
 
-	return t.copyNode()
+	return n.copyNode()
 }

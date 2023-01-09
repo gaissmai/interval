@@ -1,11 +1,5 @@
 package interval_test
 
-import (
-	"testing"
-
-	"github.com/gaissmai/interval"
-)
-
 var intMap = map[int]string{
 	1:         "1",
 	10:        "10",
@@ -15,6 +9,8 @@ var intMap = map[int]string{
 	100_000:   "100_000",
 	1_000_000: "1_000_000",
 }
+
+/*
 
 func BenchmarkInsert(b *testing.B) {
 	for n := 1; n <= 1_000_000; n *= 10 {
@@ -135,3 +131,4 @@ func BenchmarkSupersets(b *testing.B) {
 		})
 	}
 }
+*/

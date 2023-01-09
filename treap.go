@@ -20,34 +20,39 @@ type Interface[T any] interface {
 	CompareUpper(T) int
 }
 
-// Tree is the basic recursive data structure, usable without initialization.
-//
-// This is a generic type, the implementation constraint is defined by the interval.Interface.
-type Tree[T Interface[T]] struct {
+// Node is the basic recursive data structure. This is a generic type,
+// the implementation constraint is defined by the interval.Interface.
+type Node[T Interface[T]] struct {
 	//
 	// augment the treap for interval lookups
-	minUpper *Tree[T] // pointer to node in subtree with min upper value, just needed for Subsets()
-	maxUpper *Tree[T] // pointer to node in subtree with max upper value, needed for all other lookups
+	minUpper *Node[T] // pointer to node in subtree with min upper value, just needed for Subsets()
+	maxUpper *Node[T] // pointer to node in subtree with max upper value, needed for all other lookups
 	//
 	// base treap fields, in memory efficient order
-	left  *Tree[T]
-	right *Tree[T]
+	left  *Node[T]
+	right *Node[T]
 	prio  float64 // random key for binary heap, balances the tree
 	item  T       // generic key/value
 }
 
-func NewTree[T Interface[T]](items ...T) *Tree[T] {
-	var t *Tree[T]
+// Tree is just a handle for the root node.
+type Tree[T Interface[T]] struct {
+	root *Node[T]
+}
+
+// NewTree initializes the interval tree.
+func NewTree[T Interface[T]](items ...T) Tree[T] {
+	var t Tree[T]
 
 	for i := range items {
-		t = t.insert(makeNode(items[i]), false)
+		t.root = t.root.insert(makeNode(items[i]), false)
 	}
 	return t
 }
 
 // makeNode, create new node with item and random priority.
-func makeNode[T Interface[T]](item T) *Tree[T] {
-	n := new(Tree[T])
+func makeNode[T Interface[T]](item T) *Node[T] {
+	n := new(Node[T])
 	n.item = item
 	n.prio = rand.Float64()
 	n.recalc() // initial calculation of finger pointers...
@@ -56,37 +61,37 @@ func makeNode[T Interface[T]](item T) *Tree[T] {
 }
 
 // copyNode, make a shallow copy of the pointers and the item, no recalculation necessary.
-func (t *Tree[T]) copyNode() *Tree[T] {
-	if t == nil {
-		return t
+func (n *Node[T]) copyNode() *Node[T] {
+	if n == nil {
+		return n
 	}
 
-	n := *t
-	return &n
+	m := *n
+	return &m
 }
 
 // Insert elements into the tree, if an element is a duplicate, it replaces the previous element.
-func (t *Tree[T]) Insert(items ...T) *Tree[T] {
+func (t Tree[T]) Insert(items ...T) Tree[T] {
 	// something to preserve?
 	immutable := true
-	if t == nil {
+	if t.root == nil {
 		immutable = false
 	}
 
 	for i := range items {
-		t = t.insert(makeNode(items[i]), immutable)
+		t.root = t.root.insert(makeNode(items[i]), immutable)
 	}
 	return t
 }
 
 // insert into tree, changing nodes are copied, new treap is returned, old treap is modified if immutable is false.
-func (t *Tree[T]) insert(b *Tree[T], immutable bool) *Tree[T] {
-	if t == nil {
+func (n *Node[T]) insert(b *Node[T], immutable bool) *Node[T] {
+	if n == nil {
 		return b
 	}
 
 	// if b is the new root?
-	if b.prio >= t.prio {
+	if b.prio >= n.prio {
 		//
 		//          b
 		//          | split t in ( <b | dupe? | >b )
@@ -99,7 +104,7 @@ func (t *Tree[T]) insert(b *Tree[T], immutable bool) *Tree[T] {
 		//           /
 		//          l
 		//
-		l, dupe, r := t.split(b.item, immutable)
+		l, dupe, r := n.split(b.item, immutable)
 
 		// replace dupe with b. b has same key but different prio than dupe, a join() is required
 		if dupe != nil {
@@ -117,26 +122,26 @@ func (t *Tree[T]) insert(b *Tree[T], immutable bool) *Tree[T] {
 		return b
 	}
 
-	cmp := compare(b.item, t.item)
+	cmp := compare(b.item, n.item)
 	if cmp == 0 {
 		// replace duplicate item with b, but b has different prio, a join() is required
-		return join(t.left, join(b, t.right, immutable), immutable)
+		return join(n.left, join(b, n.right, immutable), immutable)
 	}
 
 	if immutable {
-		t = t.copyNode()
+		n = n.copyNode()
 	}
 
 	switch {
 	case cmp < 0: // rec-descent
-		t.left = t.left.insert(b, immutable)
+		n.left = n.left.insert(b, immutable)
 		//
 		//       R
 		// b    l r
 		//     l   r
 		//
 	case cmp > 0: // rec-descent
-		t.right = t.right.insert(b, immutable)
+		n.right = n.right.insert(b, immutable)
 		//
 		//   R
 		//  l r    b
@@ -144,15 +149,15 @@ func (t *Tree[T]) insert(b *Tree[T], immutable bool) *Tree[T] {
 		//
 	}
 
-	t.recalc() // node has changed, recalc
-	return t
+	n.recalc() // node has changed, recalc
+	return n
 }
 
 // Delete removes an item if it exists, returns the new tree and true, false if not found.
-func (t *Tree[T]) Delete(item T) (*Tree[T], bool) {
+func (t Tree[T]) Delete(item T) (Tree[T], bool) {
 	immutable := true
-	l, m, r := t.split(item, immutable)
-	t = join(l, r, immutable)
+	l, m, r := t.root.split(item, immutable)
+	t.root = join(l, r, immutable)
 
 	if m == nil {
 		return t, false
@@ -167,45 +172,50 @@ func (t *Tree[T]) Delete(item T) (*Tree[T], bool) {
 //
 // To create very large trees, it may be time-saving to split the input data into chunks,
 // fan out for Insert and combine the generated subtrees with Union.
-func (t *Tree[T]) Union(b *Tree[T], overwrite bool, immutable bool) *Tree[T] {
-	if t == nil {
+func (t Tree[T]) Union(b Tree[T], overwrite bool, immutable bool) Tree[T] {
+	t.root = t.root.union(b.root, overwrite, immutable)
+	return t
+}
+
+func (n *Node[T]) union(b *Node[T], overwrite bool, immutable bool) *Node[T] {
+	if n == nil {
 		return b
 	}
 	if b == nil {
-		return t
+		return n
 	}
 
 	// swap treaps if needed, treap with higher prio remains as new root
-	if t.prio < b.prio {
-		t, b = b, t
+	if n.prio < b.prio {
+		n, b = b, n
 		overwrite = !overwrite
 	}
 
 	// immutable union, copy remaining root
 	if immutable {
-		t = t.copyNode()
+		n = n.copyNode()
 	}
 
 	// the treap with the lower priority is split with the root key in the treap with the higher priority
-	l, dupe, r := b.split(t.item, immutable)
+	l, dupe, r := b.split(n.item, immutable)
 
 	// the treaps may have duplicate items
 	if overwrite && dupe != nil {
-		t.item = dupe.item
+		n.item = dupe.item
 	}
 
 	// rec-descent
-	t.left = t.left.Union(l, overwrite, immutable)
-	t.right = t.right.Union(r, overwrite, immutable)
-	t.recalc()
+	n.left = n.left.union(l, overwrite, immutable)
+	n.right = n.right.union(r, overwrite, immutable)
+	n.recalc()
 
-	return t
+	return n
 }
 
 // split the treap into all nodes that compare less-than, equal
 // and greater-than the provided item (BST key). The resulting nodes are
 // properly formed treaps or nil.
-func (t *Tree[T]) split(key T, immutable bool) (left, mid, right *Tree[T]) {
+func (t *Node[T]) split(key T, immutable bool) (left, mid, right *Node[T]) {
 	// recursion stop condition
 	if t == nil {
 		return nil, nil, nil
@@ -286,7 +296,7 @@ func (t *Tree[T]) split(key T, immutable bool) (left, mid, right *Tree[T]) {
 //      tree.Shortest(ival{3,6}) returns ival{2,7}, true
 //      tree.Shortest(ival{6,9}) returns ival{},    false
 //
-func (t *Tree[T]) Shortest(item T) (result T, ok bool) {
+func (t *Node[T]) Shortest(item T) (result T, ok bool) {
 	if t == nil {
 		return
 	}
@@ -366,7 +376,7 @@ func (t *Tree[T]) Shortest(item T) (result T, ok bool) {
 // If the item is not covered by any interval in the tree,
 // the zero value and false is returned.
 //
-func (t *Tree[T]) Largest(item T) (result T, ok bool) {
+func (t *Node[T]) Largest(item T) (result T, ok bool) {
 	// find node.item < item
 	for {
 		if t == nil {
@@ -384,7 +394,7 @@ func (t *Tree[T]) Largest(item T) (result T, ok bool) {
 	return t.largest(item)
 }
 
-func (t *Tree[T]) largest(item T) (result T, ok bool) {
+func (t *Node[T]) largest(item T) (result T, ok bool) {
 	if t == nil {
 		return
 	}
@@ -409,7 +419,7 @@ func (t *Tree[T]) largest(item T) (result T, ok bool) {
 }
 
 // Supersets returns all intervals that covers the item in sorted order.
-func (t *Tree[T]) Supersets(item T) []T {
+func (t *Node[T]) Supersets(item T) []T {
 	if t == nil {
 		return nil
 	}
@@ -426,7 +436,7 @@ func (t *Tree[T]) Supersets(item T) []T {
 	return result
 }
 
-func (t *Tree[T]) supersets(item T) (result []T) {
+func (t *Node[T]) supersets(item T) (result []T) {
 	if t == nil {
 		return
 	}
@@ -455,7 +465,7 @@ func (t *Tree[T]) supersets(item T) (result []T) {
 }
 
 // Subsets returns all intervals in tree that are covered by item in sorted order.
-func (t *Tree[T]) Subsets(item T) []T {
+func (t *Node[T]) Subsets(item T) []T {
 	if t == nil {
 		return nil
 	}
@@ -472,7 +482,7 @@ func (t *Tree[T]) Subsets(item T) []T {
 	return result
 }
 
-func (t *Tree[T]) subsets(item T) (result []T) {
+func (t *Node[T]) subsets(item T) (result []T) {
 	if t == nil {
 		return
 	}
@@ -502,7 +512,7 @@ func (t *Tree[T]) subsets(item T) (result []T) {
 
 // join combines two disjunct treaps. All nodes in treap a have keys <= that of treap b
 // for this algorithm to work correctly. The join is immutable, first copy concerned nodes.
-func join[T Interface[T]](a, b *Tree[T], immutable bool) *Tree[T] {
+func join[T Interface[T]](a, b *Node[T], immutable bool) *Node[T] {
 	// recursion stop condition
 	if a == nil {
 		return b
@@ -538,7 +548,7 @@ func join[T Interface[T]](a, b *Tree[T], immutable bool) *Tree[T] {
 
 // recalc the augmented fields in treap node after each creation/modification with values in descendants.
 // Only one level deeper must be considered. The treap datastructure is very easy to augment.
-func (t *Tree[T]) recalc() {
+func (t *Node[T]) recalc() {
 	if t == nil {
 		return
 	}

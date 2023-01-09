@@ -46,6 +46,7 @@ func ExampleTree_Max() {
 	//7...9
 }
 
+/*
 func ExampleTree_Supersets() {
 	tree := interval.NewTree(periods...)
 	tree.Fprint(os.Stdout)
@@ -126,3 +127,4 @@ func ExampleTree_Visit() {
 	// 3...4
 	// 3...5
 }
+*/

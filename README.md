@@ -72,6 +72,7 @@ import "github.com/gaissmai/interval"
 
 type Tree[T Interface[T]] struct{ ... }
 
+  func NewTree[T Interface[T]](items ...T) *Tree[T]
   func (t *Tree[T]) Insert(items ...T) *Tree[T]
   func (t *Tree[T]) Delete(item T) (*Tree[T], bool)
 
