@@ -5,11 +5,33 @@ import (
 	"os"
 
 	"github.com/gaissmai/interval"
-	"github.com/gaissmai/interval/internal/period"
 )
 
+// fmt.Stringer for formattting, not required for interval.Interface
+func (p Ival) String() string {
+	return fmt.Sprintf("%d...%d", p[0], p[1])
+}
+
+// little helper, compare two ints
+func cmp(a, b int) int {
+	switch {
+	case a == b:
+		return 0
+	case a < b:
+		return -1
+	}
+	return 1
+}
+
+// example interval
+type Ival [2]int
+
+// implement interval.Interface
+func (p Ival) CompareLower(q Ival) int { return cmp(p[0], q[0]) }
+func (p Ival) CompareUpper(q Ival) int { return cmp(p[1], q[1]) }
+
 // example data
-var periods = []period.Ival{
+var periods = []Ival{
 	{3, 4},
 	{2, 9},
 	{7, 9},

@@ -10,11 +10,10 @@ import (
 	"testing"
 
 	"github.com/gaissmai/interval"
-	"github.com/gaissmai/interval/internal/period"
 )
 
 // test data
-var ps = []period.Ival{
+var ps = []Ival{
 	{0, 6},
 	{0, 5},
 	{1, 8},
@@ -29,15 +28,15 @@ var ps = []period.Ival{
 }
 
 // random test data
-func generateIvals(n int) []period.Ival {
-	is := make([]period.Ival, n)
+func generateIvals(n int) []Ival {
+	is := make([]Ival, n)
 	for i := 0; i < n; i++ {
 		a := rand.Int()
 		b := rand.Int()
 		if a > b {
 			a, b = b, a
 		}
-		is[i] = period.Ival{a, b}
+		is[i] = Ival{a, b}
 	}
 	return is
 }
@@ -45,8 +44,8 @@ func generateIvals(n int) []period.Ival {
 func TestNewTree(t *testing.T) {
 	t.Parallel()
 
-	var zeroItem period.Ival
-	var zeroTree interval.Tree[period.Ival]
+	var zeroItem Ival
+	var zeroTree interval.Tree[Ival]
 
 	w := new(strings.Builder)
 	if err := zeroTree.Fprint(w); err != nil {
@@ -102,8 +101,8 @@ func TestNewTree(t *testing.T) {
 		t.Errorf("Max(), got: %v, want: %v", s, zeroItem)
 	}
 
-	var items []period.Ival
-	zeroTree.Visit(zeroItem, zeroItem, func(item period.Ival) bool {
+	var items []Ival
+	zeroTree.Visit(zeroItem, zeroItem, func(item Ival) bool {
 		items = append(items, item)
 		return true
 	})
@@ -115,7 +114,7 @@ func TestNewTree(t *testing.T) {
 func TestTreeWithDups(t *testing.T) {
 	t.Parallel()
 
-	is := []period.Ival{
+	is := []Ival{
 		{0, 100},
 		{41, 102},
 		{42, 67},
@@ -160,7 +159,7 @@ func TestImmutable(t *testing.T) {
 		t.Fatal("Delete changed receiver")
 	}
 
-	item := period.Ival{-111, 666}
+	item := Ival{-111, 666}
 	_ = tree1.Insert(item)
 	if !reflect.DeepEqual(tree1, tree2) {
 		t.Fatal("Insert changed receiver")
@@ -207,58 +206,58 @@ func TestLookup(t *testing.T) {
 		//     	 │        └─ 6...7
 		//     	 └─ 7...9
 
-		item := period.Ival{0, 5}
+		item := Ival{0, 5}
 		if got, _ := tree.Shortest(item); got != item {
 			t.Errorf("Shortest(%v) = %v, want %v", item, got, item)
 		}
 
-		item = period.Ival{5, 5}
-		want := period.Ival{4, 8}
+		item = Ival{5, 5}
+		want := Ival{4, 8}
 		if got, _ := tree.Shortest(item); got != want {
 			t.Errorf("Shortest(%v) = %v, want %v", item, got, want)
 		}
 
-		item = period.Ival{8, 9}
-		want = period.Ival{7, 9}
+		item = Ival{8, 9}
+		want = Ival{7, 9}
 		if got, _ := tree.Shortest(item); got != want {
 			t.Errorf("Shortest(%v) = %v, want %v", item, got, want)
 		}
 
-		item = period.Ival{3, 8}
-		want = period.Ival{2, 8}
+		item = Ival{3, 8}
+		want = Ival{2, 8}
 		if got, _ := tree.Shortest(item); got != want {
 			t.Errorf("Shortest(%v) = %v, want %v", item, got, want)
 		}
 
-		item = period.Ival{19, 55}
+		item = Ival{19, 55}
 		if got, ok := tree.Shortest(item); ok {
 			t.Errorf("Shortest(%v) = %v, want %v", item, got, !ok)
 		}
 
-		item = period.Ival{-19, 0}
+		item = Ival{-19, 0}
 		if got, ok := tree.Shortest(item); ok {
 			t.Errorf("Shortest(%v) = %v, want %v", item, got, !ok)
 		}
 
-		item = period.Ival{8, 8}
-		want = period.Ival{1, 8}
+		item = Ival{8, 8}
+		want = Ival{1, 8}
 		if got, _ := tree.Largest(item); got != want {
 			t.Errorf("Largest(%v) = %v, want %v", item, got, want)
 		}
 
-		item = period.Ival{3, 6}
-		want = period.Ival{0, 6}
+		item = Ival{3, 6}
+		want = Ival{0, 6}
 		if got, _ := tree.Largest(item); got != want {
 			t.Errorf("Largest(%v) = %v, want %v", item, got, want)
 		}
 
-		item = period.Ival{3, 7}
-		want = period.Ival{1, 8}
+		item = Ival{3, 7}
+		want = Ival{1, 8}
 		if got, _ := tree.Largest(item); got != want {
 			t.Errorf("Largest(%v) = %v, want %v", item, got, want)
 		}
 
-		item = period.Ival{0, 7}
+		item = Ival{0, 7}
 		if _, ok := tree.Largest(item); ok {
 			t.Errorf("Largest(%v) = %v, want %v", item, ok, false)
 		}
@@ -269,7 +268,7 @@ func TestLookup(t *testing.T) {
 func TestSuperset(t *testing.T) {
 	t.Parallel()
 
-	is := []period.Ival{
+	is := []Ival{
 		{1, 100},
 		{45, 120},
 		{46, 80},
@@ -277,27 +276,27 @@ func TestSuperset(t *testing.T) {
 
 	tree := interval.NewTree(is...)
 
-	item := period.Ival{0, 6}
+	item := Ival{0, 6}
 	if got, ok := tree.Largest(item); ok {
 		t.Errorf("Largest(%v) = %v, want %v", item, got, !ok)
 	}
 
-	item = period.Ival{99, 200}
+	item = Ival{99, 200}
 	if got, ok := tree.Largest(item); ok {
 		t.Errorf("Largest(%v) = %v, want %v", item, got, !ok)
 	}
 
-	item = period.Ival{1, 100}
+	item = Ival{1, 100}
 	if got, ok := tree.Largest(item); got != is[0] || !ok {
 		t.Errorf("Largest(%v) = %v, want %v", item, got, is[0])
 	}
 
-	item = period.Ival{46, 80}
+	item = Ival{46, 80}
 	if got, ok := tree.Largest(item); got != is[0] || !ok {
 		t.Errorf("Largest(%v) = %v, want %v", item, got, is[0])
 	}
 
-	item = period.Ival{47, 62}
+	item = Ival{47, 62}
 	if got, ok := tree.Largest(item); got != is[0] || !ok {
 		t.Errorf("Largest(%v) = %v, want %v", item, got, is[0])
 	}
@@ -307,9 +306,9 @@ func TestVisit(t *testing.T) {
 	t.Parallel()
 	tree := interval.NewTree(ps...)
 
-	var collect []period.Ival
+	var collect []Ival
 	want := 4
-	tree.Visit(tree.Min(), tree.Max(), func(item period.Ival) bool {
+	tree.Visit(tree.Min(), tree.Max(), func(item Ival) bool {
 		collect = append(collect, item)
 		return len(collect) != want
 	})
@@ -320,7 +319,7 @@ func TestVisit(t *testing.T) {
 
 	collect = nil
 	want = 9
-	tree.Visit(tree.Min(), tree.Max(), func(item period.Ival) bool {
+	tree.Visit(tree.Min(), tree.Max(), func(item Ival) bool {
 		collect = append(collect, item)
 		return len(collect) != want
 	})
@@ -331,14 +330,14 @@ func TestVisit(t *testing.T) {
 
 	collect = nil
 	want = 2
-	tree.Visit(tree.Max(), tree.Min(), func(item period.Ival) bool {
+	tree.Visit(tree.Max(), tree.Min(), func(item Ival) bool {
 		collect = append(collect, item)
 		return len(collect) != want
 	})
 
 	collect = nil
 	want = 5
-	tree.Visit(tree.Max(), tree.Min(), func(item period.Ival) bool {
+	tree.Visit(tree.Max(), tree.Min(), func(item Ival) bool {
 		collect = append(collect, item)
 		return len(collect) != want
 	})
@@ -347,12 +346,12 @@ func TestVisit(t *testing.T) {
 func TestMinMax(t *testing.T) {
 	t.Parallel()
 	tree := interval.NewTree(ps...)
-	want := period.Ival{0, 6}
+	want := Ival{0, 6}
 	if tree.Min() != want {
 		t.Fatalf("Min(), want: %v, got: %v", want, tree.Min())
 	}
 
-	want = period.Ival{7, 9}
+	want = Ival{7, 9}
 	if tree.Max() != want {
 		t.Fatalf("Max(), want: %v, got: %v", want, tree.Max())
 	}
@@ -360,7 +359,7 @@ func TestMinMax(t *testing.T) {
 
 func TestUnion(t *testing.T) {
 	t.Parallel()
-	tree := interval.NewTree[period.Ival]()
+	tree := interval.NewTree[Ival]()
 
 	for i := range ps {
 		b := interval.NewTree(ps[i])
@@ -437,10 +436,10 @@ func TestRandom(t *testing.T) {
 		t.Run(tname, func(t *testing.T) {
 			t.Parallel()
 			var (
-				shortest  period.Ival
-				largest   period.Ival
-				subsets   []period.Ival
-				supersets []period.Ival
+				shortest  Ival
+				largest   Ival
+				subsets   []Ival
+				supersets []Ival
 				ok        bool
 			)
 			if shortest, ok = tree.Shortest(item); !ok {
