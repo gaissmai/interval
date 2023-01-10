@@ -70,18 +70,21 @@ func (n *node[T]) copyNode() *node[T] {
 	return &m
 }
 
-// Insert elements into the tree, if an element is a duplicate, it replaces the previous element.
+// Insert elements into the tree, returns the new Tree.
+// If an element is a duplicate, it replaces the previous element.
 func (t Tree[T]) Insert(items ...T) Tree[T] {
+	n := t.root
+
 	// something to preserve?
 	immutable := true
-	if t.root == nil {
+	if n == nil {
 		immutable = false
 	}
 
 	for i := range items {
-		t.root = t.root.insert(makeNode(items[i]), immutable)
+		n = n.insert(makeNode(items[i]), immutable)
 	}
-	return t
+	return Tree[T]{root: n}
 }
 
 // insert into tree, changing nodes are copied, new treap is returned, old treap is modified if immutable is false.
@@ -155,10 +158,13 @@ func (n *node[T]) insert(b *node[T], immutable bool) *node[T] {
 
 // Delete removes an item if it exists, returns the new tree and true, false if not found.
 func (t Tree[T]) Delete(item T) (Tree[T], bool) {
-	immutable := true
-	l, m, r := t.root.split(item, immutable)
-	t.root = join(l, r, immutable)
+	n := t.root
 
+	immutable := true
+	l, m, r := n.split(item, immutable)
+	n = join(l, r, immutable)
+
+	t.root = n
 	if m == nil {
 		return t, false
 	}
