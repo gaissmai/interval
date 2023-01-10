@@ -84,7 +84,9 @@ func (t Tree[T]) Insert(items ...T) Tree[T] {
 	for i := range items {
 		n = n.insert(makeNode(items[i]), immutable)
 	}
-	return Tree[T]{root: n}
+
+	t.root = n
+	return t
 }
 
 // insert into tree, changing nodes are copied, new treap is returned, old treap is modified if immutable is false.
