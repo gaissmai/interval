@@ -47,13 +47,17 @@ func TestNewTree(t *testing.T) {
 	var zeroItem Ival
 	var zeroTree interval.Tree[Ival]
 
+	if zeroTree.String() != "" {
+		t.Errorf("String() = %v, want \"\"", "")
+	}
+
 	w := new(strings.Builder)
 	if err := zeroTree.Fprint(w); err != nil {
 		t.Fatal(err)
 	}
 
 	if w.String() != "" {
-		t.Errorf("Write(w) = %v, want \"\"", w.String())
+		t.Errorf("Fprint(w) = %v, want \"\"", w.String())
 	}
 
 	w.Reset()
@@ -62,7 +66,7 @@ func TestNewTree(t *testing.T) {
 	}
 
 	if w.String() != "" {
-		t.Errorf("Write(w) = %v, want \"\"", w.String())
+		t.Errorf("FprintBST(w) = %v, want \"\"", w.String())
 	}
 
 	if _, ok := zeroTree.Delete(zeroItem); ok {
@@ -117,9 +121,26 @@ func TestTreeWithDups(t *testing.T) {
 	is := []Ival{
 		{0, 100},
 		{41, 102},
+		{41, 102},
+		{41, 102},
+		{41, 102},
+		{41, 102},
+		{41, 102},
+		{41, 102},
+		{42, 67},
+		{42, 67},
+		{42, 67},
+		{42, 67},
+		{42, 67},
+		{42, 67},
 		{42, 67},
 		{42, 67},
 		{48, 50},
+		{3, 13},
+		{3, 13},
+		{3, 13},
+		{3, 13},
+		{3, 13},
 		{3, 13},
 	}
 
@@ -135,11 +156,8 @@ func TestTreeWithDups(t *testing.T) {
    └─ 42...67
       └─ 48...50
 `
-	w := new(strings.Builder)
-	tree.Fprint(w)
-
-	if w.String() != asStr {
-		t.Errorf("Fprint()\nwant:\n%sgot:\n%s", asStr, w.String())
+	if tree.String() != asStr {
+		t.Errorf("Fprint()\nwant:\n%sgot:\n%s", asStr, tree.String())
 	}
 }
 
@@ -183,6 +201,35 @@ func TestImmutable(t *testing.T) {
 	_ = tree1.Supersets(item)
 	if !reflect.DeepEqual(tree1, tree2) {
 		t.Fatal("Supersets changed receiver")
+	}
+}
+
+func TestMutable(t *testing.T) {
+	tree1 := interval.NewTree(ps...)
+	tree2 := tree1.Clone()
+
+	min := tree1.Min()
+
+	var ok bool
+	if ok = (&tree1).DeleteMutable(min); !ok {
+		t.Fatal("DeleteMutable, could not delete min item")
+	}
+	if reflect.DeepEqual(tree1, tree2) {
+		t.Fatal("DeleteMutable didn't change receiver")
+	}
+
+	// reset tree1, tree2
+	tree1 = interval.NewTree(ps...)
+	tree2 = tree1.Clone()
+
+	item := Ival{-111, 666}
+	(&tree1).InsertMutable(item)
+
+	if reflect.DeepEqual(tree1, tree2) {
+		t.Fatal("InsertMutable didn't change receiver")
+	}
+	if _, ok := tree1.Delete(item); !ok {
+		t.Fatal("InsertMutable didn't change receiver")
 	}
 }
 
@@ -380,11 +427,8 @@ func TestUnion(t *testing.T) {
 └─ 7...9
 `
 
-	w := new(strings.Builder)
-	tree.Fprint(w)
-
-	if w.String() != asStr {
-		t.Errorf("Fprint()\nwant:\n%sgot:\n%s", asStr, w.String())
+	if tree.String() != asStr {
+		t.Errorf("Fprint()\nwant:\n%sgot:\n%s", asStr, tree.String())
 	}
 
 	// now with dupe overwrite
@@ -393,7 +437,7 @@ func TestUnion(t *testing.T) {
 		tree = tree.Union(b, true, true)
 	}
 
-	w.Reset()
+	w := new(strings.Builder)
 	tree.Fprint(w)
 	if w.String() != asStr {
 		t.Errorf("Fprint()\nwant:\n%sgot:\n%s", asStr, w.String())

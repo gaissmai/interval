@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"strings"
 )
 
 type traverseOrder uint8
@@ -86,6 +87,13 @@ func (t *node[T]) traverse(order traverseOrder, depth int, visitFn func(n *node[
 	default:
 		panic("unreachable")
 	}
+}
+
+// String returns a hierarchical tree diagram of the ordered intervals as string, just a wrapper for [Fprint].
+func (t Tree[T]) String() string {
+	w := new(strings.Builder)
+	_ = t.Fprint(w)
+	return w.String()
 }
 
 // Fprint writes a hierarchical tree diagram of the ordered intervals to w.

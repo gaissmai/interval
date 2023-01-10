@@ -68,29 +68,33 @@ type Interface[T any] interface {
 
 ## API
 ```go
-import "github.com/gaissmai/interval"
+  import "github.com/gaissmai/interval"
 
-type Tree[T Interface[T]] struct{ ... }
+  type Tree[T Interface[T]] struct{ ... }
 
-  func NewTree[T Interface[T]](items ...T) *Tree[T]
-  func (t *Tree[T]) Insert(items ...T) *Tree[T]
-  func (t *Tree[T]) Delete(item T) (*Tree[T], bool)
+  func NewTree[T Interface[T]](items ...T) (t Tree[T])
 
-  func (t *Tree[T]) Shortest(item T) (result T, ok bool)
-  func (t *Tree[T]) Largest(item T) (result T, ok bool)
+  func (t Tree[T]) Insert(items ...T) Tree[T]
+  func (t Tree[T]) Delete(item T) (Tree[T], bool)
 
-  func (t *Tree[T]) Subsets(item T) []T
-  func (t *Tree[T]) Supersets(item T) []T
+  func (t *Tree[T]) InsertMutable(items ...T)
+  func (t *Tree[T]) DeleteMutable(item T) bool
 
-  func (t *Tree[T]) Clone() *Tree[T]
-  func (t *Tree[T]) Union(b *Tree[T], overwrite bool) *Tree[T]
+  func (t Tree[T]) Shortest(item T) (result T, ok bool)
+  func (t Tree[T]) Largest(item T) (result T, ok bool)
 
-  func (t *Tree[T]) Visit(start, stop T, visitFn func(t T) bool)
-  func (t *Tree[T]) Fprint(w io.Writer) error
-  func (t *Tree[T]) Size() int
-  func (t *Tree[T]) Min() (min T)
-  func (t *Tree[T]) Max() (max T)
+  func (t Tree[T]) Subsets(item T) []T
+  func (t Tree[T]) Supersets(item T) []T
 
+  func (t Tree[T]) Clone() Tree[T]
+  func (t Tree[T]) Union(other Tree[T], overwrite bool, immutable bool) Tree[T]
+
+  func (t Tree[T]) Visit(start, stop T, visitFn func(item T) bool)
+  func (t Tree[T]) Fprint(w io.Writer) error
+  func (t Tree[T]) String() string
+  func (t Tree[T]) Size() int
+  func (t Tree[T]) Min() (min T)
+  func (t Tree[T]) Max() (max T)
 ```
 
 ## Benchmarks
@@ -107,19 +111,30 @@ of the trees is **O(log(n))** and the **allocs/op** represent this well.
 The data structure is a randomized BST, the expected depth is determined with very
 high probability (for large n) but not deterministic.
 
+If the original tree is allowed to mutate during insert and delete because the old state is no longer needed,
+then the values are correspondingly better.
+
 ```
 $ go test -benchmem -bench='Insert'
 goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkInsert/Into1-8              8728209          142 ns/op     128 B/op     2 allocs/op
-BenchmarkInsert/Into10-8             2740953          391 ns/op     320 B/op     5 allocs/op
-BenchmarkInsert/Into100-8             889261         1610 ns/op     896 B/op    14 allocs/op
-BenchmarkInsert/Into1_000-8           601810         2081 ns/op    1088 B/op    17 allocs/op
-BenchmarkInsert/Into10_000-8          754924         1334 ns/op     960 B/op    15 allocs/op
-BenchmarkInsert/Into100_000-8         388801         2921 ns/op    1728 B/op    27 allocs/op
-BenchmarkInsert/Into1_000_000-8       363061         4081 ns/op    2304 B/op    36 allocs/op
+BenchmarkInsert/Into1-8                       7343677           164 ns/op       128 B/op          2 allocs/op
+BenchmarkInsert/Into10-8                      2436724           603 ns/op       384 B/op          6 allocs/op
+BenchmarkInsert/Into100-8                     1397262           879 ns/op       704 B/op         11 allocs/op
+BenchmarkInsert/Into1_000-8                    964476          1224 ns/op       896 B/op         14 allocs/op
+BenchmarkInsert/Into10_000-8                   650233          1783 ns/op      1344 B/op         21 allocs/op
+BenchmarkInsert/Into100_000-8                  487922          2310 ns/op      1408 B/op         22 allocs/op
+BenchmarkInsert/Into1_000_000-8                408178          3608 ns/op      2048 B/op         32 allocs/op
+
+BenchmarkInsertMutable/Into1-8               10579569           118 ns/op        64 B/op          1 allocs/op
+BenchmarkInsertMutable/Into10-8               7502996           151 ns/op        64 B/op          1 allocs/op
+BenchmarkInsertMutable/Into100-8              5379123           225 ns/op        64 B/op          1 allocs/op
+BenchmarkInsertMutable/Into1_000-8            4460654           260 ns/op        64 B/op          1 allocs/op
+BenchmarkInsertMutable/Into10_000-8           2734352           424 ns/op        64 B/op          1 allocs/op
+BenchmarkInsertMutable/Into100_000-8          1757281           606 ns/op        64 B/op          1 allocs/op
+BenchmarkInsertMutable/Into1_000_000-8        1610089           746 ns/op        64 B/op          1 allocs/op
 ```
 
 ### Delete
@@ -132,12 +147,19 @@ goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkDelete/DeleteFrom10-8           8288145     149 ns/op     128 B/op      2 allocs/op
-BenchmarkDelete/DeleteFrom100-8          1034215    1097 ns/op     960 B/op     15 allocs/op
-BenchmarkDelete/DeleteFrom1_000-8         343502    3019 ns/op    2176 B/op     34 allocs/op
-BenchmarkDelete/DeleteFrom10_000-8        543692    2128 ns/op    1728 B/op     27 allocs/op
-BenchmarkDelete/DeleteFrom100_000-8       375445    3058 ns/op    2048 B/op     32 allocs/op
-BenchmarkDelete/DeleteFrom1_000_000-8     266654    5381 ns/op    3200 B/op     50 allocs/op
+BenchmarkDelete/DeleteFrom10-8                 8018518           150 ns/op      128 B/op          2 allocs/op
+BenchmarkDelete/DeleteFrom100-8                2349710           708 ns/op      448 B/op          7 allocs/op
+BenchmarkDelete/DeleteFrom1_000-8               616173          2051 ns/op     1536 B/op         24 allocs/op
+BenchmarkDelete/DeleteFrom10_000-8              446180          2362 ns/op     1856 B/op         29 allocs/op
+BenchmarkDelete/DeleteFrom100_000-8             272798          4224 ns/op     2816 B/op         44 allocs/op
+BenchmarkDelete/DeleteFrom1_000_000-8           231808          5897 ns/op     3520 B/op         55 allocs/op
+
+BenchmarkDeleteMutable/DeleteFrom10-8          7682869           156 ns/op        0 B/op          0 allocs/op
+BenchmarkDeleteMutable/DeleteFrom100-8        13009023            92 ns/op        0 B/op          0 allocs/op
+BenchmarkDeleteMutable/DeleteFrom1_000-8       1912417           627 ns/op        0 B/op          0 allocs/op
+BenchmarkDeleteMutable/DeleteFrom10_000-8      1362752           889 ns/op        0 B/op          0 allocs/op
+BenchmarkDeleteMutable/DeleteFrom100_000-8      893157          1334 ns/op        0 B/op          0 allocs/op
+BenchmarkDeleteMutable/DeleteFrom1_000_000-8    647199          1828 ns/op        0 B/op          0 allocs/op
 ```
 
 ### Lookup

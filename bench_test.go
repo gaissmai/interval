@@ -1,6 +1,7 @@
 package interval_test
 
 import (
+	"math/rand"
 	"testing"
 
 	"github.com/gaissmai/interval"
@@ -31,16 +32,50 @@ func BenchmarkInsert(b *testing.B) {
 	}
 }
 
-func BenchmarkDelete(b *testing.B) {
-	for n := 10; n <= 1_000_000; n *= 10 {
+func BenchmarkInsertMutable(b *testing.B) {
+	for n := 1; n <= 1_000_000; n *= 10 {
 		tree := interval.NewTree(generateIvals(n)...)
 		probe := generateIvals(1)[0]
+		name := "Into" + intMap[n]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				(&tree).InsertMutable(probe)
+			}
+		})
+	}
+}
+
+func BenchmarkDelete(b *testing.B) {
+	for n := 10; n <= 1_000_000; n *= 10 {
+		ivals := generateIvals(n)
+		probe := ivals[rand.Intn(len(ivals))]
+
+		tree := interval.NewTree(ivals...)
 		name := "DeleteFrom" + intMap[n]
 
 		b.Run(name, func(b *testing.B) {
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
 				_, _ = tree.Delete(probe)
+			}
+		})
+	}
+}
+
+func BenchmarkDeleteMutable(b *testing.B) {
+	for n := 10; n <= 1_000_000; n *= 10 {
+		ivals := generateIvals(n)
+		probe := ivals[rand.Intn(len(ivals))]
+
+		tree := interval.NewTree(generateIvals(n)...)
+		name := "DeleteFrom" + intMap[n]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_ = (&tree).DeleteMutable(probe)
 			}
 		})
 	}
