@@ -90,7 +90,7 @@ func (t Tree[T]) Insert(items ...T) Tree[T] {
 }
 
 // InsertMutable inserts items into the tree, changing the original tree.
-// If the original tree does not need to be preserved then this is much faster than the immutable [Insert].
+// If the original tree does not need to be preserved then this is much faster than the immutable [Tree.Insert].
 func (t *Tree[T]) InsertMutable(items ...T) {
 	for i := range items {
 		t.root = t.root.insert(makeNode(items[i]), false)
@@ -182,7 +182,7 @@ func (t Tree[T]) Delete(item T) (Tree[T], bool) {
 }
 
 // DeleteMutable removes an item from tree, returns true if it exists, false otherwise.
-// If the original tree does not need to be preserved then this is much faster than the immutable [Delete].
+// If the original tree does not need to be preserved then this is much faster than the immutable [Tree.Delete].
 func (t *Tree[T]) DeleteMutable(item T) bool {
 	l, m, r := t.root.split(item, false)
 	t.root = join(l, r, false)
