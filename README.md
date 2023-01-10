@@ -113,13 +113,13 @@ goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkInsertInto1-8              8506729        174.8 ns/op   128 B/op     2 allocs/op
-BenchmarkInsertInto10-8             3443077        304.3 ns/op   256 B/op     4 allocs/op
-BenchmarkInsertInto100-8            2419617        836.3 ns/op   640 B/op    10 allocs/op
-BenchmarkInsertInto1_000-8          2900678        713.0 ns/op   512 B/op     8 allocs/op
-BenchmarkInsertInto10_000-8         1222190        964.9 ns/op   768 B/op    12 allocs/op
-BenchmarkInsertInto100_000-8        1019144       1246.0 ns/op   832 B/op    13 allocs/op
-BenchmarkInsertInto1_000_000-8       881776       1423.0 ns/op   896 B/op    14 allocs/op
+BenchmarkInsert/Into1-8              8728209          142 ns/op     128 B/op     2 allocs/op
+BenchmarkInsert/Into10-8             2740953          391 ns/op     320 B/op     5 allocs/op
+BenchmarkInsert/Into100-8             889261         1610 ns/op     896 B/op    14 allocs/op
+BenchmarkInsert/Into1_000-8           601810         2081 ns/op    1088 B/op    17 allocs/op
+BenchmarkInsert/Into10_000-8          754924         1334 ns/op     960 B/op    15 allocs/op
+BenchmarkInsert/Into100_000-8         388801         2921 ns/op    1728 B/op    27 allocs/op
+BenchmarkInsert/Into1_000_000-8       363061         4081 ns/op    2304 B/op    36 allocs/op
 ```
 
 ### Delete
@@ -132,13 +132,12 @@ goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkDeleteFrom1-8              17313007        59.5 ns/op     64 B/op    1 allocs/op
-BenchmarkDeleteFrom10-8              9414926       251.1 ns/op    192 B/op    3 allocs/op
-BenchmarkDeleteFrom100-8             2230638       504.0 ns/op    448 B/op    7 allocs/op
-BenchmarkDeleteFrom1_000-8           1000000      1157.0 ns/op    832 B/op   13 allocs/op
-BenchmarkDeleteFrom10_000-8           545694      2207.0 ns/op   1792 B/op   28 allocs/op
-BenchmarkDeleteFrom100_000-8          418015      2515.0 ns/op   1856 B/op   29 allocs/op
-BenchmarkDeleteFrom1_000_000-8       1081098      1504.0 ns/op    960 B/op   15 allocs/op
+BenchmarkDelete/DeleteFrom10-8           8288145     149 ns/op     128 B/op      2 allocs/op
+BenchmarkDelete/DeleteFrom100-8          1034215    1097 ns/op     960 B/op     15 allocs/op
+BenchmarkDelete/DeleteFrom1_000-8         343502    3019 ns/op    2176 B/op     34 allocs/op
+BenchmarkDelete/DeleteFrom10_000-8        543692    2128 ns/op    1728 B/op     27 allocs/op
+BenchmarkDelete/DeleteFrom100_000-8       375445    3058 ns/op    2048 B/op     32 allocs/op
+BenchmarkDelete/DeleteFrom1_000_000-8     266654    5381 ns/op    3200 B/op     50 allocs/op
 ```
 
 ### Lookup

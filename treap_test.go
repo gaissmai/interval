@@ -1,7 +1,11 @@
 package interval_test
 
 import (
+	"fmt"
+	"math"
 	"math/rand"
+	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -66,23 +70,20 @@ func TestNewTree(t *testing.T) {
 		t.Errorf("Delete(), got: %v, want: false", ok)
 	}
 
-	// TODO
-	/* +++++++++++++++++ TODO
-
-	if s := zeroTree.Insert(zeroItem); s == zeroTree {
-		t.Errorf("Insert(), got: %v, want: !nil", s)
-	}
-
-	if s := zeroTree.Clone(); s.root != nil {
-		t.Errorf("Clone(), got: %v, want: nil", s)
-	}
-
 	if _, ok := zeroTree.Shortest(zeroItem); ok {
 		t.Errorf("Shortest(), got: %v, want: false", ok)
 	}
 
 	if _, ok := zeroTree.Largest(zeroItem); ok {
 		t.Errorf("Largest(), got: %v, want: false", ok)
+	}
+
+	if s := zeroTree.Insert(zeroItem); s.Size() != 1 {
+		t.Errorf("Insert(), got: %v, want: 1", s.Size())
+	}
+
+	if s := zeroTree.Clone(); s.Size() != 0 {
+		t.Errorf("Clone(), got: %v, want: 0", s.Size())
 	}
 
 	if s := zeroTree.Subsets(zeroItem); s != nil {
@@ -92,8 +93,6 @@ func TestNewTree(t *testing.T) {
 	if s := zeroTree.Supersets(zeroItem); s != nil {
 		t.Errorf("Supersets(), got: %v, want: nil", s)
 	}
-
-	*/
 
 	if s := zeroTree.Min(); s != zeroItem {
 		t.Errorf("Min(), got: %v, want: %v", s, zeroItem)
@@ -112,8 +111,6 @@ func TestNewTree(t *testing.T) {
 		t.Errorf("Visit(), got: %v, want: 0", len(items))
 	}
 }
-
-/* TODO
 
 func TestTreeWithDups(t *testing.T) {
 	t.Parallel()
@@ -164,27 +161,27 @@ func TestImmutable(t *testing.T) {
 	}
 
 	item := period.Ival{-111, 666}
-	tree1.Insert(item)
+	_ = tree1.Insert(item)
 	if !reflect.DeepEqual(tree1, tree2) {
 		t.Fatal("Insert changed receiver")
 	}
 
-	tree1.Shortest(item)
+	_, _ = tree1.Shortest(item)
 	if !reflect.DeepEqual(tree1, tree2) {
 		t.Fatal("Shortest changed receiver")
 	}
 
-	tree1.Largest(item)
+	_, _ = tree1.Largest(item)
 	if !reflect.DeepEqual(tree1, tree2) {
 		t.Fatal("Largest changed receiver")
 	}
 
-	tree1.Subsets(item)
+	_ = tree1.Subsets(item)
 	if !reflect.DeepEqual(tree1, tree2) {
 		t.Fatal("Subsets changed receiver")
 	}
 
-	tree1.Supersets(item)
+	_ = tree1.Supersets(item)
 	if !reflect.DeepEqual(tree1, tree2) {
 		t.Fatal("Supersets changed receiver")
 	}
@@ -481,4 +478,3 @@ func TestPrintBST(t *testing.T) {
 		t.Fatalf("FprintBST(), want line count: %d, got: %d", want, lc)
 	}
 }
-*/

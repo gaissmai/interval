@@ -47,7 +47,7 @@ func covers[T Interface[T]](a, b T) bool {
 
 // traverse the BST in some order, call the visitor function for each node.
 // Prematurely stop traversion if visitor function returns false.
-func (t *Node[T]) traverse(order traverseOrder, depth int, visitFn func(n *Node[T], depth int) bool) bool {
+func (t *node[T]) traverse(order traverseOrder, depth int, visitFn func(n *node[T], depth int) bool) bool {
 	if t == nil {
 		return true
 	}
@@ -119,7 +119,7 @@ func (t Tree[T]) Fprint(w io.Writer) error {
 	var pcm parentChildsMap[T]
 
 	// init map
-	pcm.pcMap = make(map[*Node[T]][]*Node[T])
+	pcm.pcMap = make(map[*node[T]][]*node[T])
 
 	pcm = t.root.buildParentChildsMap(pcm)
 
@@ -136,7 +136,7 @@ func (t Tree[T]) Fprint(w io.Writer) error {
 	return walkAndStringify(w, pcm, nil, "")
 }
 
-func walkAndStringify[T Interface[T]](w io.Writer, pcm parentChildsMap[T], parent *Node[T], pad string) error {
+func walkAndStringify[T Interface[T]](w io.Writer, pcm parentChildsMap[T], parent *node[T], pad string) error {
 	// the prefix (pad + glyphe) is already printed on the line on upper level
 	if parent != nil {
 		if _, err := fmt.Fprintf(w, "%v\n", parent.item); err != nil {
@@ -206,7 +206,7 @@ func (t Tree[T]) FprintBST(w io.Writer) error {
 }
 
 // preorderStringify, traverse the tree, stringify the nodes in preorder
-func (t *Node[T]) preorderStringify(w io.Writer, pad string) error {
+func (t *node[T]) preorderStringify(w io.Writer, pad string) error {
 	// stringify this node
 	if _, err := fmt.Fprintf(w, "%v [prio:%.4g] [%p|l:%p|r:%p]\n", t.item, t.prio, t, t.left, t.right); err != nil {
 		return err
@@ -265,12 +265,12 @@ func (t *Node[T]) preorderStringify(w io.Writer, pad string) error {
 //  └─ 7...9
 //
 type parentChildsMap[T Interface[T]] struct {
-	pcMap map[*Node[T]][]*Node[T] // parent -> []child map
-	stack []*Node[T]              // just needed for the algo
+	pcMap map[*node[T]][]*node[T] // parent -> []child map
+	stack []*node[T]              // just needed for the algo
 }
 
 // buildParentChildsMap, in-order traversal
-func (t *Node[T]) buildParentChildsMap(pcm parentChildsMap[T]) parentChildsMap[T] {
+func (t *node[T]) buildParentChildsMap(pcm parentChildsMap[T]) parentChildsMap[T] {
 	if t == nil {
 		return pcm
 	}
@@ -286,7 +286,7 @@ func (t *Node[T]) buildParentChildsMap(pcm parentChildsMap[T]) parentChildsMap[T
 }
 
 // pcmForNode, find parent in stack, remove items from stack, put this item on stack.
-func (t *Node[T]) pcmForNode(pcm parentChildsMap[T]) parentChildsMap[T] {
+func (t *node[T]) pcmForNode(pcm parentChildsMap[T]) parentChildsMap[T] {
 	// if this item is covered by a prev item on stack
 	for j := len(pcm.stack) - 1; j >= 0; j-- {
 
@@ -320,12 +320,14 @@ func (t *Node[T]) pcmForNode(pcm parentChildsMap[T]) parentChildsMap[T] {
 // 0.x.y. In future versions this will be removed without increasing the main
 // semantic version, so please do not rely on it for now.
 //
-func (t *Node[T]) Statistics() (maxDepth int, average, deviation float64) {
+func (t Tree[T]) Statistics() (maxDepth int, average, deviation float64) {
+	n := t.root
+
 	// key is depth, value is the sum of nodes with this depth
 	depths := make(map[int]int)
 
 	// get the depths
-	t.traverse(inorder, 0, func(t *Node[T], depth int) bool {
+	n.traverse(inorder, 0, func(t *node[T], depth int) bool {
 		depths[depth] += 1
 		return true
 	})
@@ -379,9 +381,9 @@ func (t Tree[T]) Max() (max T) {
 
 // Size returns the number of items in tree.
 func (t Tree[T]) Size() int {
-	var size int
 	n := t.root
-	n.traverse(inorder, 0, func(k *Node[T], _ int) bool {
+	size := 0
+	n.traverse(inorder, 0, func(k *node[T], _ int) bool {
 		size++
 		return true
 	})
@@ -418,7 +420,7 @@ func (t Tree[T]) Visit(start, stop T, visitFn func(t T) bool) {
 
 	span := join(mid1, join(l, mid2, immutable), immutable)
 
-	span.traverse(order, 0, func(t *Node[T], dummy int) bool {
+	span.traverse(order, 0, func(t *node[T], dummy int) bool {
 		return visitFn(t.item)
 	})
 }
@@ -429,7 +431,7 @@ func (t Tree[T]) Clone() Tree[T] {
 	return t
 }
 
-func (n *Node[T]) clone() *Node[T] {
+func (n *node[T]) clone() *node[T] {
 	if n == nil {
 		return n
 	}
