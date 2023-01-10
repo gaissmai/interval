@@ -401,7 +401,7 @@ func (t Tree[T]) Size() int {
 //
 // The traversion terminates prematurely if the visit function returns false.
 //
-func (t Tree[T]) Visit(start, stop T, visitFn func(t T) bool) {
+func (t Tree[T]) Visit(start, stop T, visitFn func(item T) bool) {
 	n := t.root
 	if n == nil {
 		return
