@@ -48,7 +48,7 @@ func BenchmarkInsertMutable(b *testing.B) {
 }
 
 func BenchmarkDelete(b *testing.B) {
-	for n := 10; n <= 1_000_000; n *= 10 {
+	for n := 1; n <= 1_000_000; n *= 10 {
 		ivals := generateIvals(n)
 		probe := ivals[rand.Intn(len(ivals))]
 
@@ -65,7 +65,7 @@ func BenchmarkDelete(b *testing.B) {
 }
 
 func BenchmarkDeleteMutable(b *testing.B) {
-	for n := 10; n <= 1_000_000; n *= 10 {
+	for n := 1; n <= 1_000_000; n *= 10 {
 		ivals := generateIvals(n)
 		probe := ivals[rand.Intn(len(ivals))]
 
@@ -112,7 +112,7 @@ func BenchmarkUnionMutable(b *testing.B) {
 }
 
 func BenchmarkFind(b *testing.B) {
-	for n := 100; n <= 1_000_000; n *= 10 {
+	for n := 1; n <= 1_000_000; n *= 10 {
 		ivals := generateIvals(n)
 		tree := interval.NewTree(ivals...)
 		probe := ivals[rand.Intn(len(ivals))]

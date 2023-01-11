@@ -62,12 +62,8 @@ func makeNode[T Interface[T]](item T) *node[T] {
 
 // copyNode, make a shallow copy of the pointers and the item, no recalculation necessary.
 func (n *node[T]) copyNode() *node[T] {
-	if n == nil {
-		return n
-	}
-
-	m := *n
-	return &m
+	c := *n
+	return &c
 }
 
 // Insert elements into the tree, returns the new Tree.
@@ -293,33 +289,21 @@ func (t *node[T]) split(key T, immutable bool) (left, mid, right *node[T]) {
 // otherwise the zero value for item and false.
 func (t Tree[T]) Find(item T) (result T, ok bool) {
 	n := t.root
-	return n.find(item)
-}
+	for {
+		if n == nil {
+			return
+		}
 
-func (n *node[T]) find(item T) (result T, ok bool) {
-	// recursion stop condition(s)
-	if n == nil {
-		return
+		cmp := compare(item, n.item)
+		switch {
+		case cmp == 0:
+			return n.item, true
+		case cmp < 0:
+			n = n.left
+		case cmp > 0:
+			n = n.right
+		}
 	}
-
-	// fast exit, node has too small max upper interval value (augmented value)
-	if item.CompareUpper(n.maxUpper.item) > 0 {
-		return
-	}
-
-	cmp := compare(item, n.item)
-	if cmp == 0 {
-		return n.item, true
-	}
-
-	// rec-descent
-	switch {
-	case cmp < 0:
-		return n.left.find(item)
-	case cmp > 0:
-		return n.right.find(item)
-	}
-	panic("unreachable")
 }
 
 // Shortest returns the most specific interval that covers item. ok is true on

@@ -69,6 +69,10 @@ func TestNewTree(t *testing.T) {
 		t.Errorf("FprintBST(w) = %v, want \"\"", w.String())
 	}
 
+	if _, ok := zeroTree.Find(zeroItem); ok {
+		t.Errorf("Find(), got: %v, want: false", ok)
+	}
+
 	if _, ok := zeroTree.Delete(zeroItem); ok {
 		t.Errorf("Delete(), got: %v, want: false", ok)
 	}

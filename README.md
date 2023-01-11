@@ -204,9 +204,9 @@ goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkFind/In100-8               11051197       102.8 ns/op      0 B/op    0 allocs/op
-BenchmarkFind/In1_000-8             12076317        99.6 ns/op      0 B/op    0 allocs/op
-BenchmarkFind/In10_000-8             8264806       145.3 ns/op      0 B/op    0 allocs/op
-BenchmarkFind/In100_000-8            2878986       412.3 ns/op      0 B/op    0 allocs/op
-BenchmarkFind/In1_000_000-8          4449298       263.9 ns/op      0 B/op    0 allocs/op
+BenchmarkFind/In100-8               17299449        63.9 ns/op      0 B/op    0 allocs/op
+BenchmarkFind/In1_000-8             17327350        69.4 ns/op      0 B/op    0 allocs/op
+BenchmarkFind/In10_000-8            12858908        90.2 ns/op      0 B/op    0 allocs/op
+BenchmarkFind/In100_000-8            4696676       256.7 ns/op      0 B/op    0 allocs/op
+BenchmarkFind/In1_000_000-8          7131028       163.1 ns/op      0 B/op    0 allocs/op
 ```
