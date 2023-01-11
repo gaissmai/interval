@@ -175,10 +175,9 @@ func (t Tree[T]) Delete(item T) (Tree[T], bool) {
 	n = join(l, r, immutable)
 
 	t.root = n
-	if m == nil {
-		return t, false
-	}
-	return t, true
+	ok := m != nil
+
+	return t, ok
 }
 
 // DeleteMutable removes an item from tree, returns true if it exists, false otherwise.
@@ -195,7 +194,7 @@ func (t *Tree[T]) DeleteMutable(item T) bool {
 //
 // The "immutable" flag controls whether the two trees are allowed to be modified.
 //
-// To create very large trees, it may be time-saving to split the input data into chunks,
+// To create very large trees, it may be time-saving to slice the input data into chunks,
 // fan out for creation and combine the generated subtrees with non-immutable unions.
 func (t Tree[T]) Union(other Tree[T], overwrite bool, immutable bool) Tree[T] {
 	n := t.root.union(other.root, overwrite, immutable)
@@ -203,6 +202,7 @@ func (t Tree[T]) Union(other Tree[T], overwrite bool, immutable bool) Tree[T] {
 }
 
 func (n *node[T]) union(b *node[T], overwrite bool, immutable bool) *node[T] {
+	// recursion stop condition
 	if n == nil {
 		return b
 	}
@@ -240,6 +240,7 @@ func (n *node[T]) union(b *node[T], overwrite bool, immutable bool) *node[T] {
 // split the treap into all nodes that compare less-than, equal
 // and greater-than the provided item (BST key). The resulting nodes are
 // properly formed treaps or nil.
+// If the split must be immutable, first copy concerned nodes.
 func (t *node[T]) split(key T, immutable bool) (left, mid, right *node[T]) {
 	// recursion stop condition
 	if t == nil {
@@ -288,6 +289,34 @@ func (t *node[T]) split(key T, immutable bool) (left, mid, right *node[T]) {
 	}
 }
 
+// Find, searches for the interval in the tree and returns it as well as true,
+// otherwise the zero value for item and false.
+func (t Tree[T]) Find(item T) (result T, ok bool) {
+	n := t.root
+	return n.find(item)
+}
+
+func (n *node[T]) find(item T) (result T, ok bool) {
+	// recursion stop condition(s)
+	if n == nil {
+		return
+	}
+
+	cmp := compare(item, n.item)
+	if cmp == 0 {
+		return n.item, true
+	}
+
+	// rec-descent
+	switch {
+	case cmp < 0:
+		return n.left.find(item)
+	case cmp > 0:
+		return n.right.find(item)
+	}
+	panic("unreachable")
+}
+
 // Shortest returns the most specific interval that covers item. ok is true on
 // success.
 //
@@ -326,6 +355,7 @@ func (t Tree[T]) Shortest(item T) (result T, ok bool) {
 	return n.shortest(item)
 }
 
+// shortest can't use tree.split(key) because of allocations or mutations.
 func (n *node[T]) shortest(item T) (result T, ok bool) {
 	if n == nil {
 		return
@@ -426,6 +456,7 @@ func (t Tree[T]) Largest(item T) (result T, ok bool) {
 	return n.largest(item)
 }
 
+// largest can't use tree.split(key) because of allocations or mutations.
 func (t *node[T]) largest(item T) (result T, ok bool) {
 	if t == nil {
 		return
@@ -458,6 +489,7 @@ func (t Tree[T]) Supersets(item T) []T {
 	}
 	var result []T
 
+	// supersets algo with tree.split(), allocations allowed
 	l, m, _ := n.split(item, true)
 	result = l.supersets(item)
 
@@ -506,6 +538,7 @@ func (t Tree[T]) Subsets(item T) []T {
 	}
 	var result []T
 
+	// subsets algo with tree.split(), allocations allowed
 	_, m, r := n.split(item, true)
 
 	// if key is in treap, start with key in result
@@ -546,7 +579,7 @@ func (t *node[T]) subsets(item T) (result []T) {
 }
 
 // join combines two disjunct treaps. All nodes in treap a have keys <= that of treap b
-// for this algorithm to work correctly. The join is immutable, first copy concerned nodes.
+// for this algorithm to work correctly. If the join must be immutable, first copy concerned nodes.
 func join[T Interface[T]](a, b *node[T], immutable bool) *node[T] {
 	// recursion stop condition
 	if a == nil {

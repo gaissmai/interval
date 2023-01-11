@@ -233,6 +233,23 @@ func TestMutable(t *testing.T) {
 	}
 }
 
+func TestFind(t *testing.T) {
+	t.Parallel()
+
+	ivals := generateIvals(100_00)
+	tree := interval.NewTree(ivals...)
+
+	for _, ival := range ivals {
+		item, ok := tree.Find(ival)
+		if ok != true {
+			t.Errorf("Find(%v) = %v, want %v", item, ok, true)
+		}
+		if item.CompareLower(ival) != 0 || item.CompareUpper(ival) != 0 {
+			t.Errorf("Find(%v) = %v, want %v", ival, item, ival)
+		}
+	}
+}
+
 func TestLookup(t *testing.T) {
 	t.Parallel()
 

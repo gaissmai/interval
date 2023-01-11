@@ -111,6 +111,22 @@ func BenchmarkUnionNonImmutable(b *testing.B) {
 	}
 }
 
+func BenchmarkFind(b *testing.B) {
+	for n := 100; n <= 1_000_000; n *= 10 {
+		ivals := generateIvals(n)
+		tree := interval.NewTree(ivals...)
+		probe := ivals[rand.Intn(len(ivals))]
+		name := "In" + intMap[n]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_, _ = tree.Find(probe)
+			}
+		})
+	}
+}
+
 func BenchmarkShortest(b *testing.B) {
 	for n := 100; n <= 1_000_000; n *= 10 {
 		tree := interval.NewTree(generateIvals(n)...)

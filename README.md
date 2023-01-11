@@ -80,6 +80,7 @@ type Interface[T any] interface {
   func (t *Tree[T]) InsertMutable(items ...T)
   func (t *Tree[T]) DeleteMutable(item T) bool
 
+  func (t Tree[T]) Find(item T) (result T, ok bool)
   func (t Tree[T]) Shortest(item T) (result T, ok bool)
   func (t Tree[T]) Largest(item T) (result T, ok bool)
 
@@ -188,9 +189,24 @@ goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkLargest/In100-8         	14285817	    77.25 ns/op	    0 B/op	  0 allocs/op
-BenchmarkLargest/In1_000-8       	12253501	    95.82 ns/op	    0 B/op	  0 allocs/op
-BenchmarkLargest/In10_000-8      	 8254034	   145.5 ns/op	    0 B/op	  0 allocs/op
-BenchmarkLargest/In100_000-8     	 6909498	   174.2 ns/op	    0 B/op	  0 allocs/op
-BenchmarkLargest/In1_000_000-8   	 6963052	   160.7 ns/op	    0 B/op	  0 allocs/op
+BenchmarkLargest/In100-8            14285817        77.2 ns/op      0 B/op    0 allocs/op
+BenchmarkLargest/In1_000-8          12253501        95.8 ns/op      0 B/op    0 allocs/op
+BenchmarkLargest/In10_000-8          8254034       145.5 ns/op      0 B/op    0 allocs/op
+BenchmarkLargest/In100_000-8         6909498       174.2 ns/op      0 B/op    0 allocs/op
+BenchmarkLargest/In1_000_000-8       6963052       160.7 ns/op      0 B/op    0 allocs/op
+```
+
+... and the simple `Find()` for the exact match:
+
+```
+$ go test -benchmem -bench='Find'
+goos: linux
+goarch: amd64
+pkg: github.com/gaissmai/interval
+cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+BenchmarkFind/In100-8               11051197       102.8 ns/op      0 B/op    0 allocs/op
+BenchmarkFind/In1_000-8             12076317        99.6 ns/op      0 B/op    0 allocs/op
+BenchmarkFind/In10_000-8             8264806       145.3 ns/op      0 B/op    0 allocs/op
+BenchmarkFind/In100_000-8            2878986       412.3 ns/op      0 B/op    0 allocs/op
+BenchmarkFind/In1_000_000-8          4449298       263.9 ns/op      0 B/op    0 allocs/op
 ```
