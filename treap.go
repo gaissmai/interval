@@ -170,9 +170,9 @@ func (n *node[T]) insert(b *node[T], immutable bool) *node[T] {
 func (t Tree[T]) Delete(item T) (Tree[T], bool) {
 	n := t.root
 
-	immutable := true
-	l, m, r := n.split(item, immutable)
-	n = join(l, r, immutable)
+	// split/join must be immutable
+	l, m, r := n.split(item, true)
+	n = join(l, r, true)
 
 	t.root = n
 	ok := m != nil
