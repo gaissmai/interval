@@ -302,6 +302,11 @@ func (n *node[T]) find(item T) (result T, ok bool) {
 		return
 	}
 
+	// fast exit, node has too small max upper interval value (augmented value)
+	if item.CompareUpper(n.maxUpper.item) > 0 {
+		return
+	}
+
 	cmp := compare(item, n.item)
 	if cmp == 0 {
 		return n.item, true
