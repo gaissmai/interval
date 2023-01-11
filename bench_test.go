@@ -96,7 +96,7 @@ func BenchmarkUnionImmutable(b *testing.B) {
 	}
 }
 
-func BenchmarkUnionNonImmutable(b *testing.B) {
+func BenchmarkUnionMutable(b *testing.B) {
 	for n := 10; n <= 100_000; n *= 10 {
 		this100_000 := interval.NewTree(generateIvals(100_000)...)
 		tree := interval.NewTree(generateIvals(n)...)
@@ -182,6 +182,51 @@ func BenchmarkSupersets(b *testing.B) {
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
 				_ = tree.Supersets(probe)
+			}
+		})
+	}
+}
+
+func BenchmarkSize(b *testing.B) {
+	for n := 100; n <= 1_000_000; n *= 10 {
+		ivals := generateIvals(n)
+		tree := interval.NewTree(ivals...)
+		name := "In" + intMap[n]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_ = tree.Size()
+			}
+		})
+	}
+}
+
+func BenchmarkMin(b *testing.B) {
+	for n := 100; n <= 1_000_000; n *= 10 {
+		ivals := generateIvals(n)
+		tree := interval.NewTree(ivals...)
+		name := "In" + intMap[n]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_ = tree.Min()
+			}
+		})
+	}
+}
+
+func BenchmarkMax(b *testing.B) {
+	for n := 100; n <= 1_000_000; n *= 10 {
+		ivals := generateIvals(n)
+		tree := interval.NewTree(ivals...)
+		name := "In" + intMap[n]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_ = tree.Max()
 			}
 		})
 	}
