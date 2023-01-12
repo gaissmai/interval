@@ -495,9 +495,7 @@ func (n *node[T]) supersets(item T) (result []T) {
 	}
 
 	// recursive call to right tree
-	result = append(result, n.right.supersets(item)...)
-
-	return
+	return append(result, n.right.supersets(item)...)
 }
 
 // Subsets returns all intervals in tree that are covered by item in sorted order.
@@ -538,9 +536,7 @@ func (n *node[T]) subsets(item T) (result []T) {
 	}
 
 	// recursive call to right tree
-	result = append(result, n.right.subsets(item)...)
-
-	return
+	return append(result, n.right.subsets(item)...)
 }
 
 // join combines two disjunct treaps. All nodes in treap n have keys <= that of treap m
