@@ -163,7 +163,7 @@ BenchmarkDeleteMutable/DeleteFrom100_000-8      893157          1334 ns/op      
 BenchmarkDeleteMutable/DeleteFrom1_000_000-8    647199          1828 ns/op        0 B/op          0 allocs/op
 ```
 
-### Lookup
+### Lookups
 
 The benchmark for `Shortest()` (a.k.a. longest-prefix-match if the interval is an IP CIDR prefix) is very promising:
 
@@ -179,7 +179,7 @@ BenchmarkShortest/In10_000-8         2477786       482.7 ns/op      0 B/op    0 
 BenchmarkShortest/In100_000-8        4965262       242.0 ns/op      0 B/op    0 allocs/op
 BenchmarkShortest/In1_000_000-8      2285011       527.3 ns/op      0 B/op    0 allocs/op
 ```
-... and the simple `Find()` for the exact match:
+The benchmark `Find()` for the exact match:
 
 ```
 $ go test -benchmem -bench='Find'
@@ -194,8 +194,8 @@ BenchmarkFind/In100_000-8            4696676       256.7 ns/op      0 B/op    0 
 BenchmarkFind/In1_000_000-8          7131028       163.1 ns/op      0 B/op    0 allocs/op
 ```
 
-The lookup 'Largest()' needs a split() of the treap, which means memory allocations,
-the same is true for supersets and subsets:
+The lookup `Largest()` needs a split() of the treap, which means memory allocations,
+the same is true for `Supersets()` and `Subsets()`:
 
 ```
 $ go test -benchmem -bench='Largest'
