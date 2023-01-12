@@ -487,9 +487,7 @@ func (n *node[T]) supersets(item T) (result []T) {
 	}
 
 	// in-order traversal for supersets, recursive call to left tree
-	if n.left != nil && item.CompareUpper(n.left.maxUpper.item) <= 0 {
-		result = append(result, n.left.supersets(item)...)
-	}
+	result = append(result, n.left.supersets(item)...)
 
 	// this item
 	if item.CompareUpper(n.item) <= 0 {
@@ -497,9 +495,7 @@ func (n *node[T]) supersets(item T) (result []T) {
 	}
 
 	// recursive call to right tree
-	if n.right != nil && item.CompareUpper(n.right.maxUpper.item) <= 0 {
-		result = append(result, n.right.supersets(item)...)
-	}
+	result = append(result, n.right.supersets(item)...)
 
 	return
 }
@@ -534,9 +530,7 @@ func (n *node[T]) subsets(item T) (result []T) {
 	}
 
 	// in-order traversal for subsets, recursive call to left tree
-	if n.left != nil && item.CompareUpper(n.left.minUpper.item) >= 0 {
-		result = append(result, n.left.subsets(item)...)
-	}
+	result = append(result, n.left.subsets(item)...)
 
 	// this item
 	if item.CompareUpper(n.item) >= 0 {
@@ -544,9 +538,7 @@ func (n *node[T]) subsets(item T) (result []T) {
 	}
 
 	// recursive call to right tree
-	if n.right != nil && item.CompareUpper(n.right.minUpper.item) >= 0 {
-		result = append(result, n.right.subsets(item)...)
-	}
+	result = append(result, n.right.subsets(item)...)
 
 	return
 }

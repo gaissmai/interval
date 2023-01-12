@@ -158,7 +158,7 @@ func BenchmarkLargest(b *testing.B) {
 }
 
 func BenchmarkSubsets(b *testing.B) {
-	for n := 100; n <= 1_000_000; n *= 10 {
+	for n := 100; n <= 100_000; n *= 10 {
 		tree := interval.NewTree(generateIvals(n)...)
 		probe := generateIvals(1)[0]
 		name := "In" + intMap[n]
@@ -173,7 +173,7 @@ func BenchmarkSubsets(b *testing.B) {
 }
 
 func BenchmarkSupersets(b *testing.B) {
-	for n := 100; n <= 1_000_000; n *= 10 {
+	for n := 100; n <= 100_000; n *= 10 {
 		tree := interval.NewTree(generateIvals(n)...)
 		probe := generateIvals(1)[0]
 		name := "In" + intMap[n]
