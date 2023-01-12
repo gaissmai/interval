@@ -200,8 +200,7 @@ func walkAndStringify[T Interface[T]](w io.Writer, pcm parentChildsMap[T], paren
 //                  └─r 4...8 [prio:0.09697] [0xc0000248c0|l:0x0|r:0x0]
 //
 func (t Tree[T]) FprintBST(w io.Writer) error {
-	n := t.root
-	if n == nil {
+	if t.root == nil {
 		return nil
 	}
 
@@ -210,13 +209,13 @@ func (t Tree[T]) FprintBST(w io.Writer) error {
 	}
 
 	// start recursion with empty padding
-	return n.preorderStringify(w, "")
+	return t.root.preorderStringify(w, "")
 }
 
 // preorderStringify, traverse the tree, stringify the nodes in preorder
-func (t *node[T]) preorderStringify(w io.Writer, pad string) error {
+func (n *node[T]) preorderStringify(w io.Writer, pad string) error {
 	// stringify this node
-	if _, err := fmt.Fprintf(w, "%v [prio:%.4g] [%p|l:%p|r:%p]\n", t.item, t.prio, t, t.left, t.right); err != nil {
+	if _, err := fmt.Fprintf(w, "%v [prio:%.4g] [%p|l:%p|r:%p]\n", n.item, n.prio, n, n.left, n.right); err != nil {
 		return err
 	}
 
@@ -225,8 +224,8 @@ func (t *node[T]) preorderStringify(w io.Writer, pad string) error {
 	var spacer string
 
 	// left wing
-	if t.left != nil {
-		if t.right != nil {
+	if n.left != nil {
+		if n.right != nil {
 			glyphe = "├─l "
 			spacer = "│   "
 		} else {
@@ -236,19 +235,19 @@ func (t *node[T]) preorderStringify(w io.Writer, pad string) error {
 		if _, err := fmt.Fprint(w, pad+glyphe); err != nil {
 			return err
 		}
-		if err := t.left.preorderStringify(w, pad+spacer); err != nil {
+		if err := n.left.preorderStringify(w, pad+spacer); err != nil {
 			return err
 		}
 	}
 
 	// right wing
-	if t.right != nil {
+	if n.right != nil {
 		glyphe = "└─r "
 		spacer = "    "
 		if _, err := fmt.Fprint(w, pad+glyphe); err != nil {
 			return err
 		}
-		if err := t.right.preorderStringify(w, pad+spacer); err != nil {
+		if err := n.right.preorderStringify(w, pad+spacer); err != nil {
 			return err
 		}
 	}
@@ -278,30 +277,30 @@ type parentChildsMap[T Interface[T]] struct {
 }
 
 // buildParentChildsMap, in-order traversal
-func (t *node[T]) buildParentChildsMap(pcm parentChildsMap[T]) parentChildsMap[T] {
-	if t == nil {
+func (n *node[T]) buildParentChildsMap(pcm parentChildsMap[T]) parentChildsMap[T] {
+	if n == nil {
 		return pcm
 	}
 
 	// in-order traversal, left tree
-	pcm = t.left.buildParentChildsMap(pcm)
+	pcm = n.left.buildParentChildsMap(pcm)
 
 	// detect parent-child-mapping for this node
-	pcm = t.pcmForNode(pcm)
+	pcm = n.pcmForNode(pcm)
 
 	// in-order traversal, right tree
-	return t.right.buildParentChildsMap(pcm)
+	return n.right.buildParentChildsMap(pcm)
 }
 
 // pcmForNode, find parent in stack, remove items from stack, put this item on stack.
-func (t *node[T]) pcmForNode(pcm parentChildsMap[T]) parentChildsMap[T] {
+func (n *node[T]) pcmForNode(pcm parentChildsMap[T]) parentChildsMap[T] {
 	// if this item is covered by a prev item on stack
 	for j := len(pcm.stack) - 1; j >= 0; j-- {
 
 		that := pcm.stack[j]
-		if covers(that.item, t.item) {
+		if covers(that.item, n.item) {
 			// item in node j is parent to item
-			pcm.pcMap[that] = append(pcm.pcMap[that], t)
+			pcm.pcMap[that] = append(pcm.pcMap[that], n)
 			break
 		}
 
@@ -313,11 +312,11 @@ func (t *node[T]) pcmForNode(pcm parentChildsMap[T]) parentChildsMap[T] {
 	// stack is emptied, no item on stack covers current item
 	if len(pcm.stack) == 0 {
 		// parent is root
-		pcm.pcMap[nil] = append(pcm.pcMap[nil], t)
+		pcm.pcMap[nil] = append(pcm.pcMap[nil], n)
 	}
 
 	// put current neode on stack for next node
-	pcm.stack = append(pcm.stack, t)
+	pcm.stack = append(pcm.stack, n)
 
 	return pcm
 }
@@ -329,13 +328,11 @@ func (t *node[T]) pcmForNode(pcm parentChildsMap[T]) parentChildsMap[T] {
 // semantic version, so please do not rely on it for now.
 //
 func (t Tree[T]) Statistics() (maxDepth int, average, deviation float64) {
-	n := t.root
-
 	// key is depth, value is the sum of nodes with this depth
 	depths := make(map[int]int)
 
 	// get the depths
-	n.traverse(inorder, 0, func(t *node[T], depth int) bool {
+	t.root.traverse(inorder, 0, func(n *node[T], depth int) bool {
 		depths[depth] += 1
 		return true
 	})
@@ -389,9 +386,8 @@ func (t Tree[T]) Max() (max T) {
 
 // Size returns the number of items in tree.
 func (t Tree[T]) Size() int {
-	n := t.root
 	size := 0
-	n.traverse(inorder, 0, func(k *node[T], _ int) bool {
+	t.root.traverse(inorder, 0, func(k *node[T], _ int) bool {
 		size++
 		return true
 	})
@@ -410,8 +406,7 @@ func (t Tree[T]) Size() int {
 // The traversion terminates prematurely if the visit function returns false.
 //
 func (t Tree[T]) Visit(start, stop T, visitFn func(item T) bool) {
-	n := t.root
-	if n == nil {
+	if t.root == nil {
 		return
 	}
 
@@ -423,13 +418,13 @@ func (t Tree[T]) Visit(start, stop T, visitFn func(item T) bool) {
 
 	immutable := true
 	// treaps are really cool datastructures!!!
-	_, mid1, r := n.split(start, immutable)
+	_, mid1, r := t.root.split(start, immutable)
 	l, mid2, _ := r.split(stop, immutable)
 
 	span := join(mid1, join(l, mid2, immutable), immutable)
 
-	span.traverse(order, 0, func(t *node[T], dummy int) bool {
-		return visitFn(t.item)
+	span.traverse(order, 0, func(n *node[T], dummy int) bool {
+		return visitFn(n.item)
 	})
 }
 
