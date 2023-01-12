@@ -12,8 +12,8 @@ func (p Ival) String() string {
 	return fmt.Sprintf("%d...%d", p[0], p[1])
 }
 
-// little helper, compare two ints
-func cmp(a, b int) int {
+// little helper
+func cmp(a, b uint) int {
 	switch {
 	case a == b:
 		return 0
@@ -24,7 +24,7 @@ func cmp(a, b int) int {
 }
 
 // example interval
-type Ival [2]int
+type Ival [2]uint
 
 // implement interval.Interface
 func (p Ival) CompareLower(q Ival) int { return cmp(p[0], q[0]) }

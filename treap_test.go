@@ -36,7 +36,7 @@ func generateIvals(n int) []Ival {
 		if a > b {
 			a, b = b, a
 		}
-		is[i] = Ival{a, b}
+		is[i] = Ival{uint(a), uint(b)}
 	}
 	return is
 }
@@ -181,7 +181,7 @@ func TestImmutable(t *testing.T) {
 		t.Fatal("Delete changed receiver")
 	}
 
-	item := Ival{-111, 666}
+	item := Ival{111, 666}
 	_ = tree1.Insert(item)
 	if !reflect.DeepEqual(tree1, tree2) {
 		t.Fatal("Insert changed receiver")
@@ -226,7 +226,7 @@ func TestMutable(t *testing.T) {
 	tree1 = interval.NewTree(ps...)
 	tree2 = tree1.Clone()
 
-	item := Ival{-111, 666}
+	item := Ival{111, 666}
 	(&tree1).InsertMutable(item)
 
 	if reflect.DeepEqual(tree1, tree2) {
@@ -302,12 +302,12 @@ func TestLookup(t *testing.T) {
 			t.Errorf("Shortest(%v) = %v, want %v", item, got, !ok)
 		}
 
-		item = Ival{-19, 0}
+		item = Ival{0, 19}
 		if got, ok := tree.Shortest(item); ok {
 			t.Errorf("Shortest(%v) = %v, want %v", item, got, !ok)
 		}
 
-		item = Ival{8, 8}
+		item = Ival{7, 7}
 		want = Ival{1, 8}
 		if got, _ := tree.Largest(item); got != want {
 			t.Errorf("Largest(%v) = %v, want %v", item, got, want)
@@ -387,24 +387,18 @@ func TestVisit(t *testing.T) {
 
 	collect = nil
 	want = 9
-	tree.Visit(tree.Min(), tree.Max(), func(item Ival) bool {
+	tree.Visit(tree.Max(), tree.Min(), func(item Ival) bool {
 		collect = append(collect, item)
-		return len(collect) != want
+		return true
 	})
 
+	want = tree.Size()
 	if len(collect) != want {
-		t.Fatalf("Visit() ascending, want to stop after %v visits, got: %v, %v", want, len(collect), collect)
+		t.Fatalf("Visit() descending, want: %d  got: %v, %v", want, len(collect), collect)
 	}
 
 	collect = nil
 	want = 2
-	tree.Visit(tree.Max(), tree.Min(), func(item Ival) bool {
-		collect = append(collect, item)
-		return len(collect) != want
-	})
-
-	collect = nil
-	want = 5
 	tree.Visit(tree.Max(), tree.Min(), func(item Ival) bool {
 		collect = append(collect, item)
 		return len(collect) != want
@@ -458,10 +452,49 @@ func TestUnion(t *testing.T) {
 		tree = tree.Union(b, true, true)
 	}
 
-	w := new(strings.Builder)
-	tree.Fprint(w)
-	if w.String() != asStr {
-		t.Errorf("Fprint()\nwant:\n%sgot:\n%s", asStr, w.String())
+	if tree.String() != asStr {
+		t.Errorf("String()\nwant:\n%sgot:\n%s", asStr, tree.String())
+	}
+
+	ps2 := []Ival{
+		{7, 60},
+		{8, 50},
+		{9, 80},
+		{9, 70},
+		{9, 50},
+		{9, 40},
+		{2, 8},
+		{2, 7},
+		{4, 8},
+		{6, 7},
+		{7, 9},
+	}
+
+	tree2 := interval.NewTree(ps2...)
+	tree = tree.Union(tree2, false, false)
+
+	asStr = `▼
+├─ 0...6
+│  └─ 0...5
+├─ 1...8
+│  ├─ 1...7
+│  │  └─ 1...5
+│  │     └─ 1...4
+│  └─ 2...8
+│     ├─ 2...7
+│     └─ 4...8
+│        └─ 6...7
+├─ 7...60
+│  ├─ 7...9
+│  └─ 8...50
+└─ 9...80
+   └─ 9...70
+      └─ 9...50
+         └─ 9...40
+`
+
+	if tree.String() != asStr {
+		t.Errorf("String()\nwant:\n%sgot:\n%s", asStr, tree.String())
 	}
 }
 

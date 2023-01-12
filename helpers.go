@@ -416,14 +416,13 @@ func (t Tree[T]) Visit(start, stop T, visitFn func(item T) bool) {
 		order = reverse
 	}
 
-	immutable := true
 	// treaps are really cool datastructures!!!
-	_, mid1, r := t.root.split(start, immutable)
-	l, mid2, _ := r.split(stop, immutable)
+	_, mid1, r := t.root.split(start, true)
+	l, mid2, _ := r.split(stop, true)
 
-	span := join(mid1, join(l, mid2, immutable), immutable)
+	span := join(mid1, join(l, mid2, true), true)
 
-	span.traverse(order, 0, func(n *node[T], dummy int) bool {
+	span.traverse(order, 0, func(n *node[T], _ int) bool {
 		return visitFn(n.item)
 	})
 }
