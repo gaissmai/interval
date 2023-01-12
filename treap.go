@@ -524,7 +524,7 @@ func (n *node[T]) subsets(item T) (result []T) {
 		return
 	}
 
-	// nope, subtree has too big upper interval value
+	// nope, subtree has too small upper interval value
 	if item.CompareUpper(n.minUpper.item) < 0 {
 		return
 	}
