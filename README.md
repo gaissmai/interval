@@ -27,7 +27,7 @@ Subsets()   O(k*log(n))
 Supersets() O(k*log(n))
 ```
 
-The author is propably the first (december 2022) using augmented treaps
+The author is propably the first (in december 2022) using augmented treaps
 as a very promising [data structure] for the representation of dynamic IP address tables
 for arbitrary ranges, that enables most and least specific range matching and even more lookup methods
 returning sets of intervals.
@@ -179,23 +179,6 @@ BenchmarkShortest/In10_000-8         2477786       482.7 ns/op      0 B/op    0 
 BenchmarkShortest/In100_000-8        4965262       242.0 ns/op      0 B/op    0 allocs/op
 BenchmarkShortest/In1_000_000-8      2285011       527.3 ns/op      0 B/op    0 allocs/op
 ```
-
-... and so the benchmark for `Largest()`:
-
-
-```
-$ go test -benchmem -bench='Largest'
-goos: linux
-goarch: amd64
-pkg: github.com/gaissmai/interval
-cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkLargest/In100-8            14285817        77.2 ns/op      0 B/op    0 allocs/op
-BenchmarkLargest/In1_000-8          12253501        95.8 ns/op      0 B/op    0 allocs/op
-BenchmarkLargest/In10_000-8          8254034       145.5 ns/op      0 B/op    0 allocs/op
-BenchmarkLargest/In100_000-8         6909498       174.2 ns/op      0 B/op    0 allocs/op
-BenchmarkLargest/In1_000_000-8       6963052       160.7 ns/op      0 B/op    0 allocs/op
-```
-
 ... and the simple `Find()` for the exact match:
 
 ```
@@ -209,4 +192,20 @@ BenchmarkFind/In1_000-8             17327350        69.4 ns/op      0 B/op    0 
 BenchmarkFind/In10_000-8            12858908        90.2 ns/op      0 B/op    0 allocs/op
 BenchmarkFind/In100_000-8            4696676       256.7 ns/op      0 B/op    0 allocs/op
 BenchmarkFind/In1_000_000-8          7131028       163.1 ns/op      0 B/op    0 allocs/op
+```
+
+The lookup 'Largest()' needs a split() of the treap, which means memory allocations,
+the same is true for supersets and subsets:
+
+```
+$ go test -benchmem -bench='Largest'
+goos: linux
+goarch: amd64
+pkg: github.com/gaissmai/interval
+cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+BenchmarkLargest/In100-8             1184683         991 ns/op      768 B/op      12 allocs/op
+BenchmarkLargest/In1_000-8           1235576        1032 ns/op      704 B/op      11 allocs/op
+BenchmarkLargest/In10_000-8           574849        1965 ns/op     1216 B/op      19 allocs/op
+BenchmarkLargest/In100_000-8          396973        3079 ns/op     1728 B/op      27 allocs/op
+BenchmarkLargest/In1_000_000-8        540117        2488 ns/op     1344 B/op      21 allocs/op
 ```

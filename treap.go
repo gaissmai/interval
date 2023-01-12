@@ -360,7 +360,7 @@ func (n *node[T]) shortest(item T) (result T, ok bool) {
 	// first try right subtree for shortest containing hull
 	if n.right != nil {
 
-		// rec-descent with t.right
+		// rec-descent with n.right
 		if compare(n.right.item, item) <= 0 {
 			result, ok = n.right.shortest(item)
 			if ok {
@@ -368,10 +368,10 @@ func (n *node[T]) shortest(item T) (result T, ok bool) {
 			}
 		}
 
-		// try t.right.left subtree for smallest containing hull
-		// take this path only if t.right.left.item > t.item (this node)
+		// try n.right.left subtree for smallest containing hull
+		// take this path only if n.right.left.item > t.item (this node)
 		if n.right.left != nil && compare(n.right.left.item, n.item) > 0 {
-			// rec-descent with t.right.left
+			// rec-descent with n.right.left
 			result, ok = n.right.left.shortest(item)
 			if ok {
 				return result, ok
@@ -418,26 +418,22 @@ func (n *node[T]) shortest(item T) (result T, ok bool) {
 // the zero value and false is returned.
 //
 func (t Tree[T]) Largest(item T) (result T, ok bool) {
-	n := t.root
-
-	// find node.item < item
-	for {
-		if n == nil {
-			return
-		}
-
-		if compare(n.item, item) > 0 {
-			n = n.left
-			continue
-		}
-		break
+	if t.root == nil {
+		return
 	}
 
-	// start recursion
-	return n.largest(item)
+	// algo with tree.split(), allocations allowed
+	l, m, _ := t.root.split(item, true)
+	result, ok = l.largest(item)
+
+	// if key is in treap and no other largest found...
+	if !ok && m != nil {
+		return m.item, true
+	}
+
+	return
 }
 
-// largest can't use tree.split(key) because of allocations or mutations.
 func (n *node[T]) largest(item T) (result T, ok bool) {
 	if n == nil {
 		return
@@ -458,7 +454,6 @@ func (n *node[T]) largest(item T) (result T, ok bool) {
 		return n.item, true
 	}
 
-	// rec-descent right
 	return n.right.largest(item)
 }
 
