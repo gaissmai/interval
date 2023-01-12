@@ -48,38 +48,38 @@ func covers[T Interface[T]](a, b T) bool {
 
 // traverse the BST in some order, call the visitor function for each node.
 // Prematurely stop traversion if visitor function returns false.
-func (t *node[T]) traverse(order traverseOrder, depth int, visitFn func(n *node[T], depth int) bool) bool {
-	if t == nil {
+func (n *node[T]) traverse(order traverseOrder, depth int, visitFn func(n *node[T], depth int) bool) bool {
+	if n == nil {
 		return true
 	}
 
 	switch order {
 	case inorder:
 		// left, do-it, right
-		if !t.left.traverse(order, depth+1, visitFn) {
+		if !n.left.traverse(order, depth+1, visitFn) {
 			return false
 		}
 
-		if !visitFn(t, depth) {
+		if !visitFn(n, depth) {
 			return false
 		}
 
-		if !t.right.traverse(order, depth+1, visitFn) {
+		if !n.right.traverse(order, depth+1, visitFn) {
 			return false
 		}
 
 		return true
 	case reverse:
 		// right, do-it, left
-		if !t.right.traverse(order, depth+1, visitFn) {
+		if !n.right.traverse(order, depth+1, visitFn) {
 			return false
 		}
 
-		if !visitFn(t, depth) {
+		if !visitFn(n, depth) {
 			return false
 		}
 
-		if !t.left.traverse(order, depth+1, visitFn) {
+		if !n.left.traverse(order, depth+1, visitFn) {
 			return false
 		}
 

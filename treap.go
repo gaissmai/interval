@@ -230,23 +230,23 @@ func (n *node[T]) union(b *node[T], overwrite bool, immutable bool) *node[T] {
 // and greater-than the provided item (BST key). The resulting nodes are
 // properly formed treaps or nil.
 // If the split must be immutable, first copy concerned nodes.
-func (t *node[T]) split(key T, immutable bool) (left, mid, right *node[T]) {
+func (n *node[T]) split(key T, immutable bool) (left, mid, right *node[T]) {
 	// recursion stop condition
-	if t == nil {
+	if n == nil {
 		return nil, nil, nil
 	}
 
 	if immutable {
-		t = t.copyNode()
+		n = n.copyNode()
 	}
 
-	cmp := compare(t.item, key)
+	cmp := compare(n.item, key)
 	switch {
 	case cmp < 0:
-		l, m, r := t.right.split(key, immutable)
-		t.right = l
-		t.recalc() // node has changed, recalc
-		return t, m, r
+		l, m, r := n.right.split(key, immutable)
+		n.right = l
+		n.recalc() // node has changed, recalc
+		return n, m, r
 		//
 		//       (k)
 		//      R
@@ -254,10 +254,10 @@ func (t *node[T]) split(key T, immutable bool) (left, mid, right *node[T]) {
 		//    l   r
 		//
 	case cmp > 0:
-		l, m, r := t.left.split(key, immutable)
-		t.left = r
-		t.recalc() // node has changed, recalc
-		return l, m, t
+		l, m, r := n.left.split(key, immutable)
+		n.left = r
+		n.recalc() // node has changed, recalc
+		return l, m, n
 		//
 		//   (k)
 		//      R
@@ -265,10 +265,10 @@ func (t *node[T]) split(key T, immutable bool) (left, mid, right *node[T]) {
 		//    l   r
 		//
 	default:
-		l, r := t.left, t.right
-		t.left, t.right = nil, nil
-		t.recalc() // node has changed, recalc
-		return l, t, r
+		l, r := n.left, n.right
+		n.left, n.right = nil, nil
+		n.recalc() // node has changed, recalc
+		return l, n, r
 		//
 		//     (k)
 		//      R
@@ -438,28 +438,28 @@ func (t Tree[T]) Largest(item T) (result T, ok bool) {
 }
 
 // largest can't use tree.split(key) because of allocations or mutations.
-func (t *node[T]) largest(item T) (result T, ok bool) {
-	if t == nil {
+func (n *node[T]) largest(item T) (result T, ok bool) {
+	if n == nil {
 		return
 	}
 
 	// fast exit, node has too small max upper interval value (augmented value)
-	if item.CompareUpper(t.maxUpper.item) > 0 {
+	if item.CompareUpper(n.maxUpper.item) > 0 {
 		return
 	}
 
 	// rec-descent left subtree
-	if result, ok = t.left.largest(item); ok {
+	if result, ok = n.left.largest(item); ok {
 		return result, ok
 	}
 
 	// this item
-	if item.CompareUpper(t.item) <= 0 {
-		return t.item, true
+	if item.CompareUpper(n.item) <= 0 {
+		return n.item, true
 	}
 
 	// rec-descent right
-	return t.right.largest(item)
+	return n.right.largest(item)
 }
 
 // Supersets returns all intervals that covers the item in sorted order.
@@ -594,32 +594,32 @@ func join[T Interface[T]](n, m *node[T], immutable bool) *node[T] {
 
 // recalc the augmented fields in treap node after each creation/modification with values in descendants.
 // Only one level deeper must be considered. The treap datastructure is very easy to augment.
-func (t *node[T]) recalc() {
-	if t == nil {
+func (n *node[T]) recalc() {
+	if n == nil {
 		return
 	}
 
 	// start with upper min/max pointing to self
-	t.minUpper = t
-	t.maxUpper = t
+	n.minUpper = n
+	n.maxUpper = n
 
-	if t.right != nil {
-		if t.minUpper.item.CompareUpper(t.right.minUpper.item) > 0 {
-			t.minUpper = t.right.minUpper
+	if n.right != nil {
+		if n.minUpper.item.CompareUpper(n.right.minUpper.item) > 0 {
+			n.minUpper = n.right.minUpper
 		}
 
-		if t.maxUpper.item.CompareUpper(t.right.maxUpper.item) < 0 {
-			t.maxUpper = t.right.maxUpper
+		if n.maxUpper.item.CompareUpper(n.right.maxUpper.item) < 0 {
+			n.maxUpper = n.right.maxUpper
 		}
 	}
 
-	if t.left != nil {
-		if t.minUpper.item.CompareUpper(t.left.minUpper.item) > 0 {
-			t.minUpper = t.left.minUpper
+	if n.left != nil {
+		if n.minUpper.item.CompareUpper(n.left.minUpper.item) > 0 {
+			n.minUpper = n.left.minUpper
 		}
 
-		if t.maxUpper.item.CompareUpper(t.left.maxUpper.item) < 0 {
-			t.maxUpper = t.left.maxUpper
+		if n.maxUpper.item.CompareUpper(n.left.maxUpper.item) < 0 {
+			n.maxUpper = n.left.maxUpper
 		}
 	}
 }
