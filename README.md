@@ -72,7 +72,7 @@ type Interface[T any] interface {
 
   type Tree[T Interface[T]] struct{ ... }
 
-  func NewTree[T Interface[T]](items ...T) (t Tree[T])
+  func NewTree[T Interface[T]](items ...T) Tree[T]
 
   func (t Tree[T]) Insert(items ...T) Tree[T]
   func (t Tree[T]) Delete(item T) (Tree[T], bool)
