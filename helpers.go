@@ -437,9 +437,10 @@ func (n *node[T]) clone() *node[T] {
 	if n == nil {
 		return n
 	}
+	n = n.copyNode()
 
 	n.left = n.left.clone()
 	n.right = n.right.clone()
 
-	return n.copyNode()
+	return n
 }
