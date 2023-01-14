@@ -43,10 +43,9 @@ type Tree[T Interface[T]] struct {
 
 // NewTree initializes the interval tree with zero or more items of generic type T.
 // The type constraint is defined by the [interval.Interface].
-func NewTree[T Interface[T]](items ...T) (t Tree[T]) {
-	for i := range items {
-		t.root = t.root.insert(makeNode(items[i]), false)
-	}
+func NewTree[T Interface[T]](items ...T) Tree[T] {
+	var t Tree[T]
+	t.InsertMutable(items...)
 	return t
 }
 
