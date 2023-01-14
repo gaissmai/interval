@@ -1,7 +1,6 @@
 package interval_test
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 	"reflect"
@@ -27,18 +26,26 @@ var ps = []Ival{
 	{7, 9},
 }
 
+func mkIval(a, b uint) Ival {
+	if a > b {
+		a, b = b, a
+	}
+	return Ival{a, b}
+}
+
 // random test data
 func generateIvals(n int) []Ival {
 	is := make([]Ival, n)
 	for i := 0; i < n; i++ {
 		a := rand.Int()
 		b := rand.Int()
-		if a > b {
-			a, b = b, a
-		}
-		is[i] = Ival{uint(a), uint(b)}
+		is[i] = mkIval(uint(a), uint(b))
 	}
 	return is
+}
+
+func equals(a, b Ival) bool {
+	return a[0] == b[0] && a[1] == b[1]
 }
 
 func TestNewTree(t *testing.T) {
@@ -218,6 +225,7 @@ func TestMutable(t *testing.T) {
 	if ok = (&tree1).DeleteMutable(min); !ok {
 		t.Fatal("DeleteMutable, could not delete min item")
 	}
+
 	if reflect.DeepEqual(tree1, tree2) {
 		t.Fatal("DeleteMutable didn't change receiver")
 	}
@@ -522,46 +530,6 @@ func TestStatistics(t *testing.T) {
 	}
 }
 
-func TestRandom(t *testing.T) {
-	t.Parallel()
-	is := generateIvals(100)
-	tree := interval.NewTree(is...)
-
-	rand.Shuffle(len(is), func(i, j int) { is[i], is[j] = is[j], is[i] })
-
-	for _, item := range is {
-		tname := fmt.Sprintf("%v", item)
-		t.Run(tname, func(t *testing.T) {
-			t.Parallel()
-			var (
-				shortest  Ival
-				largest   Ival
-				subsets   []Ival
-				supersets []Ival
-				ok        bool
-			)
-			if shortest, ok = tree.Shortest(item); !ok {
-				t.Errorf("Shortest(%v), got %v, %v", item, shortest, ok)
-			}
-			if largest, ok = tree.Largest(item); !ok {
-				t.Errorf("Largest(%v), got %v, %v", item, largest, ok)
-			}
-			if subsets = tree.Subsets(item); subsets == nil {
-				t.Errorf("Subsets(%v), got %v", item, subsets)
-			}
-			if subsets[0] != shortest {
-				t.Errorf("Subsets(%v).[0], want %v, got %v", item, shortest, subsets[0])
-			}
-			if supersets = tree.Supersets(item); supersets == nil {
-				t.Errorf("Supersets(%v), got %v", item, supersets)
-			}
-			if supersets[0] != largest {
-				t.Errorf("Supersets(%v).[0], want %v, got %v", item, largest, supersets[0])
-			}
-		})
-	}
-}
-
 func TestPrintBST(t *testing.T) {
 	t.Parallel()
 	tree := interval.NewTree(ps...)
@@ -573,5 +541,102 @@ func TestPrintBST(t *testing.T) {
 	want := 12
 	if lc != want {
 		t.Fatalf("FprintBST(), want line count: %d, got: %d", want, lc)
+	}
+}
+
+func TestMatch(t *testing.T) {
+	t.Parallel()
+	tree := interval.NewTree(generateIvals(100_000)...)
+
+	n := 100
+	for i := 0; i < n; i++ {
+		probe := generateIvals(100_000)[0]
+
+		t.Run(probe.String(), func(t *testing.T) {
+			tree1 := tree.Insert(probe)
+
+			if _, ok := tree1.Find(probe); !ok {
+				t.Fatalf("inserted item not found in tree: %v", probe)
+			}
+
+			shortest, short_ok := tree1.Shortest(probe)
+			largest, large_ok := tree1.Largest(probe)
+
+			subsets := tree1.Subsets(probe)
+			supersets := tree1.Supersets(probe)
+
+			// either both or neither
+			if short_ok && !large_ok || large_ok && !short_ok {
+				t.Fatalf("logic error: short_ok: %v, large_ok: %v", short_ok, large_ok)
+			}
+
+			lenSubsets := len(subsets)
+			lenSupersets := len(supersets)
+
+			if short_ok && lenSupersets == 0 {
+				t.Fatalf("logic error: shortest: %v, len(subsets): %v, len(supersets): %v", shortest, lenSubsets, lenSupersets)
+			}
+
+			if short_ok && !equals(supersets[lenSupersets-1], shortest) {
+				t.Fatalf("logic error: supersets[last]: %v IS NOT shortest: %v", supersets[lenSupersets-1], shortest)
+			}
+
+			if large_ok && !equals(supersets[0], largest) {
+				t.Fatalf("logic error: supersets[0]: %v IS NOT largest: %v", supersets[0], largest)
+			}
+		})
+	}
+}
+
+func TestMissing(t *testing.T) {
+	t.Parallel()
+	tree := interval.NewTree(generateIvals(100_000)...)
+
+	n := 100
+	for i := 0; i < n; i++ {
+		probe := generateIvals(100_000)[0]
+
+		t.Run(probe.String(), func(t *testing.T) {
+			tree1 := tree.Insert(probe)
+			var ok bool
+
+			if _, ok = tree1.Find(probe); !ok {
+				t.Fatalf("inserted item not found in tree: %v", probe)
+			}
+
+			if tree1, ok = tree1.Delete(probe); !ok {
+				t.Fatalf("delete, inserted item not found in tree: %v", probe)
+			}
+
+			if _, ok = tree1.Find(probe); ok {
+				t.Fatalf("deleted item still found in tree: %v", probe)
+			}
+
+			shortest, short_ok := tree1.Shortest(probe)
+			largest, large_ok := tree1.Largest(probe)
+
+			subsets := tree1.Subsets(probe)
+			supersets := tree1.Supersets(probe)
+
+			// either both or neither
+			if short_ok && !large_ok || large_ok && !short_ok {
+				t.Fatalf("logic error: short_ok: %v, large_ok: %v", short_ok, large_ok)
+			}
+
+			lenSubsets := len(subsets)
+			lenSupersets := len(supersets)
+
+			if short_ok && lenSupersets == 0 {
+				t.Fatalf("logic error: shortest: %v, len(subsets): %v, len(supersets): %v", shortest, lenSubsets, lenSupersets)
+			}
+
+			if short_ok && !equals(supersets[lenSupersets-1], shortest) {
+				t.Fatalf("logic error: supersets[last]: %v IS NOT shortest: %v", supersets[lenSupersets-1], shortest)
+			}
+
+			if large_ok && !equals(supersets[0], largest) {
+				t.Fatalf("logic error: supersets[0]: %v IS NOT largest: %v", supersets[0], largest)
+			}
+		})
 	}
 }
