@@ -51,7 +51,7 @@ package interval
 // [Allen's Interval Algebra]: https://www.ics.uci.edu/~alspaugh/cls/shr/allen.html
 //
 type Interface[T any] interface {
-	// Compare the left (l) and right (r) points of two intervals and returns four integers.
+	// Compare the left (l) and right (r) points of two intervals and returns four integers with values (-1, 0, +1).
 	//
 	// The result will be one of the thirteen possibilities in the interval relation table.
 	//

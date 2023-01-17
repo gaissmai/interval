@@ -256,7 +256,8 @@ func TestFind(t *testing.T) {
 		if ok != true {
 			t.Errorf("Find(%v) = %v, want %v", item, ok, true)
 		}
-		if item.CompareLower(ival) != 0 || item.CompareUpper(ival) != 0 {
+		ll, rr, _, _ := item.Compare(ival)
+		if ll != 0 || rr != 0 {
 			t.Errorf("Find(%v) = %v, want %v", ival, item, ival)
 		}
 	}

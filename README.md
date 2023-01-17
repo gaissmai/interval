@@ -60,7 +60,7 @@ To apply this library to types of one-dimensional intervals, they must just impl
 
 ```go
 type Interface[T any] interface {
-	// Compare the left (l) and right (r) points of two intervals and returns four integers.
+	// Compare the left (l) and right (r) points of two intervals and returns four integers with values (-1, 0, +1).
 	Compare(T) (ll, rr, lr, rl int)
 }
 ```

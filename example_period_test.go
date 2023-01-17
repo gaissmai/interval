@@ -23,16 +23,13 @@ func cmp(a, b uint) int {
 	return 1
 }
 
+// implement interval.Interface
 func (p Ival) Compare(q Ival) (ll, rr, lr, rl int) {
 	return cmp(p[0], q[0]), cmp(p[1], q[1]), cmp(p[0], q[1]), cmp(p[1], q[0])
 }
 
 // example interval
 type Ival [2]uint
-
-// implement interval.Interface
-func (p Ival) CompareLower(q Ival) int { return cmp(p[0], q[0]) }
-func (p Ival) CompareUpper(q Ival) int { return cmp(p[1], q[1]) }
 
 // example data
 var periods = []Ival{
@@ -42,7 +39,7 @@ var periods = []Ival{
 	{3, 5},
 }
 
-func ExampleInterface() {
+func ExampleInterface_period() {
 	tree := interval.NewTree(periods...)
 	tree.Fprint(os.Stdout)
 

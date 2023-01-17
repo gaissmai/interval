@@ -65,6 +65,7 @@ func (t Tree[T]) String() string {
 }
 
 // Fprint writes a hierarchical tree diagram of the ordered intervals to w.
+// The order is determined by the enveloping intervals
 //
 // example: IP CIDRs as intervals
 //
