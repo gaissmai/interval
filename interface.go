@@ -20,7 +20,7 @@ package interval
 //  |  A1------A2            | -1 |  0 | -1 |  1 | A finished by B   |
 //  |     B1---B2            |    |    |    |    |                   |
 //  -------------------------|---------------------------------------|
-//  |  A1--------A2          | -1 |  1 | -1 |  1 | A contains by B   |
+//  |  A1--------A2          | -1 |  1 | -1 |  1 | A contains B      |
 //  |     B1---B2            |    |    |    |    |                   |
 //  -------------------------|---------------------------------------|
 //  |  A1---A2               |  0 | -1 | -1 |  1 | A starts B        |
@@ -67,7 +67,9 @@ type Interface[T any] interface {
 // If the left point is equal, sort the supersets to the left.
 //
 //  e.g. all relations with ll == 0
-//  -------------------------|---------------------------------------|
+//  =================================================================|
+//  |  visualization         | ll | rr | lr | rl | description       |
+//  =================================================================|
 //  |  A1---A2               |  0 | -1 | -1 |  1 | A starts B        | => sort interval A to the right
 //  |  B1-------B2           |    |    |    |    |                   |
 //  -------------------------|---------------------------------------|
@@ -91,15 +93,23 @@ func compare[T Interface[T]](a, b T) int {
 	}
 }
 
-// cmpUpper, compares just the upper right point of the intervals.
-func cmpUpper[T Interface[T]](a, b T) int {
+// cmpRR, compares just the upper right point of the intervals.
+func cmpRR[T Interface[T]](a, b T) int {
 	_, rr, _, _ := a.Compare(b)
 	return rr
 }
 
+// cmpLR, compares just the left point from a with right point from b.
+func cmpLR[T Interface[T]](a, b T) int {
+	_, _, lr, _ := a.Compare(b)
+	return lr
+}
+
 // covers, returns true if a covers b.
 //
-//  -------------------------|---------------------------------------|
+//  =================================================================|
+//  |  visualization         | ll | rr | lr | rl | description       |
+//  =================================================================|
 //  |  A1------A2            | -1 |  0 | -1 |  1 | A finished by B   |
 //  |     B1---B2            |    |    |    |    |                   |
 //  -------------------------|---------------------------------------|
@@ -116,4 +126,21 @@ func cmpUpper[T Interface[T]](a, b T) int {
 func covers[T Interface[T]](a, b T) bool {
 	ll, rr, _, _ := a.Compare(b)
 	return ll <= 0 && rr >= 0
+}
+
+// intersects, returns true if the intervals does not precede each other.
+//
+//  =================================================================|
+//  |  visualization         | ll | rr | lr | rl | description       |
+//  =================================================================|
+//  |  A1---A2               | -1 | -1 | -1 | -1 | A precedes B      |
+//  |           B1---B2      |    |    |    |    |                   |
+//  -------------------------|---------------------------------------|
+//  |          A1---A2       |  1 |  1 |  1 |  1 | A preceded by B   |
+//  |  B1---B2               |    |    |    |    |                   |
+//  -------------------------|---------------------------------------|
+//
+func intersects[T Interface[T]](a, b T) bool {
+	ll, rr, lr, rl := a.Compare(b)
+	return !((ll == -1 && rr == -1 && lr == -1 && rl == -1) || (ll == 1 && rr == 1 && lr == 1 && rl == 1))
 }

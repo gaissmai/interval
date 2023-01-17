@@ -108,6 +108,10 @@ func TestNewTree(t *testing.T) {
 		t.Errorf("Supersets(), got: %v, want: nil", s)
 	}
 
+	if s := zeroTree.Intersections(zeroItem); s != nil {
+		t.Errorf("Intersections(), got: %v, want: nil", s)
+	}
+
 	if s := zeroTree.Min(); s != zeroItem {
 		t.Errorf("Min(), got: %v, want: %v", s, zeroItem)
 	}
@@ -212,6 +216,11 @@ func TestImmutable(t *testing.T) {
 	_ = tree1.Supersets(item)
 	if !reflect.DeepEqual(tree1, tree2) {
 		t.Fatal("Supersets changed receiver")
+	}
+
+	_ = tree1.Intersections(item)
+	if !reflect.DeepEqual(tree1, tree2) {
+		t.Fatal("Intersections changed receiver")
 	}
 }
 
@@ -342,40 +351,141 @@ func TestLookup(t *testing.T) {
 	}
 }
 
-func TestSuperset(t *testing.T) {
+func TestSubsets(t *testing.T) {
 	t.Parallel()
 
-	is := []Ival{
-		{1, 100},
-		{45, 120},
-		{46, 80},
-	}
+	tree := interval.NewTree(ps...)
+	var want []Ival
 
-	tree := interval.NewTree(is...)
+	//     	 ▼
+	//     	 ├─ 0...6
+	//     	 │  └─ 0...5
+	//     	 ├─ 1...8
+	//     	 │  ├─ 1...7
+	//     	 │  │  └─ 1...5
+	//     	 │  │     └─ 1...4
+	//     	 │  └─ 2...8
+	//     	 │     ├─ 2...7
+	//     	 │     └─ 4...8
+	//     	 │        └─ 6...7
+	//     	 └─ 7...9
 
 	item := Ival{0, 6}
-	if got, ok := tree.Largest(item); ok {
-		t.Errorf("Largest(%v) = %v, want %v", item, got, !ok)
+	want = []Ival{{0, 6}, {0, 5}, {1, 5}, {1, 4}}
+	subsets := tree.Subsets(item)
+
+	if !reflect.DeepEqual(subsets, want) {
+		t.Fatalf("Subsets, got: %v, want: %v", subsets, want)
 	}
 
-	item = Ival{99, 200}
-	if got, ok := tree.Largest(item); ok {
-		t.Errorf("Largest(%v) = %v, want %v", item, got, !ok)
+	// ###
+	item = Ival{3, 6}
+	want = nil
+	subsets = tree.Subsets(item)
+
+	if !reflect.DeepEqual(subsets, want) {
+		t.Fatalf("Subsets, got: %v, want: %v", subsets, want)
 	}
 
-	item = Ival{1, 100}
-	if got, ok := tree.Largest(item); got != is[0] || !ok {
-		t.Errorf("Largest(%v) = %v, want %v", item, got, is[0])
+	// ###
+	item = Ival{3, 11}
+	want = []Ival{{4, 8}, {6, 7}, {7, 9}}
+	subsets = tree.Subsets(item)
+
+	if !reflect.DeepEqual(subsets, want) {
+		t.Fatalf("Subsets(%v), got: %+v, want: %+v", item, subsets, want)
+	}
+}
+
+func TestSupersets(t *testing.T) {
+	t.Parallel()
+
+	tree := interval.NewTree(ps...)
+	var want []Ival
+
+	//     	 ▼
+	//     	 ├─ 0...6
+	//     	 │  └─ 0...5
+	//     	 ├─ 1...8
+	//     	 │  ├─ 1...7
+	//     	 │  │  └─ 1...5
+	//     	 │  │     └─ 1...4
+	//     	 │  └─ 2...8
+	//     	 │     ├─ 2...7
+	//     	 │     └─ 4...8
+	//     	 │        └─ 6...7
+	//     	 └─ 7...9
+
+	item := Ival{0, 6}
+	want = []Ival{{0, 6}}
+	supersets := tree.Supersets(item)
+
+	if !reflect.DeepEqual(supersets, want) {
+		t.Fatalf("Superset, got: %v, want: %v", supersets, want)
 	}
 
-	item = Ival{46, 80}
-	if got, ok := tree.Largest(item); got != is[0] || !ok {
-		t.Errorf("Largest(%v) = %v, want %v", item, got, is[0])
+	// ###
+	item = Ival{3, 7}
+	want = []Ival{{1, 8}, {1, 7}, {2, 8}, {2, 7}}
+	supersets = tree.Supersets(item)
+
+	if !reflect.DeepEqual(supersets, want) {
+		t.Fatalf("Superset, got: %v, want: %v", supersets, want)
 	}
 
-	item = Ival{47, 62}
-	if got, ok := tree.Largest(item); got != is[0] || !ok {
-		t.Errorf("Largest(%v) = %v, want %v", item, got, is[0])
+	// ###
+	item = Ival{3, 11}
+	want = nil
+	supersets = tree.Supersets(item)
+
+	if !reflect.DeepEqual(supersets, want) {
+		t.Fatalf("Supersets(%v), got: %+v, want: %+v", item, supersets, want)
+	}
+}
+
+func TestIntersections(t *testing.T) {
+	t.Parallel()
+
+	tree := interval.NewTree(ps...)
+	var want []Ival
+
+	//     	 ▼
+	//     	 ├─ 0...6
+	//     	 │  └─ 0...5
+	//     	 ├─ 1...8
+	//     	 │  ├─ 1...7
+	//     	 │  │  └─ 1...5
+	//     	 │  │     └─ 1...4
+	//     	 │  └─ 2...8
+	//     	 │     ├─ 2...7
+	//     	 │     └─ 4...8
+	//     	 │        └─ 6...7
+	//     	 └─ 7...9
+
+	item := Ival{7, 7}
+	want = []Ival{{1, 8}, {1, 7}, {2, 8}, {2, 7}, {4, 8}, {6, 7}, {7, 9}}
+	intersects := tree.Intersections(item)
+
+	if !reflect.DeepEqual(intersects, want) {
+		t.Fatalf("Intersections(%v), got: %v, want: %v", item, intersects, want)
+	}
+
+	// ###
+	item = Ival{8, 10}
+	want = []Ival{{1, 8}, {2, 8}, {4, 8}, {7, 9}}
+	intersects = tree.Intersections(item)
+
+	if !reflect.DeepEqual(intersects, want) {
+		t.Fatalf("Intersections(%v), got: %v, want: %v", item, intersects, want)
+	}
+
+	// ###
+	item = Ival{10, 15}
+	want = nil
+	intersects = tree.Intersections(item)
+
+	if !reflect.DeepEqual(intersects, want) {
+		t.Fatalf("Intersections(%v), got: %+v, want: %+v", item, intersects, want)
 	}
 }
 
@@ -565,6 +675,7 @@ func TestMatch(t *testing.T) {
 
 			subsets := tree1.Subsets(probe)
 			supersets := tree1.Supersets(probe)
+			intersects := tree1.Intersections(probe)
 
 			// either both or neither
 			if short_ok && !large_ok || large_ok && !short_ok {
@@ -573,6 +684,7 @@ func TestMatch(t *testing.T) {
 
 			lenSubsets := len(subsets)
 			lenSupersets := len(supersets)
+			lenIntersects := len(intersects)
 
 			if short_ok && lenSupersets == 0 {
 				t.Fatalf("logic error: shortest: %v, len(subsets): %v, len(supersets): %v", shortest, lenSubsets, lenSupersets)
@@ -584,6 +696,11 @@ func TestMatch(t *testing.T) {
 
 			if large_ok && !equals(supersets[0], largest) {
 				t.Fatalf("logic error: supersets[0]: %v IS NOT largest: %v", supersets[0], largest)
+			}
+
+			if lenIntersects < lenSubsets+lenSupersets {
+				t.Fatalf("logic error: len(intersections) MUST BE >= len(subsets) + len(supersets): %d IS NOT > %d + %d",
+					lenIntersects, lenSubsets, lenSupersets)
 			}
 		})
 	}
@@ -618,6 +735,7 @@ func TestMissing(t *testing.T) {
 
 			subsets := tree1.Subsets(probe)
 			supersets := tree1.Supersets(probe)
+			intersects := tree1.Intersections(probe)
 
 			// either both or neither
 			if short_ok && !large_ok || large_ok && !short_ok {
@@ -626,6 +744,7 @@ func TestMissing(t *testing.T) {
 
 			lenSubsets := len(subsets)
 			lenSupersets := len(supersets)
+			lenIntersects := len(intersects)
 
 			if short_ok && lenSupersets == 0 {
 				t.Fatalf("logic error: shortest: %v, len(subsets): %v, len(supersets): %v", shortest, lenSubsets, lenSupersets)
@@ -637,6 +756,11 @@ func TestMissing(t *testing.T) {
 
 			if large_ok && !equals(supersets[0], largest) {
 				t.Fatalf("logic error: supersets[0]: %v IS NOT largest: %v", supersets[0], largest)
+			}
+
+			if lenIntersects < lenSubsets+lenSupersets {
+				t.Fatalf("logic error: len(intersections) MUST BE >= len(subsets) + len(supersets): %d IS NOT > %d + %d",
+					lenIntersects, lenSubsets, lenSupersets)
 			}
 		})
 	}

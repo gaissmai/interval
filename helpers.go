@@ -340,7 +340,7 @@ func (t Tree[T]) Min() (min T) {
 	return n.item
 }
 
-// Max returns the node with max item in tree.
+// Max returns the max item in tree.
 func (t Tree[T]) Max() (max T) {
 	n := t.root
 	if n == nil {

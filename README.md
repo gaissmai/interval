@@ -85,6 +85,7 @@ type Interface[T any] interface {
 
   func (t Tree[T]) Subsets(item T) []T
   func (t Tree[T]) Supersets(item T) []T
+  func (t Tree[T]) Intersections(item T) []T
 
   func (t Tree[T]) Clone() Tree[T]
   func (t Tree[T]) Union(other Tree[T], overwrite bool, immutable bool) Tree[T]

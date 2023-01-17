@@ -17,16 +17,6 @@ var intMap = map[int]string{
 	1_000_000: "1_000_000",
 }
 
-func BenchmarkCompare(b *testing.B) {
-	A := generateIvals(1)[0]
-	B := generateIvals(1)[0]
-
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		_, _, _, _ = A.Compare(B)
-	}
-}
-
 func BenchmarkInsert(b *testing.B) {
 	for n := 1; n <= 1_000_000; n *= 10 {
 		tree := interval.NewTree(generateIvals(n)...)
@@ -192,6 +182,21 @@ func BenchmarkSupersets(b *testing.B) {
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
 				_ = tree.Supersets(probe)
+			}
+		})
+	}
+}
+
+func BenchmarkIntersections(b *testing.B) {
+	for n := 100; n <= 100_000; n *= 10 {
+		tree := interval.NewTree(generateIvals(n)...)
+		probe := generateIvals(1)[0]
+		name := "In" + intMap[n]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_ = tree.Intersections(probe)
 			}
 		})
 	}

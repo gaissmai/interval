@@ -55,7 +55,7 @@ func ExampleTree_Max() {
 	tree := interval.NewTree(periods...)
 	tree.Fprint(os.Stdout)
 
-	fmt.Println("\nInterval with max lower value in tree:")
+	fmt.Println("\nInterval with max value in tree:")
 	fmt.Println(tree.Max())
 
 	// Output:
@@ -65,7 +65,7 @@ func ExampleTree_Max() {
 	//    │  └─ 3...4
 	//    └─ 7...9
 	//
-	//Interval with max lower value in tree:
+	//Interval with max value in tree:
 	//7...9
 }
 

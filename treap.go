@@ -335,7 +335,7 @@ func (n *node[T]) shortest(item T) (result T, ok bool) {
 	}
 
 	// fast exit, node has too small max upper interval value (augmented value)
-	if cmpUpper(item, n.maxUpper.item) > 0 {
+	if cmpRR(item, n.maxUpper.item) > 0 {
 		return
 	}
 
@@ -432,7 +432,7 @@ func (n *node[T]) largest(item T) (result T, ok bool) {
 	}
 
 	// fast exit, node has too small max upper interval value (augmented value)
-	if cmpUpper(item, n.maxUpper.item) > 0 {
+	if cmpRR(item, n.maxUpper.item) > 0 {
 		return
 	}
 
@@ -442,14 +442,15 @@ func (n *node[T]) largest(item T) (result T, ok bool) {
 	}
 
 	// this item
-	if cmpUpper(item, n.item) <= 0 {
+	if cmpRR(item, n.item) <= 0 {
 		return n.item, true
 	}
 
 	return n.right.largest(item)
 }
 
-// Supersets returns all intervals that covers the item in sorted order.
+// Supersets returns all intervals that cover the element.
+// The returned intervals are in sorted order.
 func (t Tree[T]) Supersets(item T) []T {
 	if t.root == nil {
 		return nil
@@ -474,14 +475,14 @@ func (n *node[T]) supersets(item T) (result []T) {
 	}
 
 	// nope, subtree has too small upper interval value
-	if cmpUpper(item, n.maxUpper.item) > 0 {
+	if cmpRR(item, n.maxUpper.item) > 0 {
 		return
 	}
 
 	// in-order traversal for supersets, recursive call to left tree
 	result = append(result, n.left.supersets(item)...)
 
-	// this n.item
+	// n.item covers item
 	if covers(n.item, item) {
 		result = append(result, n.item)
 	}
@@ -490,7 +491,8 @@ func (n *node[T]) supersets(item T) (result []T) {
 	return append(result, n.right.supersets(item)...)
 }
 
-// Subsets returns all intervals in tree that are covered by item in sorted order.
+// Subsets returns all intervals that are covered by item.
+// The returned intervals are in sorted order.
 func (t Tree[T]) Subsets(item T) []T {
 	if t.root == nil {
 		return nil
@@ -504,8 +506,8 @@ func (t Tree[T]) Subsets(item T) []T {
 	if m != nil {
 		result = []T{item}
 	}
-	result = append(result, r.subsets(item)...)
 
+	result = append(result, r.subsets(item)...)
 	return result
 }
 
@@ -515,20 +517,48 @@ func (n *node[T]) subsets(item T) (result []T) {
 	}
 
 	// nope, subtree has too big upper interval value
-	if cmpUpper(item, n.minUpper.item) < 0 {
+	if cmpRR(item, n.minUpper.item) < 0 {
 		return
 	}
 
 	// in-order traversal for subsets, recursive call to left tree
 	result = append(result, n.left.subsets(item)...)
 
-	// this n.item
-	if covers(n.item, item) {
+	// item covers n.item
+	if covers(item, n.item) {
 		result = append(result, n.item)
 	}
 
 	// recursive call to right tree
 	return append(result, n.right.subsets(item)...)
+}
+
+// Intersections returns all intervals that intersect the item.
+// The returned intervals are in sorted order.
+func (t Tree[T]) Intersections(item T) []T {
+	return t.root.intersections(item)
+}
+
+func (n *node[T]) intersections(item T) (result []T) {
+	if n == nil {
+		return
+	}
+
+	// nope, subtree has too small upper value for intersection
+	if cmpLR(item, n.maxUpper.item) > 0 {
+		return
+	}
+
+	// in-order traversal for intersects, recursive call to left tree
+	result = append(result, n.left.intersections(item)...)
+
+	// this n.item
+	if intersects(n.item, item) {
+		result = append(result, n.item)
+	}
+
+	// recursive call to right tree
+	return append(result, n.right.intersections(item)...)
 }
 
 // join combines two disjunct treaps. All nodes in treap n have keys <= that of treap m
@@ -579,21 +609,21 @@ func (n *node[T]) recalc() {
 	n.maxUpper = n
 
 	if n.right != nil {
-		if cmpUpper(n.minUpper.item, n.right.minUpper.item) > 0 {
+		if cmpRR(n.minUpper.item, n.right.minUpper.item) > 0 {
 			n.minUpper = n.right.minUpper
 		}
 
-		if cmpUpper(n.maxUpper.item, n.right.maxUpper.item) < 0 {
+		if cmpRR(n.maxUpper.item, n.right.maxUpper.item) < 0 {
 			n.maxUpper = n.right.maxUpper
 		}
 	}
 
 	if n.left != nil {
-		if cmpUpper(n.minUpper.item, n.left.minUpper.item) > 0 {
+		if cmpRR(n.minUpper.item, n.left.minUpper.item) > 0 {
 			n.minUpper = n.left.minUpper
 		}
 
-		if cmpUpper(n.maxUpper.item, n.left.maxUpper.item) < 0 {
+		if cmpRR(n.maxUpper.item, n.left.maxUpper.item) < 0 {
 			n.maxUpper = n.left.maxUpper
 		}
 	}
