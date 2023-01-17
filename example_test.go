@@ -23,6 +23,10 @@ func cmp(a, b uint) int {
 	return 1
 }
 
+func (p Ival) Compare(q Ival) (ll, rr, lr, rl int) {
+	return cmp(p[0], q[0]), cmp(p[1], q[1]), cmp(p[0], q[1]), cmp(p[1], q[0])
+}
+
 // example interval
 type Ival [2]uint
 

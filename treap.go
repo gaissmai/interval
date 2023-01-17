@@ -13,13 +13,6 @@ import (
 	"math/rand"
 )
 
-// Interface is the type constraint for generic interval items.
-// Compare the lower and upper points of two intervals.
-type Interface[T any] interface {
-	CompareLower(T) int
-	CompareUpper(T) int
-}
-
 // node is the basic recursive data structure.
 type node[T Interface[T]] struct {
 	// augment the treap for interval lookups
@@ -342,7 +335,7 @@ func (n *node[T]) shortest(item T) (result T, ok bool) {
 	}
 
 	// fast exit, node has too small max upper interval value (augmented value)
-	if item.CompareUpper(n.maxUpper.item) > 0 {
+	if cmpUpper(item, n.maxUpper.item) > 0 {
 		return
 	}
 
@@ -439,7 +432,7 @@ func (n *node[T]) largest(item T) (result T, ok bool) {
 	}
 
 	// fast exit, node has too small max upper interval value (augmented value)
-	if item.CompareUpper(n.maxUpper.item) > 0 {
+	if cmpUpper(item, n.maxUpper.item) > 0 {
 		return
 	}
 
@@ -449,7 +442,7 @@ func (n *node[T]) largest(item T) (result T, ok bool) {
 	}
 
 	// this item
-	if item.CompareUpper(n.item) <= 0 {
+	if cmpUpper(item, n.item) <= 0 {
 		return n.item, true
 	}
 
@@ -481,7 +474,7 @@ func (n *node[T]) supersets(item T) (result []T) {
 	}
 
 	// nope, subtree has too small upper interval value
-	if item.CompareUpper(n.maxUpper.item) > 0 {
+	if cmpUpper(item, n.maxUpper.item) > 0 {
 		return
 	}
 
@@ -489,7 +482,7 @@ func (n *node[T]) supersets(item T) (result []T) {
 	result = append(result, n.left.supersets(item)...)
 
 	// this item
-	if item.CompareUpper(n.item) <= 0 {
+	if cmpUpper(item, n.item) <= 0 {
 		result = append(result, n.item)
 	}
 
@@ -522,7 +515,7 @@ func (n *node[T]) subsets(item T) (result []T) {
 	}
 
 	// nope, subtree has too big upper interval value
-	if item.CompareUpper(n.minUpper.item) < 0 {
+	if cmpUpper(item, n.minUpper.item) < 0 {
 		return
 	}
 
@@ -530,7 +523,7 @@ func (n *node[T]) subsets(item T) (result []T) {
 	result = append(result, n.left.subsets(item)...)
 
 	// this item
-	if item.CompareUpper(n.item) >= 0 {
+	if cmpUpper(item, n.item) >= 0 {
 		result = append(result, n.item)
 	}
 
@@ -586,21 +579,21 @@ func (n *node[T]) recalc() {
 	n.maxUpper = n
 
 	if n.right != nil {
-		if n.minUpper.item.CompareUpper(n.right.minUpper.item) > 0 {
+		if cmpUpper(n.minUpper.item, n.right.minUpper.item) > 0 {
 			n.minUpper = n.right.minUpper
 		}
 
-		if n.maxUpper.item.CompareUpper(n.right.maxUpper.item) < 0 {
+		if cmpUpper(n.maxUpper.item, n.right.maxUpper.item) < 0 {
 			n.maxUpper = n.right.maxUpper
 		}
 	}
 
 	if n.left != nil {
-		if n.minUpper.item.CompareUpper(n.left.minUpper.item) > 0 {
+		if cmpUpper(n.minUpper.item, n.left.minUpper.item) > 0 {
 			n.minUpper = n.left.minUpper
 		}
 
-		if n.maxUpper.item.CompareUpper(n.left.maxUpper.item) < 0 {
+		if cmpUpper(n.maxUpper.item, n.left.maxUpper.item) < 0 {
 			n.maxUpper = n.left.maxUpper
 		}
 	}

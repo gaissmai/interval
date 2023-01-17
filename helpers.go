@@ -14,36 +14,33 @@ const (
 	reverse
 )
 
-// compare is a wrapper for CompareLower, CompareUpper with added functionality for superset sorting
+// compare is a wrapper for Compare with added functionality for superset sorting
 func compare[T Interface[T]](a, b T) int {
-	cmpLower := a.CompareLower(b)
-	cmpUpper := a.CompareUpper(b)
-
-	// lower interval value is the primary sort key
-	if cmpLower != 0 {
-		return cmpLower
+	ll, rr, _, _ := a.Compare(b)
+	switch {
+	case ll == 0:
+		return -rr
+	default:
+		return ll
 	}
-
-	// if lower interval values are equal, sort supersets to the left
-	if cmpUpper != 0 {
-		return -cmpUpper
-	}
-
-	// both, lower and upper are equal
-	return 0
 }
 
+func cmpUpper[T Interface[T]](a, b T) int {
+	_, rr, _, _ := a.Compare(b)
+	return rr
+}
+
+// traverse the BST in some order, call the visitor function for each node.
 // covers reports whether a truly covers b (not equal).
 func covers[T Interface[T]](a, b T) bool {
-	cmpLower := a.CompareLower(b)
-	cmpUpper := a.CompareUpper(b)
+	ll, rr, _, _ := a.Compare(b)
 
 	// equal
-	if cmpLower == 0 && cmpUpper == 0 {
+	if ll == 0 && rr == 0 {
 		return false
 	}
 
-	return cmpLower <= 0 && cmpUpper >= 0
+	return ll <= 0 && rr >= 0
 }
 
 // traverse the BST in some order, call the visitor function for each node.
