@@ -14,35 +14,6 @@ const (
 	reverse
 )
 
-// compare is a wrapper for Compare with added functionality for superset sorting
-func compare[T Interface[T]](a, b T) int {
-	ll, rr, _, _ := a.Compare(b)
-	switch {
-	case ll == 0:
-		return -rr
-	default:
-		return ll
-	}
-}
-
-func cmpUpper[T Interface[T]](a, b T) int {
-	_, rr, _, _ := a.Compare(b)
-	return rr
-}
-
-// traverse the BST in some order, call the visitor function for each node.
-// covers reports whether a truly covers b (not equal).
-func covers[T Interface[T]](a, b T) bool {
-	ll, rr, _, _ := a.Compare(b)
-
-	// equal
-	if ll == 0 && rr == 0 {
-		return false
-	}
-
-	return ll <= 0 && rr >= 0
-}
-
 // traverse the BST in some order, call the visitor function for each node.
 // Prematurely stop traversion if visitor function returns false.
 func (n *node[T]) traverse(order traverseOrder, depth int, visitFn func(n *node[T], depth int) bool) bool {

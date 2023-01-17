@@ -481,8 +481,8 @@ func (n *node[T]) supersets(item T) (result []T) {
 	// in-order traversal for supersets, recursive call to left tree
 	result = append(result, n.left.supersets(item)...)
 
-	// this item
-	if cmpUpper(item, n.item) <= 0 {
+	// this n.item
+	if covers(n.item, item) {
 		result = append(result, n.item)
 	}
 
@@ -522,8 +522,8 @@ func (n *node[T]) subsets(item T) (result []T) {
 	// in-order traversal for subsets, recursive call to left tree
 	result = append(result, n.left.subsets(item)...)
 
-	// this item
-	if cmpUpper(item, n.item) >= 0 {
+	// this n.item
+	if covers(n.item, item) {
 		result = append(result, n.item)
 	}
 

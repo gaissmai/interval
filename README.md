@@ -59,10 +59,9 @@ Especially useful is the paper "[Fast Set Operations Using Treaps]" by Guy E. Bl
 To apply this library to types of one-dimensional intervals, they must just implement the following small interface:
 
 ```go
-// Compare the lower and upper points of two intervals.
 type Interface[T any] interface {
-	CompareLower(T) int
-	CompareUpper(T) int
+	// Compare the left (l) and right (r) points of two intervals and returns four integers.
+	Compare(T) (ll, rr, lr, rl int)
 }
 ```
 
@@ -121,21 +120,21 @@ goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkInsert/Into1-8                       7343677           164 ns/op       128 B/op          2 allocs/op
-BenchmarkInsert/Into10-8                      2436724           603 ns/op       384 B/op          6 allocs/op
-BenchmarkInsert/Into100-8                     1397262           879 ns/op       704 B/op         11 allocs/op
-BenchmarkInsert/Into1_000-8                    964476          1224 ns/op       896 B/op         14 allocs/op
-BenchmarkInsert/Into10_000-8                   650233          1783 ns/op      1344 B/op         21 allocs/op
-BenchmarkInsert/Into100_000-8                  487922          2310 ns/op      1408 B/op         22 allocs/op
-BenchmarkInsert/Into1_000_000-8                408178          3608 ns/op      2048 B/op         32 allocs/op
+BenchmarkInsert/Into1-8                       7488871           189 ns/op       128 B/op          2 allocs/op
+BenchmarkInsert/Into10-8                      3276116           398 ns/op       256 B/op          4 allocs/op
+BenchmarkInsert/Into100-8                     1496136           951 ns/op       512 B/op          8 allocs/op
+BenchmarkInsert/Into1_000-8                    533299          1959 ns/op       960 B/op         15 allocs/op
+BenchmarkInsert/Into10_000-8                   727627          1398 ns/op       832 B/op         13 allocs/op
+BenchmarkInsert/Into100_000-8                  342596          3339 ns/op      1600 B/op         25 allocs/op
+BenchmarkInsert/Into1_000_000-8                396890          3681 ns/op      1728 B/op         27 allocs/op
 
-BenchmarkInsertMutable/Into1-8               10579569           118 ns/op        64 B/op          1 allocs/op
-BenchmarkInsertMutable/Into10-8               7502996           151 ns/op        64 B/op          1 allocs/op
-BenchmarkInsertMutable/Into100-8              5379123           225 ns/op        64 B/op          1 allocs/op
-BenchmarkInsertMutable/Into1_000-8            4460654           260 ns/op        64 B/op          1 allocs/op
-BenchmarkInsertMutable/Into10_000-8           2734352           424 ns/op        64 B/op          1 allocs/op
-BenchmarkInsertMutable/Into100_000-8          1757281           606 ns/op        64 B/op          1 allocs/op
-BenchmarkInsertMutable/Into1_000_000-8        1610089           746 ns/op        64 B/op          1 allocs/op
+BenchmarkInsertMutable/Into1-8               10415164           128 ns/op        64 B/op          1 allocs/op
+BenchmarkInsertMutable/Into10-8               5160836           245 ns/op        64 B/op          1 allocs/op
+BenchmarkInsertMutable/Into100-8              2707705           443 ns/op        64 B/op          1 allocs/op
+BenchmarkInsertMutable/Into1_000-8            1694250           723 ns/op        64 B/op          1 allocs/op
+BenchmarkInsertMutable/Into10_000-8           1204220           963 ns/op        64 B/op          1 allocs/op
+BenchmarkInsertMutable/Into100_000-8           966566          1249 ns/op        64 B/op          1 allocs/op
+BenchmarkInsertMutable/Into1_000_000-8         645523          1863 ns/op        64 B/op          1 allocs/op
 ```
 
 ### Delete
@@ -173,11 +172,11 @@ goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkShortest/In100-8            5974706       193.1 ns/op      0 B/op    0 allocs/op
-BenchmarkShortest/In1_000-8          4827165       248.6 ns/op      0 B/op    0 allocs/op
-BenchmarkShortest/In10_000-8         2477786       482.7 ns/op      0 B/op    0 allocs/op
-BenchmarkShortest/In100_000-8        4965262       242.0 ns/op      0 B/op    0 allocs/op
-BenchmarkShortest/In1_000_000-8      2285011       527.3 ns/op      0 B/op    0 allocs/op
+BenchmarkShortest/In100-8            6201722       183 ns/op        0 B/op    0 allocs/op
+BenchmarkShortest/In1_000-8          5257042       228 ns/op        0 B/op    0 allocs/op
+BenchmarkShortest/In10_000-8         2372185       503 ns/op        0 B/op    0 allocs/op
+BenchmarkShortest/In100_000-8        1509024       788 ns/op        0 B/op    0 allocs/op
+BenchmarkShortest/In1_000_000-8      1531923       773 ns/op        0 B/op    0 allocs/op
 ```
 The benchmark `Find()` for the exact match:
 
@@ -187,11 +186,11 @@ goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkFind/In100-8               17299449        63.9 ns/op      0 B/op    0 allocs/op
-BenchmarkFind/In1_000-8             17327350        69.4 ns/op      0 B/op    0 allocs/op
-BenchmarkFind/In10_000-8            12858908        90.2 ns/op      0 B/op    0 allocs/op
-BenchmarkFind/In100_000-8            4696676       256.7 ns/op      0 B/op    0 allocs/op
-BenchmarkFind/In1_000_000-8          7131028       163.1 ns/op      0 B/op    0 allocs/op
+BenchmarkFind/In100-8               17299449        63 ns/op      0 B/op    0 allocs/op
+BenchmarkFind/In1_000-8             17327350        69 ns/op      0 B/op    0 allocs/op
+BenchmarkFind/In10_000-8            12858908        90 ns/op      0 B/op    0 allocs/op
+BenchmarkFind/In100_000-8            4696676       256 ns/op      0 B/op    0 allocs/op
+BenchmarkFind/In1_000_000-8          7131028       163 ns/op      0 B/op    0 allocs/op
 ```
 
 The lookup `Largest()` needs a split() of the treap, which means memory allocations,
