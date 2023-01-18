@@ -23,8 +23,9 @@ Delete()    O(log(n))
 Shortest()  O(log(n))
 Largest()   O(log(n))
 
-Subsets()   O(k*log(n))
-Supersets() O(k*log(n))
+Subsets()       O(k*log(n))
+Supersets()     O(k*log(n))
+Intersections() O(k*log(n))
 ```
 
 The author is propably the first (in december 2022) using augmented treaps
