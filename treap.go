@@ -270,8 +270,8 @@ func (n *node[T]) split(key T, immutable bool) (left, mid, right *node[T]) {
 	}
 }
 
-// Find, searches for the interval in the tree and returns it as well as true,
-// otherwise the zero value for item and false.
+// Find, searches for the exact interval in the tree and returns it as well as true,
+// otherwise the zero value for item is returned and false.
 func (t Tree[T]) Find(item T) (result T, ok bool) {
 	n := t.root
 	for {
