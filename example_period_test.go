@@ -115,6 +115,28 @@ func ExampleTree_CoveredBy() {
 	// 7...9
 }
 
+func ExampleTree_Precedes_period() {
+	tree := interval.NewTree(periods...)
+	tree.Fprint(os.Stdout)
+
+	item := Ival{6, 6}
+	fmt.Printf("\nPrecedes item: %v\n", item)
+	for _, p := range tree.Precedes(item) {
+		fmt.Println(p)
+	}
+
+	// Output:
+	// ▼
+	// └─ 2...9
+	//    ├─ 3...5
+	//    │  └─ 3...4
+	//    └─ 7...9
+	//
+	// Precedes item: 6...6
+	// 3...5
+	// 3...4
+}
+
 func ExampleTree_Visit() {
 	tree := interval.NewTree(periods...)
 	fmt.Println("parent/child printing")

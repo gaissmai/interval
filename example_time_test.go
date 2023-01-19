@@ -9,15 +9,14 @@ import (
 	"github.com/gaissmai/interval"
 )
 
-// ############################################################################
-// little helpers
-
+// little helper
 func mkTval(i, j int, s string) Tval {
 	t1, _ := time.Parse("2006", strconv.Itoa(i))
 	t2, _ := time.Parse("2006", strconv.Itoa(j))
-	return Tval{t: [2]time.Time{t1, t2}, name: s}
+	return Tval{birth: t1, death: t2, name: s}
 }
 
+// little helper
 func cmpTime(a, b time.Time) int {
 	if a.Before(b) {
 		return -1
@@ -28,25 +27,24 @@ func cmpTime(a, b time.Time) int {
 	return 0
 }
 
-// ############################################################################
-
 // example time period interval
 type Tval struct {
-	t    [2]time.Time
-	name string
+	birth time.Time
+	death time.Time
+	name  string
 }
 
-// fmt.Stringer for formattting, not required for interval.Interface
+// String, implements fmt.Stringer for nice formattting, not required for interval.Interface
 func (p Tval) String() string {
-	return fmt.Sprintf("%s...%s (%s)", p.t[0].Format("2006"), p.t[1].Format("2006"), p.name)
+	return fmt.Sprintf("%s...%s (%s)", p.birth.Format("2006"), p.death.Format("2006"), p.name)
 }
 
-// implement the interval.Interface
+// Compare implements the interval.Interface
 func (p Tval) Compare(q Tval) (ll, rr, lr, rl int) {
-	return cmpTime(p.t[0], q.t[0]),
-		cmpTime(p.t[1], q.t[1]),
-		cmpTime(p.t[0], q.t[1]),
-		cmpTime(p.t[1], q.t[0])
+	return cmpTime(p.birth, q.birth),
+		cmpTime(p.death, q.death),
+		cmpTime(p.birth, q.death),
+		cmpTime(p.death, q.birth)
 }
 
 // example data
@@ -81,8 +79,14 @@ var physicists = []Tval{
 	mkTval(1831, 1879, "Maxwell"),
 }
 
-func ExampleInterface_time() {
+func ExampleTree_Precedes_time() {
 	tree := interval.NewTree(physicists...)
+	tree.Fprint(os.Stdout)
+
+	precedes := tree.Precedes(mkTval(1643, 1727, "Newton"))
+	tree = interval.NewTree(precedes...)
+
+	fmt.Println("\nPrecedes Newton:")
 	tree.Fprint(os.Stdout)
 
 	// Output:
@@ -96,6 +100,77 @@ func ExampleInterface_time() {
 	// ├─ 1643...1727 (Newton)
 	// ├─ 1700...1782 (Bernoulli)
 	// ├─ 1707...1783 (Euler)
+	// ├─ 1731...1810 (Cavendish)
+	// ├─ 1736...1813 (Lagrange)
+	// │  └─ 1736...1806 (Coulomb)
+	// ├─ 1745...1827 (Volta)
+	// │  └─ 1749...1827 (Laplace)
+	// ├─ 1768...1830 (Fourier)
+	// │  └─ 1773...1829 (Young)
+	// ├─ 1775...1836 (Ampère)
+	// ├─ 1777...1855 (Gauss)
+	// │  └─ 1788...1827 (Fresnel)
+	// ├─ 1791...1867 (Faraday)
+	// │  ├─ 1796...1832 (Carnot)
+	// │  └─ 1805...1865 (Hamilton)
+	// ├─ 1818...1889 (Joule)
+	// ├─ 1821...1894 (Helholtz)
+	// │  └─ 1822...1888 (Clausius)
+	// └─ 1824...1907 (Kelvin)
+	//    └─ 1824...1887 (Kirchhoff)
+	//       └─ 1831...1879 (Maxwell)
+	//
+	// Precedes Newton:
+	// ▼
+	// ├─ 1473...1543 (Kopernikus)
+	// ├─ 1544...1603 (Gilbert)
+	// └─ 1564...1642 (Galilei)
+	//    └─ 1571...1630 (Kepler)
+}
+
+func ExampleTree_PrecededBy_time() {
+	tree := interval.NewTree(physicists...)
+	tree.Fprint(os.Stdout)
+
+	precededBy := tree.PrecededBy(mkTval(1643, 1727, "Newton"))
+	tree = interval.NewTree(precededBy...)
+
+	fmt.Println("\nPrecededBy Newton:")
+	tree.Fprint(os.Stdout)
+
+	// Output:
+	// ▼
+	// ├─ 1473...1543 (Kopernikus)
+	// ├─ 1544...1603 (Gilbert)
+	// ├─ 1564...1642 (Galilei)
+	// │  └─ 1571...1630 (Kepler)
+	// ├─ 1623...1662 (Pascal)
+	// ├─ 1629...1695 (Huygens)
+	// ├─ 1643...1727 (Newton)
+	// ├─ 1700...1782 (Bernoulli)
+	// ├─ 1707...1783 (Euler)
+	// ├─ 1731...1810 (Cavendish)
+	// ├─ 1736...1813 (Lagrange)
+	// │  └─ 1736...1806 (Coulomb)
+	// ├─ 1745...1827 (Volta)
+	// │  └─ 1749...1827 (Laplace)
+	// ├─ 1768...1830 (Fourier)
+	// │  └─ 1773...1829 (Young)
+	// ├─ 1775...1836 (Ampère)
+	// ├─ 1777...1855 (Gauss)
+	// │  └─ 1788...1827 (Fresnel)
+	// ├─ 1791...1867 (Faraday)
+	// │  ├─ 1796...1832 (Carnot)
+	// │  └─ 1805...1865 (Hamilton)
+	// ├─ 1818...1889 (Joule)
+	// ├─ 1821...1894 (Helholtz)
+	// │  └─ 1822...1888 (Clausius)
+	// └─ 1824...1907 (Kelvin)
+	//    └─ 1824...1887 (Kirchhoff)
+	//       └─ 1831...1879 (Maxwell)
+	//
+	// PrecededBy Newton:
+	// ▼
 	// ├─ 1731...1810 (Cavendish)
 	// ├─ 1736...1813 (Lagrange)
 	// │  └─ 1736...1806 (Coulomb)

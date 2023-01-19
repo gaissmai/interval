@@ -203,8 +203,38 @@ func BenchmarkCovers(b *testing.B) {
 	}
 }
 
+func BenchmarkPrecededBy(b *testing.B) {
+	for m := 100; m <= 10_000; m *= 10 {
+		tree := interval.NewTree(generateIvals(m)...)
+		probe := generateIvals(1)[0]
+		name := "In" + intMap[m]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_ = tree.PrecededBy(probe)
+			}
+		})
+	}
+}
+
+func BenchmarkPrecedes(b *testing.B) {
+	for m := 100; m <= 10_000; m *= 10 {
+		tree := interval.NewTree(generateIvals(m)...)
+		probe := generateIvals(1)[0]
+		name := "In" + intMap[m]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_ = tree.Precedes(probe)
+			}
+		})
+	}
+}
+
 func BenchmarkIntersections(b *testing.B) {
-	for n := 100; n <= 100_000; n *= 10 {
+	for n := 100; n <= 10_000; n *= 10 {
 		tree := interval.NewTree(generateIvals(n)...)
 		probe := generateIvals(1)[0]
 		name := "In" + intMap[n]

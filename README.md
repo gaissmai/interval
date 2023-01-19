@@ -27,6 +27,8 @@ CoverSCP()     O(log(n))
 
 Covers()         O(k*log(n))
 CoveredBy()      O(k*log(n))
+Precedes()       O(k*log(n))
+PrecededBy()     O(k*log(n))
 Intersections()  O(k*log(n))
 ```
 
@@ -88,7 +90,11 @@ type Interface[T any] interface {
   func (t Tree[T]) Intersects(item T) bool
 
   func (t Tree[T]) Covers(item T) []T
+  func (t Tree[T]) Precedes(item T) []T
+
   func (t Tree[T]) CoveredBy(item T) []T
+  func (t Tree[T]) PrecededBy(item T) []T
+
   func (t Tree[T]) Intersections(item T) []T
 
   func (t Tree[T]) Clone() Tree[T]

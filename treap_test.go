@@ -116,6 +116,14 @@ func TestNewTree(t *testing.T) {
 		t.Errorf("Intersections(), got: %v, want: nil", s)
 	}
 
+	if s := zeroTree.Precedes(zeroItem); s != nil {
+		t.Errorf("Precedes(), got: %v, want: nil", s)
+	}
+
+	if s := zeroTree.PrecededBy(zeroItem); s != nil {
+		t.Errorf("PrecededBy(), got: %v, want: nil", s)
+	}
+
 	if s := zeroTree.Min(); s != zeroItem {
 		t.Errorf("Min(), got: %v, want: %v", s, zeroItem)
 	}
@@ -225,6 +233,16 @@ func TestImmutable(t *testing.T) {
 	_ = tree1.Intersections(item)
 	if !reflect.DeepEqual(tree1, tree2) {
 		t.Fatal("Intersections changed receiver")
+	}
+
+	_ = tree1.Precedes(item)
+	if !reflect.DeepEqual(tree1, tree2) {
+		t.Fatal("Precedes changed receiver")
+	}
+
+	_ = tree1.PrecededBy(item)
+	if !reflect.DeepEqual(tree1, tree2) {
+		t.Fatal("PrecededBy changed receiver")
 	}
 }
 

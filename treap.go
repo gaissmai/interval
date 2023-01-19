@@ -16,8 +16,8 @@ import (
 // node is the basic recursive data structure.
 type node[T Interface[T]] struct {
 	// augment the treap for interval lookups
-	minUpper *node[T] // pointer to node in subtree with min upper value, just needed for CoveredBy()
-	maxUpper *node[T] // pointer to node in subtree with max upper value, needed for all other lookups
+	minUpper *node[T] // pointer to node in subtree with min upper value
+	maxUpper *node[T] // pointer to node in subtree with max upper value
 	//
 	// base treap fields, in memory efficient order
 	left  *node[T]
@@ -583,6 +583,90 @@ func (n *node[T]) isections(item T) (result []T) {
 
 	// recursive call to right tree
 	return append(result, n.right.isections(item)...)
+}
+
+// Precedes returns all intervals that precedes the item.
+// The returned intervals are in sorted order.
+//
+//  example:
+//
+//   Item                       |-----------------|
+//
+//   A       |---------------------------------------|
+//   B                  |-----|
+//   C           |-----------------|
+//   D     |-----------------|
+//
+//  Precedes(item) => [D, B]
+//
+func (t Tree[T]) Precedes(item T) []T {
+	l, _, _ := t.root.split(item, true)
+	return l.precedes(item)
+}
+
+func (n *node[T]) precedes(item T) (result []T) {
+	if n == nil {
+		return
+	}
+
+	// nope, all intervals in this subtree intersects with item
+	if cmpLR(item, n.minUpper.item) <= 0 {
+		return
+	}
+
+	// recursive call to ...
+	result = append(result, n.left.precedes(item)...)
+
+	// this n.item
+	if !intersects(n.item, item) {
+		result = append(result, n.item)
+	}
+
+	// recursive call to right tree
+	return append(result, n.right.precedes(item)...)
+}
+
+// PrecededBy returns all intervals that are preceded by the item.
+// The returned intervals are in sorted order.
+//
+//  example:
+//
+//   Item       |-----|
+//
+//   A       |---------------------------------------|
+//   B                  |-----|
+//   C           |-----------------|
+//   D                    |-----------------|
+//
+//  PrecededBy(item) => [B, D]
+//
+func (t Tree[T]) PrecededBy(item T) []T {
+	_, _, r := t.root.split(item, true)
+	return r.precededby(item)
+}
+
+func (n *node[T]) precededby(item T) (result []T) {
+	if n == nil {
+		return
+	}
+
+	// skip some left wings
+	if n.left != nil {
+		if intersects(item, n.item) {
+			// skip left, proceed instead with left.right
+			result = append(result, n.left.right.precededby(item)...)
+		} else {
+			result = append(result, n.left.precededby(item)...)
+		}
+	}
+
+	// this n.item
+	if !intersects(n.item, item) {
+		result = append(result, n.item)
+	}
+
+	// recursive call to right
+	return append(result, n.right.precededby(item)...)
 }
 
 // join combines two disjunct treaps. All nodes in treap n have keys <= that of treap m
