@@ -111,6 +111,22 @@ func BenchmarkUnionMutable(b *testing.B) {
 	}
 }
 
+func BenchmarkIntersects(b *testing.B) {
+	for n := 1; n <= 1_000_000; n *= 10 {
+		ivals := generateIvals(n)
+		tree := interval.NewTree(ivals...)
+		probe := ivals[rand.Intn(len(ivals))]
+		name := "In" + intMap[n]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_ = tree.Intersects(probe)
+			}
+		})
+	}
+}
+
 func BenchmarkFind(b *testing.B) {
 	for n := 1; n <= 1_000_000; n *= 10 {
 		ivals := generateIvals(n)
@@ -127,7 +143,7 @@ func BenchmarkFind(b *testing.B) {
 	}
 }
 
-func BenchmarkShortest(b *testing.B) {
+func BenchmarkCoverLCP(b *testing.B) {
 	for n := 100; n <= 1_000_000; n *= 10 {
 		tree := interval.NewTree(generateIvals(n)...)
 		probe := generateIvals(1)[0]
@@ -136,13 +152,13 @@ func BenchmarkShortest(b *testing.B) {
 		b.Run(name, func(b *testing.B) {
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
-				_, _ = tree.Shortest(probe)
+				_, _ = tree.CoverLCP(probe)
 			}
 		})
 	}
 }
 
-func BenchmarkLargest(b *testing.B) {
+func BenchmarkCoverSCP(b *testing.B) {
 	for n := 100; n <= 1_000_000; n *= 10 {
 		tree := interval.NewTree(generateIvals(n)...)
 		probe := generateIvals(1)[0]
@@ -151,13 +167,13 @@ func BenchmarkLargest(b *testing.B) {
 		b.Run(name, func(b *testing.B) {
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
-				_, _ = tree.Largest(probe)
+				_, _ = tree.CoverSCP(probe)
 			}
 		})
 	}
 }
 
-func BenchmarkSubsets(b *testing.B) {
+func BenchmarkCoveredBy(b *testing.B) {
 	for n := 100; n <= 100_000; n *= 10 {
 		tree := interval.NewTree(generateIvals(n)...)
 		probe := generateIvals(1)[0]
@@ -166,13 +182,13 @@ func BenchmarkSubsets(b *testing.B) {
 		b.Run(name, func(b *testing.B) {
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
-				_ = tree.Subsets(probe)
+				_ = tree.CoveredBy(probe)
 			}
 		})
 	}
 }
 
-func BenchmarkSupersets(b *testing.B) {
+func BenchmarkCovers(b *testing.B) {
 	for n := 100; n <= 100_000; n *= 10 {
 		tree := interval.NewTree(generateIvals(n)...)
 		probe := generateIvals(1)[0]
@@ -181,7 +197,7 @@ func BenchmarkSupersets(b *testing.B) {
 		b.Run(name, func(b *testing.B) {
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
-				_ = tree.Supersets(probe)
+				_ = tree.Covers(probe)
 			}
 		})
 	}

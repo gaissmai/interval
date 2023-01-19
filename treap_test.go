@@ -84,12 +84,12 @@ func TestNewTree(t *testing.T) {
 		t.Errorf("Delete(), got: %v, want: false", ok)
 	}
 
-	if _, ok := zeroTree.Shortest(zeroItem); ok {
-		t.Errorf("Shortest(), got: %v, want: false", ok)
+	if _, ok := zeroTree.CoverLCP(zeroItem); ok {
+		t.Errorf("CoverLCP(), got: %v, want: false", ok)
 	}
 
-	if _, ok := zeroTree.Largest(zeroItem); ok {
-		t.Errorf("Largest(), got: %v, want: false", ok)
+	if _, ok := zeroTree.CoverSCP(zeroItem); ok {
+		t.Errorf("CoverSCP(), got: %v, want: false", ok)
 	}
 
 	if s := zeroTree.Insert(zeroItem); s.Size() != 1 {
@@ -100,12 +100,16 @@ func TestNewTree(t *testing.T) {
 		t.Errorf("Clone(), got: %v, want: 0", s.Size())
 	}
 
-	if s := zeroTree.Subsets(zeroItem); s != nil {
-		t.Errorf("Subsets(), got: %v, want: nil", s)
+	if s := zeroTree.CoveredBy(zeroItem); s != nil {
+		t.Errorf("CoveredBy(), got: %v, want: nil", s)
 	}
 
-	if s := zeroTree.Supersets(zeroItem); s != nil {
-		t.Errorf("Supersets(), got: %v, want: nil", s)
+	if s := zeroTree.Covers(zeroItem); s != nil {
+		t.Errorf("Covers(), got: %v, want: nil", s)
+	}
+
+	if s := zeroTree.Intersects(zeroItem); s != false {
+		t.Errorf("Intersectons(), got: %v, want: false", s)
 	}
 
 	if s := zeroTree.Intersections(zeroItem); s != nil {
@@ -198,24 +202,24 @@ func TestImmutable(t *testing.T) {
 		t.Fatal("Insert changed receiver")
 	}
 
-	_, _ = tree1.Shortest(item)
+	_, _ = tree1.CoverLCP(item)
 	if !reflect.DeepEqual(tree1, tree2) {
-		t.Fatal("Shortest changed receiver")
+		t.Fatal("CoverLCP changed receiver")
 	}
 
-	_, _ = tree1.Largest(item)
+	_, _ = tree1.CoverSCP(item)
 	if !reflect.DeepEqual(tree1, tree2) {
-		t.Fatal("Largest changed receiver")
+		t.Fatal("CoverSCP changed receiver")
 	}
 
-	_ = tree1.Subsets(item)
+	_ = tree1.CoveredBy(item)
 	if !reflect.DeepEqual(tree1, tree2) {
-		t.Fatal("Subsets changed receiver")
+		t.Fatal("Covered changed receiver")
 	}
 
-	_ = tree1.Supersets(item)
+	_ = tree1.CoveredBy(item)
 	if !reflect.DeepEqual(tree1, tree2) {
-		t.Fatal("Supersets changed receiver")
+		t.Fatal("Covers changed receiver")
 	}
 
 	_ = tree1.Intersections(item)
@@ -293,65 +297,65 @@ func TestLookup(t *testing.T) {
 		//     	 └─ 7...9
 
 		item := Ival{0, 5}
-		if got, _ := tree.Shortest(item); got != item {
-			t.Errorf("Shortest(%v) = %v, want %v", item, got, item)
+		if got, _ := tree.CoverLCP(item); got != item {
+			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, item)
 		}
 
 		item = Ival{5, 5}
 		want := Ival{4, 8}
-		if got, _ := tree.Shortest(item); got != want {
-			t.Errorf("Shortest(%v) = %v, want %v", item, got, want)
+		if got, _ := tree.CoverLCP(item); got != want {
+			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, want)
 		}
 
 		item = Ival{8, 9}
 		want = Ival{7, 9}
-		if got, _ := tree.Shortest(item); got != want {
-			t.Errorf("Shortest(%v) = %v, want %v", item, got, want)
+		if got, _ := tree.CoverLCP(item); got != want {
+			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, want)
 		}
 
 		item = Ival{3, 8}
 		want = Ival{2, 8}
-		if got, _ := tree.Shortest(item); got != want {
-			t.Errorf("Shortest(%v) = %v, want %v", item, got, want)
+		if got, _ := tree.CoverLCP(item); got != want {
+			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, want)
 		}
 
 		item = Ival{19, 55}
-		if got, ok := tree.Shortest(item); ok {
-			t.Errorf("Shortest(%v) = %v, want %v", item, got, !ok)
+		if got, ok := tree.CoverLCP(item); ok {
+			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, !ok)
 		}
 
 		item = Ival{0, 19}
-		if got, ok := tree.Shortest(item); ok {
-			t.Errorf("Shortest(%v) = %v, want %v", item, got, !ok)
+		if got, ok := tree.CoverLCP(item); ok {
+			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, !ok)
 		}
 
 		item = Ival{7, 7}
 		want = Ival{1, 8}
-		if got, _ := tree.Largest(item); got != want {
-			t.Errorf("Largest(%v) = %v, want %v", item, got, want)
+		if got, _ := tree.CoverSCP(item); got != want {
+			t.Errorf("CoverSCP(%v) = %v, want %v", item, got, want)
 		}
 
 		item = Ival{3, 6}
 		want = Ival{0, 6}
-		if got, _ := tree.Largest(item); got != want {
-			t.Errorf("Largest(%v) = %v, want %v", item, got, want)
+		if got, _ := tree.CoverSCP(item); got != want {
+			t.Errorf("CoverSCP(%v) = %v, want %v", item, got, want)
 		}
 
 		item = Ival{3, 7}
 		want = Ival{1, 8}
-		if got, _ := tree.Largest(item); got != want {
-			t.Errorf("Largest(%v) = %v, want %v", item, got, want)
+		if got, _ := tree.CoverSCP(item); got != want {
+			t.Errorf("CoverSCP(%v) = %v, want %v", item, got, want)
 		}
 
 		item = Ival{0, 7}
-		if _, ok := tree.Largest(item); ok {
-			t.Errorf("Largest(%v) = %v, want %v", item, ok, false)
+		if _, ok := tree.CoverSCP(item); ok {
+			t.Errorf("CoverSCP(%v) = %v, want %v", item, ok, false)
 		}
 
 	}
 }
 
-func TestSubsets(t *testing.T) {
+func TestCoveredBy(t *testing.T) {
 	t.Parallel()
 
 	tree := interval.NewTree(ps...)
@@ -372,32 +376,32 @@ func TestSubsets(t *testing.T) {
 
 	item := Ival{0, 6}
 	want = []Ival{{0, 6}, {0, 5}, {1, 5}, {1, 4}}
-	subsets := tree.Subsets(item)
+	covered := tree.CoveredBy(item)
 
-	if !reflect.DeepEqual(subsets, want) {
-		t.Fatalf("Subsets, got: %v, want: %v", subsets, want)
+	if !reflect.DeepEqual(covered, want) {
+		t.Fatalf("Covered, got: %v, want: %v", covered, want)
 	}
 
 	// ###
 	item = Ival{3, 6}
 	want = nil
-	subsets = tree.Subsets(item)
+	covered = tree.CoveredBy(item)
 
-	if !reflect.DeepEqual(subsets, want) {
-		t.Fatalf("Subsets, got: %v, want: %v", subsets, want)
+	if !reflect.DeepEqual(covered, want) {
+		t.Fatalf("Covered, got: %v, want: %v", covered, want)
 	}
 
 	// ###
 	item = Ival{3, 11}
 	want = []Ival{{4, 8}, {6, 7}, {7, 9}}
-	subsets = tree.Subsets(item)
+	covered = tree.CoveredBy(item)
 
-	if !reflect.DeepEqual(subsets, want) {
-		t.Fatalf("Subsets(%v), got: %+v, want: %+v", item, subsets, want)
+	if !reflect.DeepEqual(covered, want) {
+		t.Fatalf("Covered(%v), got: %+v, want: %+v", item, covered, want)
 	}
 }
 
-func TestSupersets(t *testing.T) {
+func TestCovers(t *testing.T) {
 	t.Parallel()
 
 	tree := interval.NewTree(ps...)
@@ -418,28 +422,79 @@ func TestSupersets(t *testing.T) {
 
 	item := Ival{0, 6}
 	want = []Ival{{0, 6}}
-	supersets := tree.Supersets(item)
+	covers := tree.Covers(item)
 
-	if !reflect.DeepEqual(supersets, want) {
-		t.Fatalf("Superset, got: %v, want: %v", supersets, want)
+	if !reflect.DeepEqual(covers, want) {
+		t.Fatalf("Covers(%v), got: %v, want: %v", item, covers, want)
 	}
 
 	// ###
 	item = Ival{3, 7}
 	want = []Ival{{1, 8}, {1, 7}, {2, 8}, {2, 7}}
-	supersets = tree.Supersets(item)
+	covers = tree.Covers(item)
 
-	if !reflect.DeepEqual(supersets, want) {
-		t.Fatalf("Superset, got: %v, want: %v", supersets, want)
+	if !reflect.DeepEqual(covers, want) {
+		t.Fatalf("Covers(%v), got: %v, want: %v", item, covers, want)
 	}
 
 	// ###
 	item = Ival{3, 11}
 	want = nil
-	supersets = tree.Supersets(item)
+	covers = tree.Covers(item)
 
-	if !reflect.DeepEqual(supersets, want) {
-		t.Fatalf("Supersets(%v), got: %+v, want: %+v", item, supersets, want)
+	if !reflect.DeepEqual(covers, want) {
+		t.Fatalf("Covers(%v), got: %+v, want: %+v", item, covers, want)
+	}
+}
+
+func TestIntersects(t *testing.T) {
+	t.Parallel()
+
+	tree := interval.NewTree(ps...)
+
+	//     	 ▼
+	//     	 ├─ 0...6
+	//     	 │  └─ 0...5
+	//     	 ├─ 1...8
+	//     	 │  ├─ 1...7
+	//     	 │  │  └─ 1...5
+	//     	 │  │     └─ 1...4
+	//     	 │  └─ 2...8
+	//     	 │     ├─ 2...7
+	//     	 │     └─ 4...8
+	//     	 │        └─ 6...7
+	//     	 └─ 7...9
+
+	item := Ival{7, 7}
+	want := true
+	got := tree.Intersects(item)
+
+	if got != want {
+		t.Fatalf("Intersects(%v), got: %v, want: %v", item, got, want)
+	}
+
+	item = Ival{9, 17}
+	want = true
+	got = tree.Intersects(item)
+
+	if got != want {
+		t.Fatalf("Intersects(%v), got: %v, want: %v", item, got, want)
+	}
+
+	item = Ival{1, 1}
+	want = true
+	got = tree.Intersects(item)
+
+	if got != want {
+		t.Fatalf("Intersects(%v), got: %v, want: %v", item, got, want)
+	}
+
+	item = Ival{10, 12}
+	want = false
+	got = tree.Intersects(item)
+
+	if got != want {
+		t.Fatalf("Intersects(%v), got: %v, want: %v", item, got, want)
 	}
 }
 
@@ -464,28 +519,28 @@ func TestIntersections(t *testing.T) {
 
 	item := Ival{7, 7}
 	want = []Ival{{1, 8}, {1, 7}, {2, 8}, {2, 7}, {4, 8}, {6, 7}, {7, 9}}
-	intersects := tree.Intersections(item)
+	intersections := tree.Intersections(item)
 
-	if !reflect.DeepEqual(intersects, want) {
-		t.Fatalf("Intersections(%v), got: %v, want: %v", item, intersects, want)
+	if !reflect.DeepEqual(intersections, want) {
+		t.Fatalf("Intersections(%v), got: %v, want: %v", item, intersections, want)
 	}
 
 	// ###
 	item = Ival{8, 10}
 	want = []Ival{{1, 8}, {2, 8}, {4, 8}, {7, 9}}
-	intersects = tree.Intersections(item)
+	intersections = tree.Intersections(item)
 
-	if !reflect.DeepEqual(intersects, want) {
-		t.Fatalf("Intersections(%v), got: %v, want: %v", item, intersects, want)
+	if !reflect.DeepEqual(intersections, want) {
+		t.Fatalf("Intersections(%v), got: %v, want: %v", item, intersections, want)
 	}
 
 	// ###
 	item = Ival{10, 15}
 	want = nil
-	intersects = tree.Intersections(item)
+	intersections = tree.Intersections(item)
 
-	if !reflect.DeepEqual(intersects, want) {
-		t.Fatalf("Intersections(%v), got: %+v, want: %+v", item, intersects, want)
+	if !reflect.DeepEqual(intersections, want) {
+		t.Fatalf("Intersections(%v), got: %+v, want: %+v", item, intersections, want)
 	}
 }
 
@@ -670,37 +725,37 @@ func TestMatch(t *testing.T) {
 				t.Fatalf("inserted item not found in tree: %v", probe)
 			}
 
-			shortest, short_ok := tree1.Shortest(probe)
-			largest, large_ok := tree1.Largest(probe)
+			shortest, short_ok := tree1.CoverLCP(probe)
+			largest, large_ok := tree1.CoverSCP(probe)
 
-			subsets := tree1.Subsets(probe)
-			supersets := tree1.Supersets(probe)
-			intersects := tree1.Intersections(probe)
+			covers := tree1.Covers(probe)
+			covered := tree1.CoveredBy(probe)
+			intersections := tree1.Intersections(probe)
 
 			// either both or neither
 			if short_ok && !large_ok || large_ok && !short_ok {
 				t.Fatalf("logic error: short_ok: %v, large_ok: %v", short_ok, large_ok)
 			}
 
-			lenSubsets := len(subsets)
-			lenSupersets := len(supersets)
-			lenIntersects := len(intersects)
+			lenCovers := len(covers)
+			lenCovered := len(covered)
+			lenIntersects := len(intersections)
 
-			if short_ok && lenSupersets == 0 {
-				t.Fatalf("logic error: shortest: %v, len(subsets): %v, len(supersets): %v", shortest, lenSubsets, lenSupersets)
+			if short_ok && lenCovers == 0 {
+				t.Fatalf("logic error: shortest: %v, len(covered): %v, len(covers): %v", shortest, lenCovered, lenCovers)
 			}
 
-			if short_ok && !equals(supersets[lenSupersets-1], shortest) {
-				t.Fatalf("logic error: supersets[last]: %v IS NOT shortest: %v", supersets[lenSupersets-1], shortest)
+			if short_ok && !equals(covers[lenCovers-1], shortest) {
+				t.Fatalf("logic error: covers[last]: %v IS NOT shortest: %v", covers[lenCovers-1], shortest)
 			}
 
-			if large_ok && !equals(supersets[0], largest) {
-				t.Fatalf("logic error: supersets[0]: %v IS NOT largest: %v", supersets[0], largest)
+			if large_ok && !equals(covers[0], largest) {
+				t.Fatalf("logic error: covers[0]: %v IS NOT largest: %v", covers[0], largest)
 			}
 
-			if lenIntersects < lenSubsets+lenSupersets {
-				t.Fatalf("logic error: len(intersections) MUST BE >= len(subsets) + len(supersets): %d IS NOT > %d + %d",
-					lenIntersects, lenSubsets, lenSupersets)
+			if lenIntersects < lenCovered+lenCovers {
+				t.Fatalf("logic error: len(intersections) MUST BE >= len(covered) + len(covers): %d IS NOT > %d + %d",
+					lenIntersects, lenCovered, lenCovers)
 			}
 		})
 	}
@@ -730,37 +785,37 @@ func TestMissing(t *testing.T) {
 				t.Fatalf("deleted item still found in tree: %v", probe)
 			}
 
-			shortest, short_ok := tree1.Shortest(probe)
-			largest, large_ok := tree1.Largest(probe)
+			shortest, short_ok := tree1.CoverLCP(probe)
+			largest, large_ok := tree1.CoverSCP(probe)
 
-			subsets := tree1.Subsets(probe)
-			supersets := tree1.Supersets(probe)
-			intersects := tree1.Intersections(probe)
+			covers := tree1.Covers(probe)
+			covered := tree1.CoveredBy(probe)
+			intersections := tree1.Intersections(probe)
 
 			// either both or neither
 			if short_ok && !large_ok || large_ok && !short_ok {
 				t.Fatalf("logic error: short_ok: %v, large_ok: %v", short_ok, large_ok)
 			}
 
-			lenSubsets := len(subsets)
-			lenSupersets := len(supersets)
-			lenIntersects := len(intersects)
+			lenCovers := len(covers)
+			lenCovered := len(covered)
+			lenIntersects := len(intersections)
 
-			if short_ok && lenSupersets == 0 {
-				t.Fatalf("logic error: shortest: %v, len(subsets): %v, len(supersets): %v", shortest, lenSubsets, lenSupersets)
+			if short_ok && lenCovers == 0 {
+				t.Fatalf("logic error: shortest: %v, len(covered): %v, len(covers): %v", shortest, lenCovered, lenCovers)
 			}
 
-			if short_ok && !equals(supersets[lenSupersets-1], shortest) {
-				t.Fatalf("logic error: supersets[last]: %v IS NOT shortest: %v", supersets[lenSupersets-1], shortest)
+			if short_ok && !equals(covers[lenCovers-1], shortest) {
+				t.Fatalf("logic error: covers[last]: %v IS NOT shortest: %v", covers[lenCovers-1], shortest)
 			}
 
-			if large_ok && !equals(supersets[0], largest) {
-				t.Fatalf("logic error: supersets[0]: %v IS NOT largest: %v", supersets[0], largest)
+			if large_ok && !equals(covers[0], largest) {
+				t.Fatalf("logic error: covers[0]: %v IS NOT largest: %v", covers[0], largest)
 			}
 
-			if lenIntersects < lenSubsets+lenSupersets {
-				t.Fatalf("logic error: len(intersections) MUST BE >= len(subsets) + len(supersets): %d IS NOT > %d + %d",
-					lenIntersects, lenSubsets, lenSupersets)
+			if lenIntersects < lenCovered+lenCovers {
+				t.Fatalf("logic error: len(intersections) MUST BE >= len(covered) + len(covers): %d IS NOT > %d + %d",
+					lenIntersects, lenCovered, lenCovers)
 			}
 		})
 	}

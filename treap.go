@@ -16,7 +16,7 @@ import (
 // node is the basic recursive data structure.
 type node[T Interface[T]] struct {
 	// augment the treap for interval lookups
-	minUpper *node[T] // pointer to node in subtree with min upper value, just needed for Subsets()
+	minUpper *node[T] // pointer to node in subtree with min upper value, just needed for CoveredBy()
 	maxUpper *node[T] // pointer to node in subtree with max upper value, needed for all other lookups
 	//
 	// base treap fields, in memory efficient order
@@ -291,19 +291,21 @@ func (t Tree[T]) Find(item T) (result T, ok bool) {
 	}
 }
 
-// Shortest returns the most specific interval that covers item. ok is true on
-// success.
+// CoverLCP returns the interval with the longest-common-prefix that covers the item.
+// If the item isn't covered by any interval, the zero value and false is returned.
 //
-// Returns the identical interval if it exists in the tree, or the interval at
-// which the item would be inserted.
+// The meaning of 'LCP' is best explained with examples:
 //
-// If the item would be inserted directly under root, the zero value and false
-// is returned.
+//   A, B and C covers the item, but B has longest-common-prefix (LCP) with item.
 //
-// If the interval tree consists of IP CIDRs, shortest is identical to the
-// longest-prefix-match.
+//   ------LCP--->|
 //
-// The meaning of 'shortest' is best explained with an example
+//   Item            |----|
+//
+//   A |------------------------|
+//   B            |---------------------------|
+//   C     |---------------|
+//   D              |--|
 //
 //     e.g. for this interval tree
 //
@@ -320,16 +322,39 @@ func (t Tree[T]) Find(item T) (result T, ok bool) {
 //     	 │        └─ 6...7
 //     	 └─ 7...9
 //
-//      tree.Shortest(ival{0,5}) returns ival{0,5}, true
-//      tree.Shortest(ival{3,6}) returns ival{2,7}, true
-//      tree.Shortest(ival{6,9}) returns ival{},    false
+//      tree.CoverLCP(ival{0,5}) returns ival{0,5}, true
+//      tree.CoverLCP(ival{3,6}) returns ival{2,7}, true
+//      tree.CoverLCP(ival{6,9}) returns ival{},    false
 //
-func (t Tree[T]) Shortest(item T) (result T, ok bool) {
-	return t.root.shortest(item)
+// If the interval tree consists of IP CIDRs, CoverLCP is identical to the
+// longest-prefix-match.
+//
+//  example: IP CIDRs as intervals
+//
+//     ▼
+//     ├─ 0.0.0.0/0
+//     │  ├─ 10.0.0.0/8
+//     │  │  ├─ 10.0.0.0/24
+//     │  │  └─ 10.0.1.0/24
+//     │  └─ 127.0.0.0/8
+//     │     └─ 127.0.0.1/32
+//     └─ ::/0
+//        ├─ ::1/128
+//        ├─ 2000::/3
+//        │  └─ 2001:db8::/32
+//        ├─ fc00::/7
+//        ├─ fe80::/10
+//        └─ ff00::/8
+//
+//      tree.CoverLCP("10.0.1.17/32")       returns "10.0.1.0/24", true
+//      tree.CoverLCP("2001:7c0:3100::/40") returns "2000::/3",    true
+//
+func (t Tree[T]) CoverLCP(item T) (result T, ok bool) {
+	return t.root.lcp(item)
 }
 
-// shortest can't use tree.split(key) because of allocations or mutations.
-func (n *node[T]) shortest(item T) (result T, ok bool) {
+// lcp
+func (n *node[T]) lcp(item T) (result T, ok bool) {
 	if n == nil {
 		return
 	}
@@ -342,7 +367,7 @@ func (n *node[T]) shortest(item T) (result T, ok bool) {
 	cmp := compare(n.item, item)
 	switch {
 	case cmp > 0:
-		return n.left.shortest(item)
+		return n.left.lcp(item)
 	case cmp == 0:
 		// equality is always the shortest containing hull
 		return n.item, true
@@ -354,7 +379,7 @@ func (n *node[T]) shortest(item T) (result T, ok bool) {
 
 		// rec-descent with n.right
 		if compare(n.right.item, item) <= 0 {
-			result, ok = n.right.shortest(item)
+			result, ok = n.right.lcp(item)
 			if ok {
 				return result, ok
 			}
@@ -364,7 +389,7 @@ func (n *node[T]) shortest(item T) (result T, ok bool) {
 		// take this path only if n.right.left.item > t.item (this node)
 		if n.right.left != nil && compare(n.right.left.item, n.item) > 0 {
 			// rec-descent with n.right.left
-			result, ok = n.right.left.shortest(item)
+			result, ok = n.right.left.lcp(item)
 			if ok {
 				return result, ok
 			}
@@ -378,13 +403,24 @@ func (n *node[T]) shortest(item T) (result T, ok bool) {
 	}
 
 	// rec-descent with t.left
-	return n.left.shortest(item)
+	return n.left.lcp(item)
 }
 
-// Largest returns the largest interval (top-down in tree) that covers item.
-// ok is true on success, otherwise the item isn't contained in the tree.
+// CoverSCP returns the interval with the shortest-common-prefix that covers the item.
+// If the item isn't covered by any interval, the zero value and false is returned.
 //
-// The meaning of 'largest' is best explained with an example
+// The meaning of 'SCP' is best explained with examples:
+//
+//   A, B and C covers the item, but A has shortest-common-prefix (SCP) with item.
+//
+//   --SCP-->|
+//
+//   Item                  |----|
+//
+//   A       |------------------------|
+//   B                  |---------------------------|
+//   C           |---------------|
+//   D     |-----------------|
 //
 //	e.g. for this interval tree
 //
@@ -401,32 +437,17 @@ func (n *node[T]) shortest(item T) (result T, ok bool) {
 //		 │        └─ 6...7
 //		 └─ 7...9
 //
-//	 tree.Largest(ival{0,6}) returns ival{0,6}, true
-//	 tree.Largest(ival{0,5}) returns ival{0,6}, true
-//	 tree.Largest(ival{3,7}) returns ival{1,8}, true
-//	 tree.Largest(ival{6,9}) returns ival{},    false
+//	 tree.CoverSCP(ival{0,6}) returns ival{0,6}, true
+//	 tree.CoverSCP(ival{0,5}) returns ival{0,6}, true
+//	 tree.CoverSCP(ival{3,7}) returns ival{1,8}, true
+//	 tree.CoverSCP(ival{6,9}) returns ival{},    false
 //
-// If the item is not covered by any interval in the tree,
-// the zero value and false is returned.
-//
-func (t Tree[T]) Largest(item T) (result T, ok bool) {
-	if t.root == nil {
-		return
-	}
-
-	// algo with tree.split(), allocations allowed
-	l, m, _ := t.root.split(item, true)
-	result, ok = l.largest(item)
-
-	// if key is in treap and no other largest found...
-	if !ok && m != nil {
-		return m.item, true
-	}
-
-	return
+func (t Tree[T]) CoverSCP(item T) (result T, ok bool) {
+	return t.root.scp(item)
 }
 
-func (n *node[T]) largest(item T) (result T, ok bool) {
+// scp
+func (n *node[T]) scp(item T) (result T, ok bool) {
 	if n == nil {
 		return
 	}
@@ -437,39 +458,26 @@ func (n *node[T]) largest(item T) (result T, ok bool) {
 	}
 
 	// rec-descent left subtree
-	if result, ok = n.left.largest(item); ok {
+	if result, ok = n.left.scp(item); ok {
 		return result, ok
 	}
 
 	// this item
-	if cmpRR(item, n.item) <= 0 {
+	if covers(n.item, item) {
 		return n.item, true
 	}
 
-	return n.right.largest(item)
+	return n.right.scp(item)
 }
 
-// Supersets returns all intervals that cover the element.
+// Covers returns all intervals that cover the item.
 // The returned intervals are in sorted order.
-func (t Tree[T]) Supersets(item T) []T {
-	if t.root == nil {
-		return nil
-	}
-	var result []T
-
-	// supersets algo with tree.split(), allocations allowed
-	l, m, _ := t.root.split(item, true)
-	result = l.supersets(item)
-
-	// if key is in treap, add key to result set
-	if m != nil {
-		result = append(result, item)
-	}
-
-	return result
+func (t Tree[T]) Covers(item T) []T {
+	return t.root.covers(item)
 }
 
-func (n *node[T]) supersets(item T) (result []T) {
+// covers
+func (n *node[T]) covers(item T) (result []T) {
 	if n == nil {
 		return
 	}
@@ -480,7 +488,7 @@ func (n *node[T]) supersets(item T) (result []T) {
 	}
 
 	// in-order traversal for supersets, recursive call to left tree
-	result = append(result, n.left.supersets(item)...)
+	result = append(result, n.left.covers(item)...)
 
 	// n.item covers item
 	if covers(n.item, item) {
@@ -488,30 +496,17 @@ func (n *node[T]) supersets(item T) (result []T) {
 	}
 
 	// recursive call to right tree
-	return append(result, n.right.supersets(item)...)
+	return append(result, n.right.covers(item)...)
 }
 
-// Subsets returns all intervals that are covered by item.
+// CoveredBy returns all intervals that are covered by item.
 // The returned intervals are in sorted order.
-func (t Tree[T]) Subsets(item T) []T {
-	if t.root == nil {
-		return nil
-	}
-	var result []T
-
-	// subsets algo with tree.split(), allocations allowed
-	_, m, r := t.root.split(item, true)
-
-	// if key is in treap, start with key in result
-	if m != nil {
-		result = []T{item}
-	}
-
-	result = append(result, r.subsets(item)...)
-	return result
+func (t Tree[T]) CoveredBy(item T) []T {
+	return t.root.coveredBy(item)
 }
 
-func (n *node[T]) subsets(item T) (result []T) {
+// coveredBy
+func (n *node[T]) coveredBy(item T) (result []T) {
 	if n == nil {
 		return
 	}
@@ -522,7 +517,7 @@ func (n *node[T]) subsets(item T) (result []T) {
 	}
 
 	// in-order traversal for subsets, recursive call to left tree
-	result = append(result, n.left.subsets(item)...)
+	result = append(result, n.left.coveredBy(item)...)
 
 	// item covers n.item
 	if covers(item, n.item) {
@@ -530,16 +525,45 @@ func (n *node[T]) subsets(item T) (result []T) {
 	}
 
 	// recursive call to right tree
-	return append(result, n.right.subsets(item)...)
+	return append(result, n.right.coveredBy(item)...)
 }
 
-// Intersections returns all intervals that intersect the item.
+// Intersects returns true is any interval intersects item.
+func (t Tree[T]) Intersects(item T) bool {
+	return t.root.intersects(item)
+}
+
+func (n *node[T]) intersects(item T) bool {
+	if n == nil {
+		return false
+	}
+
+	// nope, subtree has too small upper value for intersection
+	if cmpLR(item, n.maxUpper.item) > 0 {
+		return false
+	}
+
+	// recursive call to left tree
+	if n.left.intersects(item) {
+		return true
+	}
+
+	// this n.item
+	if intersects(n.item, item) {
+		return true
+	}
+
+	// recursive call to right tree
+	return n.right.intersects(item)
+}
+
+// Intersections returns all intervals that intersect with item.
 // The returned intervals are in sorted order.
 func (t Tree[T]) Intersections(item T) []T {
-	return t.root.intersections(item)
+	return t.root.isections(item)
 }
 
-func (n *node[T]) intersections(item T) (result []T) {
+func (n *node[T]) isections(item T) (result []T) {
 	if n == nil {
 		return
 	}
@@ -549,8 +573,8 @@ func (n *node[T]) intersections(item T) (result []T) {
 		return
 	}
 
-	// in-order traversal for intersects, recursive call to left tree
-	result = append(result, n.left.intersections(item)...)
+	// in-order traversal for intersections, recursive call to left tree
+	result = append(result, n.left.isections(item)...)
 
 	// this n.item
 	if intersects(n.item, item) {
@@ -558,7 +582,7 @@ func (n *node[T]) intersections(item T) (result []T) {
 	}
 
 	// recursive call to right tree
-	return append(result, n.right.intersections(item)...)
+	return append(result, n.right.isections(item)...)
 }
 
 // join combines two disjunct treaps. All nodes in treap n have keys <= that of treap m

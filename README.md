@@ -18,14 +18,16 @@ All nodes are read-only after creation, allowing concurrent readers to operate s
 The time complexity is **O(log(n))** or **O(k*log(n))** where k is the number of returned items, the space complexity is **O(n)**.
 
 ```
-Insert()    O(log(n))
-Delete()    O(log(n))
-Shortest()  O(log(n))
-Largest()   O(log(n))
+Insert()       O(log(n))
+Delete()       O(log(n))
+Find()         O(log(n))
+Intersects()   O(log(n))
+CoverLCP()     O(log(n))
+CoverSCP()     O(log(n))
 
-Subsets()       O(k*log(n))
-Supersets()     O(k*log(n))
-Intersections() O(k*log(n))
+Covers()         O(k*log(n))
+CoveredBy()      O(k*log(n))
+Intersections()  O(k*log(n))
 ```
 
 The author is propably the first (in december 2022) using augmented treaps
@@ -61,8 +63,8 @@ To apply this library to types of one-dimensional intervals, they must just impl
 
 ```go
 type Interface[T any] interface {
-	// Compare the left (l) and right (r) points of two intervals and returns four integers with values (-1, 0, +1).
-	Compare(T) (ll, rr, lr, rl int)
+    // Compare the left (l) and right (r) points of two intervals and returns four integers with values (-1, 0, +1).
+    Compare(T) (ll, rr, lr, rl int)
 }
 ```
 
@@ -81,11 +83,12 @@ type Interface[T any] interface {
   func (t *Tree[T]) DeleteMutable(item T) bool
 
   func (t Tree[T]) Find(item T) (result T, ok bool)
-  func (t Tree[T]) Shortest(item T) (result T, ok bool)
-  func (t Tree[T]) Largest(item T) (result T, ok bool)
+  func (t Tree[T]) CoverLPM(item T) (result T, ok bool)
+  func (t Tree[T]) CoverSPM(item T) (result T, ok bool)
+  func (t Tree[T]) Intersects(item T) bool
 
-  func (t Tree[T]) Subsets(item T) []T
-  func (t Tree[T]) Supersets(item T) []T
+  func (t Tree[T]) Covers(item T) []T
+  func (t Tree[T]) CoveredBy(item T) []T
   func (t Tree[T]) Intersections(item T) []T
 
   func (t Tree[T]) Clone() Tree[T]
@@ -166,21 +169,55 @@ BenchmarkDeleteMutable/DeleteFrom1_000_000-8    647199          1828 ns/op      
 
 ### Lookups
 
-The benchmark for `Shortest()` (a.k.a. longest-prefix-match if the interval is an IP CIDR prefix) is very promising:
+The benchmark for `CoverLCP()` (a.k.a. longest-prefix-match if the interval is an IP CIDR prefix) is very promising:
 
 ```
-$ go test -benchmem -bench='Shortest'
+$ go test -benchmem -bench='CoverLCP'
 goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkShortest/In100-8            6201722       183 ns/op        0 B/op    0 allocs/op
-BenchmarkShortest/In1_000-8          5257042       228 ns/op        0 B/op    0 allocs/op
-BenchmarkShortest/In10_000-8         2372185       503 ns/op        0 B/op    0 allocs/op
-BenchmarkShortest/In100_000-8        1509024       788 ns/op        0 B/op    0 allocs/op
-BenchmarkShortest/In1_000_000-8      1531923       773 ns/op        0 B/op    0 allocs/op
+BenchmarkCoverLCP/In100-8            4833073       239 ns/op        0 B/op    0 allocs/op
+BenchmarkCoverLCP/In1_000-8          3714054       323 ns/op        0 B/op    0 allocs/op
+BenchmarkCoverLCP/In10_000-8         1897353       630 ns/op        0 B/op    0 allocs/op
+BenchmarkCoverLCP/In100_000-8        1533745       782 ns/op        0 B/op    0 allocs/op
+BenchmarkCoverLCP/In1_000_000-8      1732171       693 ns/op        0 B/op    0 allocs/op
 ```
-The benchmark `Find()` for the exact match:
+
+... also for `CoverSCP()`:
+
+
+```
+$ go test -benchmem -bench='CoverSCP'
+goos: linux
+goarch: amd64
+pkg: github.com/gaissmai/interval
+cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+BenchmarkCoverSCP/In100-8           11576743        95 ns/op        0 B/op    0 allocs/op
+BenchmarkCoverSCP/In1_000-8         10032699       114 ns/op        0 B/op    0 allocs/op
+BenchmarkCoverSCP/In10_000-8         6087580       196 ns/op        0 B/op    0 allocs/op
+BenchmarkCoverSCP/In100_000-8        5949422       202 ns/op        0 B/op    0 allocs/op
+BenchmarkCoverSCP/In1_000_000-8      4775067       250 ns/op        0 B/op    0 allocs/op
+```
+
+... and for `Intersects()`:
+
+```
+$ go test -benchmem -bench='Intersects'
+goos: linux
+goarch: amd64
+pkg: github.com/gaissmai/interval
+cpu: Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz
+BenchmarkIntersects/In1-4           58757540        19 ns/op        0 B/op    0 allocs/op
+BenchmarkIntersects/In10-4          27267051        40 ns/op        0 B/op    0 allocs/op
+BenchmarkIntersects/In100-4         17559418        60 ns/op        0 B/op    0 allocs/op
+BenchmarkIntersects/In1_000-4       10471032       120 ns/op        0 B/op    0 allocs/op
+BenchmarkIntersects/In10_000-4       6546705       175 ns/op        0 B/op    0 allocs/op
+BenchmarkIntersects/In100_000-4      7483621       191 ns/op        0 B/op    0 allocs/op
+BenchmarkIntersects/In1_000_000-4    8134428       149 ns/op        0 B/op    0 allocs/op
+```
+
+... and for Find(), the exact match:
 
 ```
 $ go test -benchmem -bench='Find'
@@ -193,20 +230,4 @@ BenchmarkFind/In1_000-8             17327350        69 ns/op      0 B/op    0 al
 BenchmarkFind/In10_000-8            12858908        90 ns/op      0 B/op    0 allocs/op
 BenchmarkFind/In100_000-8            4696676       256 ns/op      0 B/op    0 allocs/op
 BenchmarkFind/In1_000_000-8          7131028       163 ns/op      0 B/op    0 allocs/op
-```
-
-The lookup `Largest()` needs a split() of the treap, which means memory allocations,
-the same is true for `Supersets()` and `Subsets()`:
-
-```
-$ go test -benchmem -bench='Largest'
-goos: linux
-goarch: amd64
-pkg: github.com/gaissmai/interval
-cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkLargest/In100-8             1184683         991 ns/op      768 B/op      12 allocs/op
-BenchmarkLargest/In1_000-8           1235576        1032 ns/op      704 B/op      11 allocs/op
-BenchmarkLargest/In10_000-8           574849        1965 ns/op     1216 B/op      19 allocs/op
-BenchmarkLargest/In100_000-8          396973        3079 ns/op     1728 B/op      27 allocs/op
-BenchmarkLargest/In1_000_000-8        540117        2488 ns/op     1344 B/op      21 allocs/op
 ```
