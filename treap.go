@@ -528,7 +528,7 @@ func (n *node[T]) coveredBy(item T) (result []T) {
 	return append(result, n.right.coveredBy(item)...)
 }
 
-// Intersects returns true is any interval intersects item.
+// Intersects returns true if any interval intersects item.
 func (t Tree[T]) Intersects(item T) bool {
 	return t.root.intersects(item)
 }
