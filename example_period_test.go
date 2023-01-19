@@ -69,14 +69,13 @@ func ExampleTree_Max() {
 	//7...9
 }
 
-/*
-func ExampleTree_Supersets() {
+func ExampleTree_Covers() {
 	tree := interval.NewTree(periods...)
 	tree.Fprint(os.Stdout)
 
-	item := period.Ival{3, 4}
-	fmt.Printf("\nSupersets for item: %v\n", item)
-	for _, p := range tree.Supersets(item) {
+	item := Ival{3, 4}
+	fmt.Printf("\nCovers for item: %v\n", item)
+	for _, p := range tree.Covers(item) {
 		fmt.Println(p)
 	}
 
@@ -87,19 +86,19 @@ func ExampleTree_Supersets() {
 	//    │  └─ 3...4
 	//    └─ 7...9
 	//
-	// Supersets for item: 3...4
+	// Covers for item: 3...4
 	// 2...9
 	// 3...5
 	// 3...4
 }
 
-func ExampleTree_Subsets() {
+func ExampleTree_CoveredBy() {
 	tree := interval.NewTree(periods...)
 	tree.Fprint(os.Stdout)
 
-	item := period.Ival{3, 10}
-	fmt.Printf("\nSubsets for item: %v\n", item)
-	for _, p := range tree.Subsets(item) {
+	item := Ival{3, 10}
+	fmt.Printf("\nCoveredBy item: %v\n", item)
+	for _, p := range tree.CoveredBy(item) {
 		fmt.Println(p)
 	}
 
@@ -110,7 +109,7 @@ func ExampleTree_Subsets() {
 	//    │  └─ 3...4
 	//    └─ 7...9
 	//
-	// Subsets for item: 3...10
+	// CoveredBy item: 3...10
 	// 3...5
 	// 3...4
 	// 7...9
@@ -121,9 +120,9 @@ func ExampleTree_Visit() {
 	fmt.Println("parent/child printing")
 	tree.Fprint(os.Stdout)
 
-	start := period.Ival{3, 5}
-	stop := period.Ival{7, 9}
-	visitFn := func(item period.Ival) bool {
+	start := Ival{3, 5}
+	stop := Ival{7, 9}
+	visitFn := func(item Ival) bool {
 		fmt.Printf("%v\n", item)
 		return true
 	}
@@ -150,4 +149,3 @@ func ExampleTree_Visit() {
 	// 3...4
 	// 3...5
 }
-*/
