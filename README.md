@@ -83,8 +83,8 @@ type Interface[T any] interface {
   func (t *Tree[T]) DeleteMutable(item T) bool
 
   func (t Tree[T]) Find(item T) (result T, ok bool)
-  func (t Tree[T]) CoverLPM(item T) (result T, ok bool)
-  func (t Tree[T]) CoverSPM(item T) (result T, ok bool)
+  func (t Tree[T]) CoverLCP(item T) (result T, ok bool)
+  func (t Tree[T]) CoverSCP(item T) (result T, ok bool)
   func (t Tree[T]) Intersects(item T) bool
 
   func (t Tree[T]) Covers(item T) []T
