@@ -562,6 +562,98 @@ func TestIntersections(t *testing.T) {
 	}
 }
 
+func TestPrecedes(t *testing.T) {
+	t.Parallel()
+
+	tree := interval.NewTree(ps...)
+	var want []Ival
+
+	//     	 ▼
+	//     	 ├─ 0...6
+	//     	 │  └─ 0...5
+	//     	 ├─ 1...8
+	//     	 │  ├─ 1...7
+	//     	 │  │  └─ 1...5
+	//     	 │  │     └─ 1...4
+	//     	 │  └─ 2...8
+	//     	 │     ├─ 2...7
+	//     	 │     └─ 4...8
+	//     	 │        └─ 6...7
+	//     	 └─ 7...9
+
+	item := Ival{7, 7}
+	want = []Ival{{0, 6}, {0, 5}, {1, 5}, {1, 4}}
+	precedes := tree.Precedes(item)
+
+	if !reflect.DeepEqual(precedes, want) {
+		t.Fatalf("Precedes(%v), got: %v, want: %v", item, precedes, want)
+	}
+
+	// ###
+	item = Ival{5, 10}
+	want = []Ival{{1, 4}}
+	precedes = tree.Precedes(item)
+
+	if !reflect.DeepEqual(precedes, want) {
+		t.Fatalf("Precedes(%v), got: %v, want: %v", item, precedes, want)
+	}
+
+	// ###
+	item = Ival{0, 9}
+	want = nil
+	precedes = tree.Precedes(item)
+
+	if !reflect.DeepEqual(precedes, want) {
+		t.Fatalf("Precedes(%v), got: %+v, want: %+v", item, precedes, want)
+	}
+}
+
+func TestPrecededBy(t *testing.T) {
+	t.Parallel()
+
+	tree := interval.NewTree(ps...)
+	var want []Ival
+
+	//     	 ▼
+	//     	 ├─ 0...6
+	//     	 │  └─ 0...5
+	//     	 ├─ 1...8
+	//     	 │  ├─ 1...7
+	//     	 │  │  └─ 1...5
+	//     	 │  │     └─ 1...4
+	//     	 │  └─ 2...8
+	//     	 │     ├─ 2...7
+	//     	 │     └─ 4...8
+	//     	 │        └─ 6...7
+	//     	 └─ 7...9
+
+	item := Ival{4, 4}
+	want = []Ival{{6, 7}, {7, 9}}
+	precedes := tree.PrecededBy(item)
+
+	if !reflect.DeepEqual(precedes, want) {
+		t.Fatalf("PrecededBy(%v), got: %v, want: %v", item, precedes, want)
+	}
+
+	// ###
+	item = Ival{1, 2}
+	want = []Ival{{4, 8}, {6, 7}, {7, 9}}
+	precedes = tree.PrecededBy(item)
+
+	if !reflect.DeepEqual(precedes, want) {
+		t.Fatalf("PrecededBy(%v), got: %v, want: %v", item, precedes, want)
+	}
+
+	// ###
+	item = Ival{0, 7}
+	want = nil
+	precedes = tree.PrecededBy(item)
+
+	if !reflect.DeepEqual(precedes, want) {
+		t.Fatalf("PrecededBy(%v), got: %+v, want: %+v", item, precedes, want)
+	}
+}
+
 func TestVisit(t *testing.T) {
 	t.Parallel()
 	tree := interval.NewTree(ps...)
