@@ -103,7 +103,6 @@ type Interface[T any] interface {
   func (t Tree[T]) Visit(start, stop T, visitFn func(item T) bool)
   func (t Tree[T]) Fprint(w io.Writer) error
   func (t Tree[T]) String() string
-  func (t Tree[T]) Size() int
   func (t Tree[T]) Min() (min T)
   func (t Tree[T]) Max() (max T)
 ```

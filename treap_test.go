@@ -92,12 +92,12 @@ func TestNewTree(t *testing.T) {
 		t.Errorf("CoverSCP(), got: %v, want: false", ok)
 	}
 
-	if s := zeroTree.Insert(zeroItem); s.Size() != 1 {
-		t.Errorf("Insert(), got: %v, want: 1", s.Size())
+	if size, _, _, _ := zeroTree.Insert(zeroItem).Statistics(); size != 1 {
+		t.Errorf("Insert(), got: %v, want: 1", size)
 	}
 
-	if s := zeroTree.Clone(); s.Size() != 0 {
-		t.Errorf("Clone(), got: %v, want: 0", s.Size())
+	if size, _, _, _ := zeroTree.Clone().Statistics(); size != 0 {
+		t.Errorf("Clone(), got: %v, want: 0", size)
 	}
 
 	if s := zeroTree.CoveredBy(zeroItem); s != nil {
@@ -172,8 +172,8 @@ func TestTreeWithDups(t *testing.T) {
 	}
 
 	tree := interval.NewTree(is...)
-	if s := tree.Size(); s != 5 {
-		t.Errorf("Size() = %v, want 5", s)
+	if size, _, _, _ := tree.Statistics(); size != 5 {
+		t.Errorf("Size() = %v, want 5", size)
 	}
 
 	asStr := `▼
@@ -676,7 +676,7 @@ func TestVisit(t *testing.T) {
 		return true
 	})
 
-	want = tree.Size()
+	want, _, _, _ = tree.Statistics()
 	if len(collect) != want {
 		t.Fatalf("Visit() descending, want: %d  got: %v, %v", want, len(collect), collect)
 	}
@@ -790,7 +790,11 @@ func TestStatistics(t *testing.T) {
 		t.Run(count, func(t *testing.T) {
 			tree := interval.NewTree(generateIvals(n)...)
 
-			_, averageDepth, deviation := tree.Statistics()
+			size, _, averageDepth, deviation := tree.Statistics()
+			if size != n {
+				t.Fatalf("size, got: %d, want: %d", size, n)
+			}
+
 			t.Logf("stats: n=%d, averageDepth=%.4g, deviation=%.4g\n", n, averageDepth, deviation)
 
 			maxAverageDepth := 2 * math.Log2(float64(n))

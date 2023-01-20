@@ -298,13 +298,14 @@ func (n *node[T]) pcmForNode(pcm parentChildsMap[T]) parentChildsMap[T] {
 // 0.x.y. In future versions this will be removed without increasing the main
 // semantic version, so please do not rely on it for now.
 //
-func (t Tree[T]) Statistics() (maxDepth int, average, deviation float64) {
+func (t Tree[T]) Statistics() (size int, maxDepth int, average, deviation float64) {
 	// key is depth, value is the sum of nodes with this depth
 	depths := make(map[int]int)
 
-	// get the depths
+	// get the depths, sum up the size
 	t.root.traverse(inorder, 0, func(n *node[T], depth int) bool {
 		depths[depth] += 1
+		size += 1
 		return true
 	})
 
@@ -326,7 +327,7 @@ func (t Tree[T]) Statistics() (maxDepth int, average, deviation float64) {
 	variance = variance / float64(sum)
 	deviation = math.Sqrt(variance)
 
-	return maxDepth, average, deviation
+	return size, maxDepth, average, deviation
 }
 
 // Min returns the min item in tree.
@@ -353,16 +354,6 @@ func (t Tree[T]) Max() (max T) {
 		n = n.right
 	}
 	return n.item
-}
-
-// Size returns the number of items in tree.
-func (t Tree[T]) Size() int {
-	size := 0
-	t.root.traverse(inorder, 0, func(k *node[T], _ int) bool {
-		size++
-		return true
-	})
-	return size
 }
 
 // Visit traverses the tree with item >= start to item <= stop in ascending order,

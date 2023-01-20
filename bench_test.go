@@ -248,21 +248,6 @@ func BenchmarkIntersections(b *testing.B) {
 	}
 }
 
-func BenchmarkSize(b *testing.B) {
-	for n := 100; n <= 1_000_000; n *= 10 {
-		ivals := generateIvals(n)
-		tree := interval.NewTree(ivals...)
-		name := "In" + intMap[n]
-
-		b.Run(name, func(b *testing.B) {
-			b.ResetTimer()
-			for n := 0; n < b.N; n++ {
-				_ = tree.Size()
-			}
-		})
-	}
-}
-
 func BenchmarkMin(b *testing.B) {
 	for n := 100; n <= 1_000_000; n *= 10 {
 		ivals := generateIvals(n)
