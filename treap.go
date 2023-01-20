@@ -22,8 +22,8 @@ type node[T Interface[T]] struct {
 	// base treap fields, in memory efficient order
 	left  *node[T]
 	right *node[T]
-	prio  float64 // random key for binary heap, balances the tree
-	item  T       // generic key/value
+	prio  uint32 // random key for binary heap, balances the tree
+	item  T      // generic key/value
 }
 
 // Tree is the public handle to the hidden implementation.
@@ -46,7 +46,7 @@ func NewTree[T Interface[T]](items ...T) Tree[T] {
 func makeNode[T Interface[T]](item T) *node[T] {
 	n := new(node[T])
 	n.item = item
-	n.prio = rand.Float64()
+	n.prio = rand.Uint32()
 	n.recalc() // initial calculation of finger pointers...
 
 	return n
