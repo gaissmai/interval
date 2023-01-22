@@ -376,25 +376,23 @@ func (n *node[T]) lcp(item T) (result T, ok bool) {
 	// now on proper depth in tree
 	// first try right subtree for shortest containing hull
 	if n.right != nil {
-
 		// rec-descent with n.right
 		if compare(n.right.item, item) <= 0 {
 			result, ok = n.right.lcp(item)
 			if ok {
 				return result, ok
 			}
-		}
-
-		// try n.right.left subtree for smallest containing hull
-		// take this path only if n.right.left.item > t.item (this node)
-		if n.right.left != nil && compare(n.right.left.item, n.item) > 0 {
-			// rec-descent with n.right.left
-			result, ok = n.right.left.lcp(item)
-			if ok {
-				return result, ok
+		} else {
+			// try n.right.left subtree for smallest containing hull
+			// take this path only if n.right.left.item > t.item (this node)
+			if n.right.left != nil && compare(n.right.left.item, n.item) > 0 {
+				// rec-descent with n.right.left
+				result, ok = n.right.left.lcp(item)
+				if ok {
+					return result, ok
+				}
 			}
 		}
-
 	}
 
 	// not found in right subtree, try this node
