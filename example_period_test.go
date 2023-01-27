@@ -40,8 +40,7 @@ func compareIval(p, q Ival) (ll, rr, lr, rl int) {
 }
 
 func ExampleNewTree() {
-	tree1 := interval.NewTree(compareIval)
-	tree1.InsertMutable(periods...)
+	tree1 := interval.NewTree(compareIval, periods...)
 
 	tree1.Fprint(os.Stdout)
 	// Output:
@@ -53,7 +52,7 @@ func ExampleNewTree() {
 }
 
 func ExampleTree_Max() {
-	tree1 := tree.Insert(periods...)
+	tree1 := interval.NewTree(compareIval, periods...)
 	tree1.Fprint(os.Stdout)
 
 	fmt.Println("\nInterval with max value in tree:")
@@ -71,7 +70,7 @@ func ExampleTree_Max() {
 }
 
 func ExampleTree_Covers() {
-	tree1 := tree.Insert(periods...)
+	tree1 := interval.NewTree(compareIval, periods...)
 	tree1.Fprint(os.Stdout)
 
 	item := Ival{3, 4}
@@ -94,7 +93,7 @@ func ExampleTree_Covers() {
 }
 
 func ExampleTree_CoveredBy() {
-	tree1 := tree.Insert(periods...)
+	tree1 := interval.NewTree(compareIval, periods...)
 	tree1.Fprint(os.Stdout)
 
 	item := Ival{3, 10}
@@ -117,7 +116,7 @@ func ExampleTree_CoveredBy() {
 }
 
 func ExampleTree_Precedes_period() {
-	tree1 := tree.Insert(periods...)
+	tree1 := interval.NewTree(compareIval, periods...)
 	tree1.Fprint(os.Stdout)
 
 	item := Ival{6, 6}
@@ -139,7 +138,7 @@ func ExampleTree_Precedes_period() {
 }
 
 func ExampleTree_Visit() {
-	tree1 := tree.Insert(periods...)
+	tree1 := interval.NewTree(compareIval, periods...)
 	fmt.Println("parent/child printing")
 	tree1.Fprint(os.Stdout)
 

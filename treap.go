@@ -32,7 +32,7 @@ type Tree[T any] struct {
 	cmp  func(T, T) (ll, rr, lr, rl int)
 }
 
-// NewTree initializes the interval tree with the interval comparison function for type T.
+// NewTree initializes the interval tree with the compare function and items from type T.
 //
 //   cmp(a, b T) (ll, rr, lr, rl int)
 //
@@ -43,9 +43,15 @@ type Tree[T any] struct {
 //  lr: left  point interval a compared with right point interval b (-1, 0, +1)
 //  rl: right point interval a compared with left  point interval b (-1, 0, +1)
 //
-func NewTree[T any](cmp func(a, b T) (ll, rr, lr, rl int)) Tree[T] {
+func NewTree[T any](cmp func(a, b T) (ll, rr, lr, rl int), items ...T) Tree[T] {
 	var t Tree[T]
 	t.cmp = cmp
+
+	// mutable insert
+	for i := range items {
+		t.root = t.root.insert(t.makeNode(items[i]), false, &t)
+	}
+
 	return t
 }
 

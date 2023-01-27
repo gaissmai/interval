@@ -79,7 +79,7 @@ To apply this library to types of one-dimensional intervals, you must provide a 
   import "github.com/gaissmai/interval"
 
   type Tree[T any] struct{ ... }
-  func NewTree[T any](cmp func(a, b T) (ll, rr, lr, rl int)) Tree[T]
+  func NewTree[T any](cmp func(a, b T) (ll, rr, lr, rl int), items ...T) Tree[T]
 
   func (t Tree[T]) Insert(items ...T) Tree[T]
   func (t Tree[T]) Delete(item T) (Tree[T], bool)

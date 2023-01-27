@@ -173,7 +173,7 @@ func TestTreeWithDups(t *testing.T) {
 		{3, 13},
 	}
 
-	tree1 := tree.Insert(is...)
+	tree1 := interval.NewTree(compareIval, is...)
 	if size, _, _, _ := tree1.Statistics(); size != 5 {
 		t.Errorf("Size() = %v, want 5", size)
 	}
@@ -192,7 +192,7 @@ func TestTreeWithDups(t *testing.T) {
 
 func TestImmutable(t *testing.T) {
 	t.Parallel()
-	tree1 := tree.Insert(ps...)
+	tree1 := interval.NewTree(compareIval, ps...)
 
 	if _, ok := tree1.Delete(tree1.Min()); !ok {
 		t.Fatal("Delete, could not delete min item")
@@ -210,7 +210,7 @@ func TestImmutable(t *testing.T) {
 }
 
 func TestMutable(t *testing.T) {
-	tree1 := tree.Insert(ps...)
+	tree1 := interval.NewTree(compareIval, ps...)
 	clone := tree1.Clone()
 
 	if !equalStatistics(tree1, clone) {
@@ -233,7 +233,7 @@ func TestMutable(t *testing.T) {
 	}
 
 	// reset
-	tree1 = tree.Insert(ps...)
+	tree1 = interval.NewTree(compareIval, ps...)
 	clone = tree1.Clone()
 
 	if !equalStatistics(tree1, clone) {
@@ -252,7 +252,7 @@ func TestFind(t *testing.T) {
 	t.Parallel()
 
 	ivals := generateIvals(100_00)
-	tree1 := tree.Insert(ivals...)
+	tree1 := interval.NewTree(compareIval, ivals...)
 
 	for _, ival := range ivals {
 		item, ok := tree1.Find(ival)
@@ -271,7 +271,7 @@ func TestLookup(t *testing.T) {
 
 	for i := 0; i < 100; i++ {
 		// bring some variance into the Treap due to the prio randomness
-		tree1 := tree.Insert(ps...)
+		tree1 := interval.NewTree(compareIval, ps...)
 
 		//     	 ▼
 		//     	 ├─ 0...6
@@ -348,7 +348,7 @@ func TestLookup(t *testing.T) {
 func TestCoveredBy(t *testing.T) {
 	t.Parallel()
 
-	tree1 := tree.Insert(ps...)
+	tree1 := interval.NewTree(compareIval, ps...)
 	var want []Ival
 
 	//     	 ▼
@@ -394,7 +394,7 @@ func TestCoveredBy(t *testing.T) {
 func TestCovers(t *testing.T) {
 	t.Parallel()
 
-	tree1 := tree.Insert(ps...)
+	tree1 := interval.NewTree(compareIval, ps...)
 	var want []Ival
 
 	//     	 ▼
@@ -440,7 +440,7 @@ func TestCovers(t *testing.T) {
 func TestIntersects(t *testing.T) {
 	t.Parallel()
 
-	tree1 := tree.Insert(ps...)
+	tree1 := interval.NewTree(compareIval, ps...)
 
 	//     	 ▼
 	//     	 ├─ 0...6
@@ -491,7 +491,7 @@ func TestIntersects(t *testing.T) {
 func TestIntersections(t *testing.T) {
 	t.Parallel()
 
-	tree1 := tree.Insert(ps...)
+	tree1 := interval.NewTree(compareIval, ps...)
 	var want []Ival
 
 	//     	 ▼
@@ -537,7 +537,7 @@ func TestIntersections(t *testing.T) {
 func TestPrecedes(t *testing.T) {
 	t.Parallel()
 
-	tree1 := tree.Insert(ps...)
+	tree1 := interval.NewTree(compareIval, ps...)
 	var want []Ival
 
 	//     	 ▼
@@ -583,7 +583,7 @@ func TestPrecedes(t *testing.T) {
 func TestPrecededBy(t *testing.T) {
 	t.Parallel()
 
-	tree1 := tree.Insert(ps...)
+	tree1 := interval.NewTree(compareIval, ps...)
 	var want []Ival
 
 	//     	 ▼
@@ -628,7 +628,7 @@ func TestPrecededBy(t *testing.T) {
 
 func TestVisit(t *testing.T) {
 	t.Parallel()
-	tree1 := tree.Insert(ps...)
+	tree1 := interval.NewTree(compareIval, ps...)
 
 	var collect []Ival
 	want := 4
@@ -663,7 +663,7 @@ func TestVisit(t *testing.T) {
 
 func TestMinMax(t *testing.T) {
 	t.Parallel()
-	tree1 := tree.Insert(ps...)
+	tree1 := interval.NewTree(compareIval, ps...)
 	want := Ival{0, 6}
 	if tree1.Min() != want {
 		t.Fatalf("Min(), want: %v, got: %v", want, tree1.Min())
@@ -677,7 +677,7 @@ func TestMinMax(t *testing.T) {
 
 func TestUnion(t *testing.T) {
 	t.Parallel()
-	tree1 := tree.Insert()
+	tree1 := interval.NewTree(compareIval)
 
 	for i := range ps {
 		b := tree1.Insert(ps[i])
@@ -760,7 +760,7 @@ func TestStatistics(t *testing.T) {
 	for n := 10_000; n <= 1_000_000; n *= 10 {
 		count := strconv.Itoa(n)
 		t.Run(count, func(t *testing.T) {
-			tree1 := tree.Insert(generateIvals(n)...)
+			tree1 := interval.NewTree(compareIval, generateIvals(n)...)
 
 			size, _, averageDepth, deviation := tree1.Statistics()
 			if size != n {
@@ -784,7 +784,7 @@ func TestStatistics(t *testing.T) {
 
 func TestPrintBST(t *testing.T) {
 	t.Parallel()
-	tree1 := tree.Insert(ps...)
+	tree1 := interval.NewTree(compareIval, ps...)
 
 	w := new(strings.Builder)
 	_ = tree1.FprintBST(w)
@@ -798,7 +798,7 @@ func TestPrintBST(t *testing.T) {
 
 func TestMatch(t *testing.T) {
 	t.Parallel()
-	tree1 := tree.Insert(generateIvals(100_000)...)
+	tree1 := interval.NewTree(compareIval, generateIvals(100_000)...)
 
 	n := 100
 	for i := 0; i < n; i++ {
@@ -849,7 +849,7 @@ func TestMatch(t *testing.T) {
 
 func TestMissing(t *testing.T) {
 	t.Parallel()
-	tree1 := tree.Insert(generateIvals(100_000)...)
+	tree1 := interval.NewTree(compareIval, generateIvals(100_000)...)
 
 	n := 100
 	for i := 0; i < n; i++ {

@@ -47,8 +47,6 @@ func compareTval(p, q Tval) (ll, rr, lr, rl int) {
 		cmpTime(p.death, q.birth)
 }
 
-var timeTree = interval.NewTree(compareTval)
-
 // example data
 var physicists = []Tval{
 	mkTval(1473, 1543, "Kopernikus"),
@@ -82,11 +80,11 @@ var physicists = []Tval{
 }
 
 func ExampleTree_Precedes_time() {
-	tree := timeTree.Insert(physicists...)
+	tree := interval.NewTree(compareTval, physicists...)
 	tree.Fprint(os.Stdout)
 
 	precedes := tree.Precedes(mkTval(1643, 1727, "Newton"))
-	tree = timeTree.Insert(precedes...)
+	tree = interval.NewTree(compareTval, precedes...)
 
 	fmt.Println("\nPrecedes Newton:")
 	tree.Fprint(os.Stdout)
@@ -131,11 +129,11 @@ func ExampleTree_Precedes_time() {
 }
 
 func ExampleTree_PrecededBy_time() {
-	tree := timeTree.Insert(physicists...)
+	tree := interval.NewTree(compareTval, physicists...)
 	tree.Fprint(os.Stdout)
 
 	precededBy := tree.PrecededBy(mkTval(1643, 1727, "Newton"))
-	tree = timeTree.Insert(precededBy...)
+	tree = interval.NewTree(compareTval, precededBy...)
 
 	fmt.Println("\nPrecededBy Newton:")
 	tree.Fprint(os.Stdout)
