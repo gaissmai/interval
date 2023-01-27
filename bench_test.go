@@ -17,9 +17,12 @@ var intMap = map[int]string{
 	1_000_000: "1_000_000",
 }
 
+var tree = interval.NewTree(compareIval)
+
 func BenchmarkInsert(b *testing.B) {
 	for n := 1; n <= 1_000_000; n *= 10 {
-		tree := interval.NewTree(generateIvals(n)...)
+		tree := tree.Insert(generateIvals(n)...)
+
 		probe := generateIvals(1)[0]
 		name := "Into" + intMap[n]
 
@@ -34,7 +37,7 @@ func BenchmarkInsert(b *testing.B) {
 
 func BenchmarkInsertMutable(b *testing.B) {
 	for n := 1; n <= 1_000_000; n *= 10 {
-		tree := interval.NewTree(generateIvals(n)...)
+		tree := tree.Insert(generateIvals(n)...)
 		probe := generateIvals(1)[0]
 		name := "Into" + intMap[n]
 
@@ -52,7 +55,7 @@ func BenchmarkDelete(b *testing.B) {
 		ivals := generateIvals(n)
 		probe := ivals[rand.Intn(len(ivals))]
 
-		tree := interval.NewTree(ivals...)
+		tree := tree.Insert(ivals...)
 		name := "DeleteFrom" + intMap[n]
 
 		b.Run(name, func(b *testing.B) {
@@ -69,7 +72,7 @@ func BenchmarkDeleteMutable(b *testing.B) {
 		ivals := generateIvals(n)
 		probe := ivals[rand.Intn(len(ivals))]
 
-		tree := interval.NewTree(generateIvals(n)...)
+		tree := tree.Insert(generateIvals(n)...)
 		name := "DeleteFrom" + intMap[n]
 
 		b.Run(name, func(b *testing.B) {
@@ -81,10 +84,24 @@ func BenchmarkDeleteMutable(b *testing.B) {
 	}
 }
 
+func BenchmarkClone(b *testing.B) {
+	for n := 10; n <= 10_000; n *= 10 {
+		tree := tree.Insert(generateIvals(n)...)
+		name := intMap[n]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_ = tree.Clone()
+			}
+		})
+	}
+}
+
 func BenchmarkUnionImmutable(b *testing.B) {
-	this100_000 := interval.NewTree(generateIvals(100_000)...)
+	this100_000 := tree.Insert(generateIvals(100_000)...)
 	for n := 10; n <= 100_000; n *= 10 {
-		tree := interval.NewTree(generateIvals(n)...)
+		tree := tree.Insert(generateIvals(n)...)
 		name := "size100_000with" + intMap[n]
 
 		b.Run(name, func(b *testing.B) {
@@ -98,8 +115,8 @@ func BenchmarkUnionImmutable(b *testing.B) {
 
 func BenchmarkUnionMutable(b *testing.B) {
 	for n := 10; n <= 100_000; n *= 10 {
-		this100_000 := interval.NewTree(generateIvals(100_000)...)
-		tree := interval.NewTree(generateIvals(n)...)
+		this100_000 := tree.Insert(generateIvals(100_000)...)
+		tree := tree.Insert(generateIvals(n)...)
 		name := "size100_000with" + intMap[n]
 
 		b.Run(name, func(b *testing.B) {
@@ -114,7 +131,7 @@ func BenchmarkUnionMutable(b *testing.B) {
 func BenchmarkIntersects(b *testing.B) {
 	for n := 1; n <= 1_000_000; n *= 10 {
 		ivals := generateIvals(n)
-		tree := interval.NewTree(ivals...)
+		tree := tree.Insert(ivals...)
 		probe := ivals[rand.Intn(len(ivals))]
 		name := "In" + intMap[n]
 
@@ -130,7 +147,7 @@ func BenchmarkIntersects(b *testing.B) {
 func BenchmarkFind(b *testing.B) {
 	for n := 1; n <= 1_000_000; n *= 10 {
 		ivals := generateIvals(n)
-		tree := interval.NewTree(ivals...)
+		tree := tree.Insert(ivals...)
 		probe := ivals[rand.Intn(len(ivals))]
 		name := "In" + intMap[n]
 
@@ -145,7 +162,7 @@ func BenchmarkFind(b *testing.B) {
 
 func BenchmarkCoverLCP(b *testing.B) {
 	for n := 100; n <= 1_000_000; n *= 10 {
-		tree := interval.NewTree(generateIvals(n)...)
+		tree := tree.Insert(generateIvals(n)...)
 		probe := generateIvals(1)[0]
 		name := "In" + intMap[n]
 
@@ -160,7 +177,7 @@ func BenchmarkCoverLCP(b *testing.B) {
 
 func BenchmarkCoverSCP(b *testing.B) {
 	for n := 100; n <= 1_000_000; n *= 10 {
-		tree := interval.NewTree(generateIvals(n)...)
+		tree := tree.Insert(generateIvals(n)...)
 		probe := generateIvals(1)[0]
 		name := "In" + intMap[n]
 
@@ -175,7 +192,7 @@ func BenchmarkCoverSCP(b *testing.B) {
 
 func BenchmarkCoveredBy(b *testing.B) {
 	for n := 100; n <= 100_000; n *= 10 {
-		tree := interval.NewTree(generateIvals(n)...)
+		tree := tree.Insert(generateIvals(n)...)
 		probe := generateIvals(1)[0]
 		name := "In" + intMap[n]
 
@@ -190,7 +207,7 @@ func BenchmarkCoveredBy(b *testing.B) {
 
 func BenchmarkCovers(b *testing.B) {
 	for n := 100; n <= 100_000; n *= 10 {
-		tree := interval.NewTree(generateIvals(n)...)
+		tree := tree.Insert(generateIvals(n)...)
 		probe := generateIvals(1)[0]
 		name := "In" + intMap[n]
 
@@ -205,7 +222,7 @@ func BenchmarkCovers(b *testing.B) {
 
 func BenchmarkPrecededBy(b *testing.B) {
 	for m := 100; m <= 10_000; m *= 10 {
-		tree := interval.NewTree(generateIvals(m)...)
+		tree := tree.Insert(generateIvals(m)...)
 		probe := generateIvals(1)[0]
 		name := "In" + intMap[m]
 
@@ -220,7 +237,7 @@ func BenchmarkPrecededBy(b *testing.B) {
 
 func BenchmarkPrecedes(b *testing.B) {
 	for m := 100; m <= 10_000; m *= 10 {
-		tree := interval.NewTree(generateIvals(m)...)
+		tree := tree.Insert(generateIvals(m)...)
 		probe := generateIvals(1)[0]
 		name := "In" + intMap[m]
 
@@ -235,7 +252,7 @@ func BenchmarkPrecedes(b *testing.B) {
 
 func BenchmarkIntersections(b *testing.B) {
 	for n := 100; n <= 10_000; n *= 10 {
-		tree := interval.NewTree(generateIvals(n)...)
+		tree := tree.Insert(generateIvals(n)...)
 		probe := generateIvals(1)[0]
 		name := "In" + intMap[n]
 
@@ -251,7 +268,7 @@ func BenchmarkIntersections(b *testing.B) {
 func BenchmarkMin(b *testing.B) {
 	for n := 100; n <= 1_000_000; n *= 10 {
 		ivals := generateIvals(n)
-		tree := interval.NewTree(ivals...)
+		tree := tree.Insert(ivals...)
 		name := "In" + intMap[n]
 
 		b.Run(name, func(b *testing.B) {
@@ -266,7 +283,7 @@ func BenchmarkMin(b *testing.B) {
 func BenchmarkMax(b *testing.B) {
 	for n := 100; n <= 1_000_000; n *= 10 {
 		ivals := generateIvals(n)
-		tree := interval.NewTree(ivals...)
+		tree := tree.Insert(ivals...)
 		name := "In" + intMap[n]
 
 		b.Run(name, func(b *testing.B) {

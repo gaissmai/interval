@@ -48,11 +48,17 @@ func equals(a, b Ival) bool {
 	return a[0] == b[0] && a[1] == b[1]
 }
 
+func equalStatistics(t1, t2 interval.Tree[Ival]) bool {
+	a1, b1, c1, d1 := t1.Statistics()
+	a2, b2, c2, d2 := t2.Statistics()
+	return a1 == a2 && b1 == b2 && c1 == c2 && d1 == d2
+}
+
 func TestNewTree(t *testing.T) {
 	t.Parallel()
 
 	var zeroItem Ival
-	var zeroTree interval.Tree[Ival]
+	zeroTree := interval.NewTree(compareIval)
 
 	if zeroTree.String() != "" {
 		t.Errorf("String() = %v, want \"\"", "")
@@ -94,10 +100,6 @@ func TestNewTree(t *testing.T) {
 
 	if size, _, _, _ := zeroTree.Insert(zeroItem).Statistics(); size != 1 {
 		t.Errorf("Insert(), got: %v, want: 1", size)
-	}
-
-	if size, _, _, _ := zeroTree.Clone().Statistics(); size != 0 {
-		t.Errorf("Clone(), got: %v, want: 0", size)
 	}
 
 	if s := zeroTree.CoveredBy(zeroItem); s != nil {
@@ -171,8 +173,8 @@ func TestTreeWithDups(t *testing.T) {
 		{3, 13},
 	}
 
-	tree := interval.NewTree(is...)
-	if size, _, _, _ := tree.Statistics(); size != 5 {
+	tree1 := tree.Insert(is...)
+	if size, _, _, _ := tree1.Statistics(); size != 5 {
 		t.Errorf("Size() = %v, want 5", size)
 	}
 
@@ -183,72 +185,37 @@ func TestTreeWithDups(t *testing.T) {
    └─ 42...67
       └─ 48...50
 `
-	if tree.String() != asStr {
-		t.Errorf("Fprint()\nwant:\n%sgot:\n%s", asStr, tree.String())
+	if tree1.String() != asStr {
+		t.Errorf("Fprint()\nwant:\n%sgot:\n%s", asStr, tree1.String())
 	}
 }
 
 func TestImmutable(t *testing.T) {
 	t.Parallel()
-	tree1 := interval.NewTree(ps...)
-	tree2 := tree1.Clone()
+	tree1 := tree.Insert(ps...)
 
-	if !reflect.DeepEqual(tree1, tree2) {
-		t.Fatal("cloned tree is not deep equal to original")
-	}
-
-	if _, ok := tree1.Delete(tree2.Min()); !ok {
+	if _, ok := tree1.Delete(tree1.Min()); !ok {
 		t.Fatal("Delete, could not delete min item")
 	}
-	if !reflect.DeepEqual(tree1, tree2) {
+	if _, ok := tree1.Delete(tree1.Min()); !ok {
 		t.Fatal("Delete changed receiver")
 	}
 
 	item := Ival{111, 666}
 	_ = tree1.Insert(item)
-	if !reflect.DeepEqual(tree1, tree2) {
+
+	if _, ok := tree1.Find(item); ok {
 		t.Fatal("Insert changed receiver")
-	}
-
-	_, _ = tree1.CoverLCP(item)
-	if !reflect.DeepEqual(tree1, tree2) {
-		t.Fatal("CoverLCP changed receiver")
-	}
-
-	_, _ = tree1.CoverSCP(item)
-	if !reflect.DeepEqual(tree1, tree2) {
-		t.Fatal("CoverSCP changed receiver")
-	}
-
-	_ = tree1.CoveredBy(item)
-	if !reflect.DeepEqual(tree1, tree2) {
-		t.Fatal("Covered changed receiver")
-	}
-
-	_ = tree1.CoveredBy(item)
-	if !reflect.DeepEqual(tree1, tree2) {
-		t.Fatal("Covers changed receiver")
-	}
-
-	_ = tree1.Intersections(item)
-	if !reflect.DeepEqual(tree1, tree2) {
-		t.Fatal("Intersections changed receiver")
-	}
-
-	_ = tree1.Precedes(item)
-	if !reflect.DeepEqual(tree1, tree2) {
-		t.Fatal("Precedes changed receiver")
-	}
-
-	_ = tree1.PrecededBy(item)
-	if !reflect.DeepEqual(tree1, tree2) {
-		t.Fatal("PrecededBy changed receiver")
 	}
 }
 
 func TestMutable(t *testing.T) {
-	tree1 := interval.NewTree(ps...)
-	tree2 := tree1.Clone()
+	tree1 := tree.Insert(ps...)
+	clone := tree1.Clone()
+
+	if !equalStatistics(tree1, clone) {
+		t.Fatalf("Clone, something wrong, statistics differs")
+	}
 
 	min := tree1.Min()
 
@@ -257,22 +224,27 @@ func TestMutable(t *testing.T) {
 		t.Fatal("DeleteMutable, could not delete min item")
 	}
 
-	if reflect.DeepEqual(tree1, tree2) {
+	if equalStatistics(tree1, clone) {
 		t.Fatal("DeleteMutable didn't change receiver")
 	}
 
-	// reset tree1, tree2
-	tree1 = interval.NewTree(ps...)
-	tree2 = tree1.Clone()
+	if ok = (&tree1).DeleteMutable(min); ok {
+		t.Fatal("DeleteMutable didn't change receiver")
+	}
+
+	// reset
+	tree1 = tree.Insert(ps...)
+	clone = tree1.Clone()
+
+	if !equalStatistics(tree1, clone) {
+		t.Fatalf("Clone, something wrong, statistics differs")
+	}
 
 	item := Ival{111, 666}
 	(&tree1).InsertMutable(item)
 
-	if reflect.DeepEqual(tree1, tree2) {
-		t.Fatal("InsertMutable didn't change receiver")
-	}
-	if _, ok := tree1.Delete(item); !ok {
-		t.Fatal("InsertMutable didn't change receiver")
+	if _, ok := tree1.Find(item); !ok {
+		t.Fatal("InsertMutable didn't changed receiver")
 	}
 }
 
@@ -280,14 +252,14 @@ func TestFind(t *testing.T) {
 	t.Parallel()
 
 	ivals := generateIvals(100_00)
-	tree := interval.NewTree(ivals...)
+	tree1 := tree.Insert(ivals...)
 
 	for _, ival := range ivals {
-		item, ok := tree.Find(ival)
+		item, ok := tree1.Find(ival)
 		if ok != true {
 			t.Errorf("Find(%v) = %v, want %v", item, ok, true)
 		}
-		ll, rr, _, _ := item.Compare(ival)
+		ll, rr, _, _ := compareIval(item, ival)
 		if ll != 0 || rr != 0 {
 			t.Errorf("Find(%v) = %v, want %v", ival, item, ival)
 		}
@@ -299,7 +271,7 @@ func TestLookup(t *testing.T) {
 
 	for i := 0; i < 100; i++ {
 		// bring some variance into the Treap due to the prio randomness
-		tree := interval.NewTree(ps...)
+		tree1 := tree.Insert(ps...)
 
 		//     	 ▼
 		//     	 ├─ 0...6
@@ -315,58 +287,58 @@ func TestLookup(t *testing.T) {
 		//     	 └─ 7...9
 
 		item := Ival{0, 5}
-		if got, _ := tree.CoverLCP(item); got != item {
+		if got, _ := tree1.CoverLCP(item); got != item {
 			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, item)
 		}
 
 		item = Ival{5, 5}
 		want := Ival{4, 8}
-		if got, _ := tree.CoverLCP(item); got != want {
+		if got, _ := tree1.CoverLCP(item); got != want {
 			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, want)
 		}
 
 		item = Ival{8, 9}
 		want = Ival{7, 9}
-		if got, _ := tree.CoverLCP(item); got != want {
+		if got, _ := tree1.CoverLCP(item); got != want {
 			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, want)
 		}
 
 		item = Ival{3, 8}
 		want = Ival{2, 8}
-		if got, _ := tree.CoverLCP(item); got != want {
+		if got, _ := tree1.CoverLCP(item); got != want {
 			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, want)
 		}
 
 		item = Ival{19, 55}
-		if got, ok := tree.CoverLCP(item); ok {
+		if got, ok := tree1.CoverLCP(item); ok {
 			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, !ok)
 		}
 
 		item = Ival{0, 19}
-		if got, ok := tree.CoverLCP(item); ok {
+		if got, ok := tree1.CoverLCP(item); ok {
 			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, !ok)
 		}
 
 		item = Ival{7, 7}
 		want = Ival{1, 8}
-		if got, _ := tree.CoverSCP(item); got != want {
+		if got, _ := tree1.CoverSCP(item); got != want {
 			t.Errorf("CoverSCP(%v) = %v, want %v", item, got, want)
 		}
 
 		item = Ival{3, 6}
 		want = Ival{0, 6}
-		if got, _ := tree.CoverSCP(item); got != want {
+		if got, _ := tree1.CoverSCP(item); got != want {
 			t.Errorf("CoverSCP(%v) = %v, want %v", item, got, want)
 		}
 
 		item = Ival{3, 7}
 		want = Ival{1, 8}
-		if got, _ := tree.CoverSCP(item); got != want {
+		if got, _ := tree1.CoverSCP(item); got != want {
 			t.Errorf("CoverSCP(%v) = %v, want %v", item, got, want)
 		}
 
 		item = Ival{0, 7}
-		if _, ok := tree.CoverSCP(item); ok {
+		if _, ok := tree1.CoverSCP(item); ok {
 			t.Errorf("CoverSCP(%v) = %v, want %v", item, ok, false)
 		}
 
@@ -376,7 +348,7 @@ func TestLookup(t *testing.T) {
 func TestCoveredBy(t *testing.T) {
 	t.Parallel()
 
-	tree := interval.NewTree(ps...)
+	tree1 := tree.Insert(ps...)
 	var want []Ival
 
 	//     	 ▼
@@ -394,7 +366,7 @@ func TestCoveredBy(t *testing.T) {
 
 	item := Ival{0, 6}
 	want = []Ival{{0, 6}, {0, 5}, {1, 5}, {1, 4}}
-	covered := tree.CoveredBy(item)
+	covered := tree1.CoveredBy(item)
 
 	if !reflect.DeepEqual(covered, want) {
 		t.Fatalf("Covered, got: %v, want: %v", covered, want)
@@ -403,7 +375,7 @@ func TestCoveredBy(t *testing.T) {
 	// ###
 	item = Ival{3, 6}
 	want = nil
-	covered = tree.CoveredBy(item)
+	covered = tree1.CoveredBy(item)
 
 	if !reflect.DeepEqual(covered, want) {
 		t.Fatalf("Covered, got: %v, want: %v", covered, want)
@@ -412,7 +384,7 @@ func TestCoveredBy(t *testing.T) {
 	// ###
 	item = Ival{3, 11}
 	want = []Ival{{4, 8}, {6, 7}, {7, 9}}
-	covered = tree.CoveredBy(item)
+	covered = tree1.CoveredBy(item)
 
 	if !reflect.DeepEqual(covered, want) {
 		t.Fatalf("Covered(%v), got: %+v, want: %+v", item, covered, want)
@@ -422,7 +394,7 @@ func TestCoveredBy(t *testing.T) {
 func TestCovers(t *testing.T) {
 	t.Parallel()
 
-	tree := interval.NewTree(ps...)
+	tree1 := tree.Insert(ps...)
 	var want []Ival
 
 	//     	 ▼
@@ -440,7 +412,7 @@ func TestCovers(t *testing.T) {
 
 	item := Ival{0, 6}
 	want = []Ival{{0, 6}}
-	covers := tree.Covers(item)
+	covers := tree1.Covers(item)
 
 	if !reflect.DeepEqual(covers, want) {
 		t.Fatalf("Covers(%v), got: %v, want: %v", item, covers, want)
@@ -449,7 +421,7 @@ func TestCovers(t *testing.T) {
 	// ###
 	item = Ival{3, 7}
 	want = []Ival{{1, 8}, {1, 7}, {2, 8}, {2, 7}}
-	covers = tree.Covers(item)
+	covers = tree1.Covers(item)
 
 	if !reflect.DeepEqual(covers, want) {
 		t.Fatalf("Covers(%v), got: %v, want: %v", item, covers, want)
@@ -458,7 +430,7 @@ func TestCovers(t *testing.T) {
 	// ###
 	item = Ival{3, 11}
 	want = nil
-	covers = tree.Covers(item)
+	covers = tree1.Covers(item)
 
 	if !reflect.DeepEqual(covers, want) {
 		t.Fatalf("Covers(%v), got: %+v, want: %+v", item, covers, want)
@@ -468,7 +440,7 @@ func TestCovers(t *testing.T) {
 func TestIntersects(t *testing.T) {
 	t.Parallel()
 
-	tree := interval.NewTree(ps...)
+	tree1 := tree.Insert(ps...)
 
 	//     	 ▼
 	//     	 ├─ 0...6
@@ -485,7 +457,7 @@ func TestIntersects(t *testing.T) {
 
 	item := Ival{7, 7}
 	want := true
-	got := tree.Intersects(item)
+	got := tree1.Intersects(item)
 
 	if got != want {
 		t.Fatalf("Intersects(%v), got: %v, want: %v", item, got, want)
@@ -493,7 +465,7 @@ func TestIntersects(t *testing.T) {
 
 	item = Ival{9, 17}
 	want = true
-	got = tree.Intersects(item)
+	got = tree1.Intersects(item)
 
 	if got != want {
 		t.Fatalf("Intersects(%v), got: %v, want: %v", item, got, want)
@@ -501,7 +473,7 @@ func TestIntersects(t *testing.T) {
 
 	item = Ival{1, 1}
 	want = true
-	got = tree.Intersects(item)
+	got = tree1.Intersects(item)
 
 	if got != want {
 		t.Fatalf("Intersects(%v), got: %v, want: %v", item, got, want)
@@ -509,7 +481,7 @@ func TestIntersects(t *testing.T) {
 
 	item = Ival{10, 12}
 	want = false
-	got = tree.Intersects(item)
+	got = tree1.Intersects(item)
 
 	if got != want {
 		t.Fatalf("Intersects(%v), got: %v, want: %v", item, got, want)
@@ -519,7 +491,7 @@ func TestIntersects(t *testing.T) {
 func TestIntersections(t *testing.T) {
 	t.Parallel()
 
-	tree := interval.NewTree(ps...)
+	tree1 := tree.Insert(ps...)
 	var want []Ival
 
 	//     	 ▼
@@ -537,7 +509,7 @@ func TestIntersections(t *testing.T) {
 
 	item := Ival{7, 7}
 	want = []Ival{{1, 8}, {1, 7}, {2, 8}, {2, 7}, {4, 8}, {6, 7}, {7, 9}}
-	intersections := tree.Intersections(item)
+	intersections := tree1.Intersections(item)
 
 	if !reflect.DeepEqual(intersections, want) {
 		t.Fatalf("Intersections(%v), got: %v, want: %v", item, intersections, want)
@@ -546,7 +518,7 @@ func TestIntersections(t *testing.T) {
 	// ###
 	item = Ival{8, 10}
 	want = []Ival{{1, 8}, {2, 8}, {4, 8}, {7, 9}}
-	intersections = tree.Intersections(item)
+	intersections = tree1.Intersections(item)
 
 	if !reflect.DeepEqual(intersections, want) {
 		t.Fatalf("Intersections(%v), got: %v, want: %v", item, intersections, want)
@@ -555,7 +527,7 @@ func TestIntersections(t *testing.T) {
 	// ###
 	item = Ival{10, 15}
 	want = nil
-	intersections = tree.Intersections(item)
+	intersections = tree1.Intersections(item)
 
 	if !reflect.DeepEqual(intersections, want) {
 		t.Fatalf("Intersections(%v), got: %+v, want: %+v", item, intersections, want)
@@ -565,7 +537,7 @@ func TestIntersections(t *testing.T) {
 func TestPrecedes(t *testing.T) {
 	t.Parallel()
 
-	tree := interval.NewTree(ps...)
+	tree1 := tree.Insert(ps...)
 	var want []Ival
 
 	//     	 ▼
@@ -583,7 +555,7 @@ func TestPrecedes(t *testing.T) {
 
 	item := Ival{7, 7}
 	want = []Ival{{0, 6}, {0, 5}, {1, 5}, {1, 4}}
-	precedes := tree.Precedes(item)
+	precedes := tree1.Precedes(item)
 
 	if !reflect.DeepEqual(precedes, want) {
 		t.Fatalf("Precedes(%v), got: %v, want: %v", item, precedes, want)
@@ -592,7 +564,7 @@ func TestPrecedes(t *testing.T) {
 	// ###
 	item = Ival{5, 10}
 	want = []Ival{{1, 4}}
-	precedes = tree.Precedes(item)
+	precedes = tree1.Precedes(item)
 
 	if !reflect.DeepEqual(precedes, want) {
 		t.Fatalf("Precedes(%v), got: %v, want: %v", item, precedes, want)
@@ -601,7 +573,7 @@ func TestPrecedes(t *testing.T) {
 	// ###
 	item = Ival{0, 9}
 	want = nil
-	precedes = tree.Precedes(item)
+	precedes = tree1.Precedes(item)
 
 	if !reflect.DeepEqual(precedes, want) {
 		t.Fatalf("Precedes(%v), got: %+v, want: %+v", item, precedes, want)
@@ -611,7 +583,7 @@ func TestPrecedes(t *testing.T) {
 func TestPrecededBy(t *testing.T) {
 	t.Parallel()
 
-	tree := interval.NewTree(ps...)
+	tree1 := tree.Insert(ps...)
 	var want []Ival
 
 	//     	 ▼
@@ -629,7 +601,7 @@ func TestPrecededBy(t *testing.T) {
 
 	item := Ival{4, 4}
 	want = []Ival{{6, 7}, {7, 9}}
-	precedes := tree.PrecededBy(item)
+	precedes := tree1.PrecededBy(item)
 
 	if !reflect.DeepEqual(precedes, want) {
 		t.Fatalf("PrecededBy(%v), got: %v, want: %v", item, precedes, want)
@@ -638,7 +610,7 @@ func TestPrecededBy(t *testing.T) {
 	// ###
 	item = Ival{1, 2}
 	want = []Ival{{4, 8}, {6, 7}, {7, 9}}
-	precedes = tree.PrecededBy(item)
+	precedes = tree1.PrecededBy(item)
 
 	if !reflect.DeepEqual(precedes, want) {
 		t.Fatalf("PrecededBy(%v), got: %v, want: %v", item, precedes, want)
@@ -647,7 +619,7 @@ func TestPrecededBy(t *testing.T) {
 	// ###
 	item = Ival{0, 7}
 	want = nil
-	precedes = tree.PrecededBy(item)
+	precedes = tree1.PrecededBy(item)
 
 	if !reflect.DeepEqual(precedes, want) {
 		t.Fatalf("PrecededBy(%v), got: %+v, want: %+v", item, precedes, want)
@@ -656,11 +628,11 @@ func TestPrecededBy(t *testing.T) {
 
 func TestVisit(t *testing.T) {
 	t.Parallel()
-	tree := interval.NewTree(ps...)
+	tree1 := tree.Insert(ps...)
 
 	var collect []Ival
 	want := 4
-	tree.Visit(tree.Min(), tree.Max(), func(item Ival) bool {
+	tree1.Visit(tree1.Min(), tree1.Max(), func(item Ival) bool {
 		collect = append(collect, item)
 		return len(collect) != want
 	})
@@ -671,19 +643,19 @@ func TestVisit(t *testing.T) {
 
 	collect = nil
 	want = 9
-	tree.Visit(tree.Max(), tree.Min(), func(item Ival) bool {
+	tree1.Visit(tree1.Max(), tree1.Min(), func(item Ival) bool {
 		collect = append(collect, item)
 		return true
 	})
 
-	want, _, _, _ = tree.Statistics()
+	want, _, _, _ = tree1.Statistics()
 	if len(collect) != want {
 		t.Fatalf("Visit() descending, want: %d  got: %v, %v", want, len(collect), collect)
 	}
 
 	collect = nil
 	want = 2
-	tree.Visit(tree.Max(), tree.Min(), func(item Ival) bool {
+	tree1.Visit(tree1.Max(), tree1.Min(), func(item Ival) bool {
 		collect = append(collect, item)
 		return len(collect) != want
 	})
@@ -691,25 +663,25 @@ func TestVisit(t *testing.T) {
 
 func TestMinMax(t *testing.T) {
 	t.Parallel()
-	tree := interval.NewTree(ps...)
+	tree1 := tree.Insert(ps...)
 	want := Ival{0, 6}
-	if tree.Min() != want {
-		t.Fatalf("Min(), want: %v, got: %v", want, tree.Min())
+	if tree1.Min() != want {
+		t.Fatalf("Min(), want: %v, got: %v", want, tree1.Min())
 	}
 
 	want = Ival{7, 9}
-	if tree.Max() != want {
-		t.Fatalf("Max(), want: %v, got: %v", want, tree.Max())
+	if tree1.Max() != want {
+		t.Fatalf("Max(), want: %v, got: %v", want, tree1.Max())
 	}
 }
 
 func TestUnion(t *testing.T) {
 	t.Parallel()
-	tree := interval.NewTree[Ival]()
+	tree1 := tree.Insert()
 
 	for i := range ps {
-		b := interval.NewTree(ps[i])
-		tree = tree.Union(b, false, true)
+		b := tree1.Insert(ps[i])
+		tree1 = tree1.Union(b, false, true)
 	}
 
 	asStr := `▼
@@ -726,18 +698,18 @@ func TestUnion(t *testing.T) {
 └─ 7...9
 `
 
-	if tree.String() != asStr {
-		t.Errorf("Fprint()\nwant:\n%sgot:\n%s", asStr, tree.String())
+	if tree1.String() != asStr {
+		t.Errorf("Fprint()\nwant:\n%sgot:\n%s", asStr, tree1.String())
 	}
 
 	// now with dupe overwrite
 	for i := range ps {
-		b := interval.NewTree(ps[i])
-		tree = tree.Union(b, true, true)
+		b := tree1.Insert(ps[i])
+		tree1 = tree1.Union(b, true, true)
 	}
 
-	if tree.String() != asStr {
-		t.Errorf("String()\nwant:\n%sgot:\n%s", asStr, tree.String())
+	if tree1.String() != asStr {
+		t.Errorf("String()\nwant:\n%sgot:\n%s", asStr, tree1.String())
 	}
 
 	ps2 := []Ival{
@@ -754,8 +726,8 @@ func TestUnion(t *testing.T) {
 		{7, 9},
 	}
 
-	tree2 := interval.NewTree(ps2...)
-	tree = tree.Union(tree2, false, false)
+	tree2 := tree1.Insert(ps2...)
+	tree1 = tree1.Union(tree2, false, false)
 
 	asStr = `▼
 ├─ 0...6
@@ -777,8 +749,8 @@ func TestUnion(t *testing.T) {
          └─ 9...40
 `
 
-	if tree.String() != asStr {
-		t.Errorf("String()\nwant:\n%sgot:\n%s", asStr, tree.String())
+	if tree1.String() != asStr {
+		t.Errorf("String()\nwant:\n%sgot:\n%s", asStr, tree1.String())
 	}
 }
 
@@ -788,9 +760,9 @@ func TestStatistics(t *testing.T) {
 	for n := 10_000; n <= 1_000_000; n *= 10 {
 		count := strconv.Itoa(n)
 		t.Run(count, func(t *testing.T) {
-			tree := interval.NewTree(generateIvals(n)...)
+			tree1 := tree.Insert(generateIvals(n)...)
 
-			size, _, averageDepth, deviation := tree.Statistics()
+			size, _, averageDepth, deviation := tree1.Statistics()
 			if size != n {
 				t.Fatalf("size, got: %d, want: %d", size, n)
 			}
@@ -812,10 +784,10 @@ func TestStatistics(t *testing.T) {
 
 func TestPrintBST(t *testing.T) {
 	t.Parallel()
-	tree := interval.NewTree(ps...)
+	tree1 := tree.Insert(ps...)
 
 	w := new(strings.Builder)
-	_ = tree.FprintBST(w)
+	_ = tree1.FprintBST(w)
 
 	lc := len(strings.Split(w.String(), "\n"))
 	want := 12
@@ -826,14 +798,14 @@ func TestPrintBST(t *testing.T) {
 
 func TestMatch(t *testing.T) {
 	t.Parallel()
-	tree := interval.NewTree(generateIvals(100_000)...)
+	tree1 := tree.Insert(generateIvals(100_000)...)
 
 	n := 100
 	for i := 0; i < n; i++ {
 		probe := generateIvals(100_000)[0]
 
 		t.Run(probe.String(), func(t *testing.T) {
-			tree1 := tree.Insert(probe)
+			tree1 := tree1.Insert(probe)
 
 			if _, ok := tree1.Find(probe); !ok {
 				t.Fatalf("inserted item not found in tree: %v", probe)
@@ -877,14 +849,14 @@ func TestMatch(t *testing.T) {
 
 func TestMissing(t *testing.T) {
 	t.Parallel()
-	tree := interval.NewTree(generateIvals(100_000)...)
+	tree1 := tree.Insert(generateIvals(100_000)...)
 
 	n := 100
 	for i := 0; i < n; i++ {
 		probe := generateIvals(100_000)[0]
 
 		t.Run(probe.String(), func(t *testing.T) {
-			tree1 := tree.Insert(probe)
+			tree1 := tree1.Insert(probe)
 			var ok bool
 
 			if _, ok = tree1.Find(probe); !ok {

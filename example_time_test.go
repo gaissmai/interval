@@ -34,18 +34,20 @@ type Tval struct {
 	name  string
 }
 
-// String, implements fmt.Stringer for nice formattting, not required for interval.Interface
+// String, implements fmt.Stringer for nice formattting
 func (p Tval) String() string {
 	return fmt.Sprintf("%s...%s (%s)", p.birth.Format("2006"), p.death.Format("2006"), p.name)
 }
 
-// Compare implements the interval.Interface
-func (p Tval) Compare(q Tval) (ll, rr, lr, rl int) {
+// cmp func for type Tval
+func compareTval(p, q Tval) (ll, rr, lr, rl int) {
 	return cmpTime(p.birth, q.birth),
 		cmpTime(p.death, q.death),
 		cmpTime(p.birth, q.death),
 		cmpTime(p.death, q.birth)
 }
+
+var timeTree = interval.NewTree(compareTval)
 
 // example data
 var physicists = []Tval{
@@ -80,11 +82,11 @@ var physicists = []Tval{
 }
 
 func ExampleTree_Precedes_time() {
-	tree := interval.NewTree(physicists...)
+	tree := timeTree.Insert(physicists...)
 	tree.Fprint(os.Stdout)
 
 	precedes := tree.Precedes(mkTval(1643, 1727, "Newton"))
-	tree = interval.NewTree(precedes...)
+	tree = timeTree.Insert(precedes...)
 
 	fmt.Println("\nPrecedes Newton:")
 	tree.Fprint(os.Stdout)
@@ -129,11 +131,11 @@ func ExampleTree_Precedes_time() {
 }
 
 func ExampleTree_PrecededBy_time() {
-	tree := interval.NewTree(physicists...)
+	tree := timeTree.Insert(physicists...)
 	tree.Fprint(os.Stdout)
 
 	precededBy := tree.PrecededBy(mkTval(1643, 1727, "Newton"))
-	tree = interval.NewTree(precededBy...)
+	tree = timeTree.Insert(precededBy...)
 
 	fmt.Println("\nPrecededBy Newton:")
 	tree.Fprint(os.Stdout)

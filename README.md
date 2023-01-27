@@ -59,24 +59,27 @@ Especially useful is the paper "[Fast Set Operations Using Treaps]" by Guy E. Bl
 [some links about treaps]: http://faculty.washington.edu/aragon/treaps.html
 [Fast Set Operations Using Treaps]: https://www.cs.cmu.edu/~scandal/papers/treaps-spaa98.pdf
 
-## Interface
+## Compare function
 
-To apply this library to types of one-dimensional intervals, they must just implement the following small interface:
+To apply this library to types of one-dimensional intervals, you must provide a compare funtion:
 
 ```go
-type Interface[T any] interface {
-    // Compare the left (l) and right (r) points of two intervals and returns four integers with values (-1, 0, +1).
-    Compare(T) (ll, rr, lr, rl int)
-}
+  // cmp must return four int values:
+  //
+  //  ll: left  point interval a compared with left  point interval b (-1, 0, +1)
+  //  rr: right point interval a compared with right point interval b (-1, 0, +1)
+  //  lr: left  point interval a compared with right point interval b (-1, 0, +1)
+  //  rl: right point interval a compared with left  point interval b (-1, 0, +1)
+  //
+  func[T any] cmp(a, b T) (ll, rr, lr, rl int)
 ```
 
 ## API
 ```go
   import "github.com/gaissmai/interval"
 
-  type Tree[T Interface[T]] struct{ ... }
-
-  func NewTree[T Interface[T]](items ...T) Tree[T]
+  type Tree[T any] struct{ ... }
+  func NewTree[T any](cmp func(a, b T) (ll, rr, lr, rl int)) Tree[T]
 
   func (t Tree[T]) Insert(items ...T) Tree[T]
   func (t Tree[T]) Delete(item T) (Tree[T], bool)

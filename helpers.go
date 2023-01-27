@@ -100,7 +100,7 @@ func (t Tree[T]) Fprint(w io.Writer) error {
 	// init map
 	pcm.pcMap = make(map[*node[T]][]*node[T])
 
-	pcm = t.root.buildParentChildsMap(pcm)
+	pcm = t.root.buildParentChildsMap(pcm, &t)
 
 	if len(pcm.pcMap) == 0 {
 		return nil
@@ -115,7 +115,7 @@ func (t Tree[T]) Fprint(w io.Writer) error {
 	return walkAndStringify(w, pcm, nil, "")
 }
 
-func walkAndStringify[T Interface[T]](w io.Writer, pcm parentChildsMap[T], parent *node[T], pad string) error {
+func walkAndStringify[T any](w io.Writer, pcm parentChildsMap[T], parent *node[T], pad string) error {
 	// the prefix (pad + glyphe) is already printed on the line on upper level
 	if parent != nil {
 		if _, err := fmt.Fprintf(w, "%v\n", parent.item); err != nil {
@@ -242,34 +242,38 @@ func (n *node[T]) preorderStringify(w io.Writer, pad string) error {
 //  │        └─ 6...7
 //  └─ 7...9
 //
-type parentChildsMap[T Interface[T]] struct {
+type parentChildsMap[T any] struct {
 	pcMap map[*node[T]][]*node[T] // parent -> []child map
 	stack []*node[T]              // just needed for the algo
 }
 
 // buildParentChildsMap, in-order traversal
-func (n *node[T]) buildParentChildsMap(pcm parentChildsMap[T]) parentChildsMap[T] {
+//
+// The parameter t is needed to access the compare function.
+func (n *node[T]) buildParentChildsMap(pcm parentChildsMap[T], t *Tree[T]) parentChildsMap[T] {
 	if n == nil {
 		return pcm
 	}
 
 	// in-order traversal, left tree
-	pcm = n.left.buildParentChildsMap(pcm)
+	pcm = n.left.buildParentChildsMap(pcm, t)
 
 	// detect parent-child-mapping for this node
-	pcm = n.pcmForNode(pcm)
+	pcm = n.pcmForNode(pcm, t)
 
 	// in-order traversal, right tree
-	return n.right.buildParentChildsMap(pcm)
+	return n.right.buildParentChildsMap(pcm, t)
 }
 
 // pcmForNode, find parent in stack, remove items from stack, put this item on stack.
-func (n *node[T]) pcmForNode(pcm parentChildsMap[T]) parentChildsMap[T] {
+//
+// The parameter t is needed to access the compare function.
+func (n *node[T]) pcmForNode(pcm parentChildsMap[T], t *Tree[T]) parentChildsMap[T] {
 	// if this item is covered by a prev item on stack
 	for j := len(pcm.stack) - 1; j >= 0; j-- {
 
 		that := pcm.stack[j]
-		if covers(that.item, n.item) {
+		if t.covers(that.item, n.item) {
 			// item in node j is parent to item
 			pcm.pcMap[that] = append(pcm.pcMap[that], n)
 			break
@@ -373,36 +377,44 @@ func (t Tree[T]) Visit(start, stop T, visitFn func(item T) bool) {
 	}
 
 	order := inorder
-	if compare(start, stop) > 0 {
+	if t.compare(start, stop) > 0 {
 		start, stop = stop, start
 		order = reverse
 	}
 
 	// treaps are really cool datastructures!!!
-	_, mid1, r := t.root.split(start, true)
-	l, mid2, _ := r.split(stop, true)
+	_, mid1, r := t.root.split(start, true, &t)
+	l, mid2, _ := r.split(stop, true, &t)
 
-	span := join(mid1, join(l, mid2, true), true)
+	span := join(mid1, join(l, mid2, true, &t), true, &t)
 
 	span.traverse(order, 0, func(n *node[T], _ int) bool {
 		return visitFn(n.item)
 	})
 }
 
-// Clone, deep cloning of the tree structure, the items are copied.
+// Clone, deep cloning of the tree structure.
 func (t Tree[T]) Clone() Tree[T] {
-	t.root = t.root.clone()
+	if t.root != nil {
+		t.root = t.root.clone(t)
+	}
 	return t
 }
 
-func (n *node[T]) clone() *node[T] {
-	if n == nil {
-		return n
-	}
+// clone rec-descent
+//
+// The parameter t is needed to access the compare function.
+func (n *node[T]) clone(t Tree[T]) *node[T] {
 	n = n.copyNode()
 
-	n.left = n.left.clone()
-	n.right = n.right.clone()
+	if n.left != nil {
+		n.left = n.left.clone(t)
+	}
 
+	if n.right != nil {
+		n.right = n.right.clone(t)
+	}
+
+	n.recalc(&t)
 	return n
 }
