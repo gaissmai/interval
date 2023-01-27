@@ -241,8 +241,7 @@ func (n *node[T]) split(key T, immutable bool, t *Tree[T]) (left, mid, right *no
 		n = n.copyNode()
 	}
 
-	cmp := t.compare(n.item, key)
-	switch {
+	switch cmp := t.compare(n.item, key); {
 	case cmp < 0:
 		l, m, r := n.right.split(key, immutable, t)
 		n.right = l
@@ -288,8 +287,7 @@ func (t Tree[T]) Find(item T) (result T, ok bool) {
 			return
 		}
 
-		cmp := t.compare(item, n.item)
-		switch {
+		switch cmp := t.compare(item, n.item); {
 		case cmp == 0:
 			return n.item, true
 		case cmp < 0:
@@ -375,8 +373,7 @@ func (n *node[T]) lcp(item T, t *Tree[T]) (result T, ok bool) {
 		return
 	}
 
-	cmp := t.compare(n.item, item)
-	switch {
+	switch cmp := t.compare(n.item, item); {
 	case cmp > 0:
 		// left rec-descent
 		return n.left.lcp(item, t)
