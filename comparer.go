@@ -135,3 +135,9 @@ func (t *Tree[T]) cmpLR(a, b T) int {
 	_, _, lr, _ := t.cmp(a, b)
 	return lr
 }
+
+// cmpRL, compares just the right point from a with left point from b.
+func (t *Tree[T]) cmpRL(a, b T) int {
+	_, _, _, rl := t.cmp(a, b)
+	return rl
+}

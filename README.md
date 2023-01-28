@@ -25,11 +25,11 @@ Intersects()   O(log(n))
 CoverLCP()     O(log(n))
 CoverSCP()     O(log(n))
 
-Covers()         O(k*log(n))
-CoveredBy()      O(k*log(n))
-Precedes()       O(k*log(n))
-PrecededBy()     O(k*log(n))
-Intersections()  O(k*log(n))
+Covers()         O(k+log(n))
+CoveredBy()      O(k+log(n))
+Precedes()       O(k+log(n))
+PrecededBy()     O(k+log(n))
+Intersections()  O(k+log(n))
 ```
 
 The author is propably the first (in december 2022) using augmented treaps

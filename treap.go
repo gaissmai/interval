@@ -372,14 +372,14 @@ func (t *Tree[T]) lcp(n *node[T], item T) (result T, ok bool) {
 
 	switch cmp := t.compare(n.item, item); {
 	case cmp > 0:
-		// left rec-descent
+		// too big, left rec-descent
 		return t.lcp(n.left, item)
 	case cmp == 0:
 		// equality is always the shortest containing hull
 		return n.item, true
 	}
 
-	// right backtracking
+	// LCP => right backtracking
 	result, ok = t.lcp(n.right, item)
 	if ok {
 		return result, ok
@@ -452,7 +452,7 @@ func (t *Tree[T]) scp(n *node[T], item T) (result T, ok bool) {
 		return
 	}
 
-	// left backtracking
+	// SCP => left backtracking
 	if result, ok = t.scp(n.left, item); ok {
 		return result, ok
 	}
@@ -533,61 +533,80 @@ func (t *Tree[T]) coveredBy(n *node[T], item T) (result []T) {
 
 // Intersects returns true if any interval intersects item.
 func (t Tree[T]) Intersects(item T) bool {
-	return t.isects(t.root, item)
+	return t.intersects(t.root, item)
 }
 
 // intersects rec-descent
-func (t *Tree[T]) isects(n *node[T], item T) bool {
+func (t *Tree[T]) intersects(n *node[T], item T) bool {
 	if n == nil {
 		return false
 	}
 
-	// nope, subtree has too small upper value for intersection
+	// this n.item, fast exit
+	if t.cmpIntersects(n.item, item) {
+		return true
+	}
+
+	// don't traverse this subtree, subtree has too small upper value for intersection
+	//         item -> |------|
+	// |-------------|  <- maxUpper
 	if t.cmpLR(item, n.maxUpper.item) > 0 {
 		return false
 	}
 
 	// recursive call to left tree
-	if t.isects(n.left, item) {
+	// fast return if true
+	if t.intersects(n.left, item) {
 		return true
 	}
 
-	// this n.item
-	if t.cmpIntersects(n.item, item) {
-		return true
+	// don't traverse right subtree, subtree has too small left value for intersection.
+	// |---------| <- item
+	//     n.item  |-------------|
+	if t.cmpRL(item, n.item) < 0 {
+		return false
 	}
 
 	// recursive call to right tree
-	return t.isects(n.right, item)
+	return t.intersects(n.right, item)
 }
 
 // Intersections returns all intervals that intersect with item.
 // The returned intervals are in sorted order.
 func (t Tree[T]) Intersections(item T) []T {
-	return t.isections(t.root, item)
+	return t.intersections(t.root, item)
 }
 
-// isections rec-descent
-func (t *Tree[T]) isections(n *node[T], item T) (result []T) {
+// intersections rec-descent
+func (t *Tree[T]) intersections(n *node[T], item T) (result []T) {
 	if n == nil {
 		return
 	}
 
-	// nope, subtree has too small upper value for intersection
+	// don't traverse this subtree, subtree has too small upper value for intersection
+	//         item -> |------|
+	// |-------------|  <- maxUpper
 	if t.cmpLR(item, n.maxUpper.item) > 0 {
 		return
 	}
 
 	// in-order traversal for intersections, recursive call to left tree
-	result = append(result, t.isections(n.left, item)...)
+	result = append(result, t.intersections(n.left, item)...)
 
 	// this n.item
 	if t.cmpIntersects(n.item, item) {
 		result = append(result, n.item)
 	}
 
+	// don't traverse right subtree, subtree has too small left value for intersection.
+	// |---------| <- item
+	//     n.item  |-------------|
+	if t.cmpRL(item, n.item) < 0 {
+		return
+	}
+
 	// recursive call to right tree
-	return append(result, t.isections(n.right, item)...)
+	return append(result, t.intersections(n.right, item)...)
 }
 
 // Precedes returns all intervals that precedes the item.
