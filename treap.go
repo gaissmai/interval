@@ -56,7 +56,6 @@ func NewTree[T any](cmp func(a, b T) (ll, rr, lr, rl int), items ...T) Tree[T] {
 }
 
 // makeNode, create new node with item and random priority.
-// The parameter t is needed to access the compare function.
 func (t *Tree[T]) makeNode(item T) *node[T] {
 	n := new(node[T])
 	n.item = item
@@ -467,8 +466,6 @@ func (t Tree[T]) Covers(item T) []T {
 }
 
 // covers rec-descent
-//
-// The parameter t is needed to access the compare function.
 func (t *Tree[T]) covers(n *node[T], item T) (result []T) {
 	if n == nil {
 		return
@@ -641,8 +638,6 @@ func (t Tree[T]) PrecededBy(item T) []T {
 }
 
 // precededBy rec-desent
-//
-// The parameter t is needed to access the compare function.
 func (t *Tree[T]) precededBy(n *node[T], item T) (result []T) {
 	if n == nil {
 		return
@@ -705,8 +700,6 @@ func (t *Tree[T]) join(n, m *node[T], immutable bool) *node[T] {
 
 // recalc the augmented fields in treap node after each creation/modification with values in descendants.
 // Only one level deeper must be considered. The treap datastructure is very easy to augment.
-//
-// The parameter t is needed to access the compare function.
 func (t *Tree[T]) recalc(n *node[T]) {
 	if n == nil {
 		return

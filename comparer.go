@@ -80,7 +80,7 @@ func (t *Tree[T]) compare(a, b T) int {
 	}
 }
 
-// cmpCovers, returns true if a cmpCovers b.
+// cmpCovers, returns true if a covers b.
 //
 //  =================================================================|
 //  |  visualization         | ll | rr | lr | rl | description       |
