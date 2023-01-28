@@ -192,23 +192,8 @@ BenchmarkCoverLCP/In100_000-8        1533745       782 ns/op        0 B/op    0 
 BenchmarkCoverLCP/In1_000_000-8      1732171       693 ns/op        0 B/op    0 allocs/op
 ```
 
-... also for `CoverSCP()`:
-
-
-```
-$ go test -benchmem -bench='CoverSCP'
-goos: linux
-goarch: amd64
-pkg: github.com/gaissmai/interval
-cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkCoverSCP/In100-8           11576743        95 ns/op        0 B/op    0 allocs/op
-BenchmarkCoverSCP/In1_000-8         10032699       114 ns/op        0 B/op    0 allocs/op
-BenchmarkCoverSCP/In10_000-8         6087580       196 ns/op        0 B/op    0 allocs/op
-BenchmarkCoverSCP/In100_000-8        5949422       202 ns/op        0 B/op    0 allocs/op
-BenchmarkCoverSCP/In1_000_000-8      4775067       250 ns/op        0 B/op    0 allocs/op
-```
-
 ... and for `Intersects()`:
+
 
 ```
 $ go test -benchmem -bench='Intersects'
@@ -225,7 +210,7 @@ BenchmarkIntersects/In100_000-4      7483621       191 ns/op        0 B/op    0 
 BenchmarkIntersects/In1_000_000-4    8134428       149 ns/op        0 B/op    0 allocs/op
 ```
 
-... and for Find(), the exact match:
+... or Find(), the exact match:
 
 ```
 $ go test -benchmem -bench='Find'
@@ -239,3 +224,6 @@ BenchmarkFind/In10_000-8            12858908        90 ns/op      0 B/op    0 al
 BenchmarkFind/In100_000-8            4696676       256 ns/op      0 B/op    0 allocs/op
 BenchmarkFind/In1_000_000-8          7131028       163 ns/op      0 B/op    0 allocs/op
 ```
+
+With all other methods, the treap is split before the search, which allocates memory
+but minimises the search space.

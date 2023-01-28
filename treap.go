@@ -431,7 +431,14 @@ func (t *Tree[T]) lcp(n *node[T], item T) (result T, ok bool) {
 //	 tree.CoverSCP(ival{6,9}) returns ival{},    false
 //
 func (t Tree[T]) CoverSCP(item T) (result T, ok bool) {
-	return t.scp(t.root, item)
+	l, m, _ := t.split(t.root, item, true)
+	result, ok = t.scp(l, item)
+
+	if !ok && m != nil {
+		return m.item, ok
+	}
+
+	return result, ok
 }
 
 // scp rec-descent
@@ -462,7 +469,14 @@ func (t *Tree[T]) scp(n *node[T], item T) (result T, ok bool) {
 // Covers returns all intervals that cover the item.
 // The returned intervals are in sorted order.
 func (t Tree[T]) Covers(item T) []T {
-	return t.covers(t.root, item)
+	l, m, _ := t.split(t.root, item, true)
+	result := t.covers(l, item)
+
+	if m != nil {
+		return append(result, m.item)
+	}
+
+	return result
 }
 
 // covers rec-descent

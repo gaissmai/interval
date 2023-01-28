@@ -142,6 +142,22 @@ func BenchmarkIntersects(b *testing.B) {
 	}
 }
 
+func BenchmarkIntersects2(b *testing.B) {
+	for n := 1; n <= 1_000_000; n *= 10 {
+		ivals := genUintIvals(n)
+		tree := interval.NewTree(cmpUintInterval, ivals...)
+		probe := gen2UintIvals(1)[0]
+		name := "In" + intMap[n]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_ = tree.Intersects(probe)
+			}
+		})
+	}
+}
+
 func BenchmarkFind(b *testing.B) {
 	for n := 1; n <= 1_000_000; n *= 10 {
 		ivals := genUintIvals(n)
@@ -173,9 +189,39 @@ func BenchmarkCoverLCP(b *testing.B) {
 	}
 }
 
+func BenchmarkCoverLCP2(b *testing.B) {
+	for n := 100; n <= 1_000_000; n *= 10 {
+		tree := interval.NewTree(cmpUintInterval, gen2UintIvals(n)...)
+		probe := genUintIvals(1)[0]
+		name := "In" + intMap[n]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_, _ = tree.CoverLCP(probe)
+			}
+		})
+	}
+}
+
 func BenchmarkCoverSCP(b *testing.B) {
 	for n := 100; n <= 1_000_000; n *= 10 {
 		tree := interval.NewTree(cmpUintInterval, genUintIvals(n)...)
+		probe := genUintIvals(1)[0]
+		name := "In" + intMap[n]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_, _ = tree.CoverSCP(probe)
+			}
+		})
+	}
+}
+
+func BenchmarkCoverSCP2(b *testing.B) {
+	for n := 100; n <= 1_000_000; n *= 10 {
+		tree := interval.NewTree(cmpUintInterval, gen2UintIvals(n)...)
 		probe := genUintIvals(1)[0]
 		name := "In" + intMap[n]
 
@@ -204,8 +250,23 @@ func BenchmarkCoveredBy(b *testing.B) {
 }
 
 func BenchmarkCovers(b *testing.B) {
-	for n := 100; n <= 100_000; n *= 10 {
+	for n := 100; n <= 1_000_000; n *= 10 {
 		tree := interval.NewTree(cmpUintInterval, genUintIvals(n)...)
+		probe := genUintIvals(1)[0]
+		name := "In" + intMap[n]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_ = tree.Covers(probe)
+			}
+		})
+	}
+}
+
+func BenchmarkCovers2(b *testing.B) {
+	for n := 100; n <= 1_000_000; n *= 10 {
+		tree := interval.NewTree(cmpUintInterval, gen2UintIvals(n)...)
 		probe := genUintIvals(1)[0]
 		name := "In" + intMap[n]
 
@@ -249,8 +310,23 @@ func BenchmarkPrecedes(b *testing.B) {
 }
 
 func BenchmarkIntersections(b *testing.B) {
-	for n := 100; n <= 10_000; n *= 10 {
+	for n := 100; n <= 100_000; n *= 10 {
 		tree := interval.NewTree(cmpUintInterval, genUintIvals(n)...)
+		probe := genUintIvals(1)[0]
+		name := "In" + intMap[n]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_ = tree.Intersections(probe)
+			}
+		})
+	}
+}
+
+func BenchmarkIntersections2(b *testing.B) {
+	for n := 100; n <= 100_000; n *= 10 {
+		tree := interval.NewTree(cmpUintInterval, gen2UintIvals(n)...)
 		probe := genUintIvals(1)[0]
 		name := "In" + intMap[n]
 
