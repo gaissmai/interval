@@ -58,14 +58,14 @@ func TestNewTree(t *testing.T) {
 	t.Parallel()
 
 	var zeroItem Ival
-	zeroTree := interval.NewTree(compareIval)
+	tree := interval.NewTree(compareIval)
 
-	if zeroTree.String() != "" {
+	if tree.String() != "" {
 		t.Errorf("String() = %v, want \"\"", "")
 	}
 
 	w := new(strings.Builder)
-	if err := zeroTree.Fprint(w); err != nil {
+	if err := tree.Fprint(w); err != nil {
 		t.Fatal(err)
 	}
 
@@ -74,7 +74,7 @@ func TestNewTree(t *testing.T) {
 	}
 
 	w.Reset()
-	if err := zeroTree.FprintBST(w); err != nil {
+	if err := tree.FprintBST(w); err != nil {
 		t.Fatal(err)
 	}
 
@@ -82,60 +82,60 @@ func TestNewTree(t *testing.T) {
 		t.Errorf("FprintBST(w) = %v, want \"\"", w.String())
 	}
 
-	if _, ok := zeroTree.Find(zeroItem); ok {
+	if _, ok := tree.Find(zeroItem); ok {
 		t.Errorf("Find(), got: %v, want: false", ok)
 	}
 
-	if _, ok := zeroTree.Delete(zeroItem); ok {
+	if _, ok := tree.Delete(zeroItem); ok {
 		t.Errorf("Delete(), got: %v, want: false", ok)
 	}
 
-	if _, ok := zeroTree.CoverLCP(zeroItem); ok {
+	if _, ok := tree.CoverLCP(zeroItem); ok {
 		t.Errorf("CoverLCP(), got: %v, want: false", ok)
 	}
 
-	if _, ok := zeroTree.CoverSCP(zeroItem); ok {
+	if _, ok := tree.CoverSCP(zeroItem); ok {
 		t.Errorf("CoverSCP(), got: %v, want: false", ok)
 	}
 
-	if size, _, _, _ := zeroTree.Insert(zeroItem).Statistics(); size != 1 {
+	if size, _, _, _ := tree.Insert(zeroItem).Statistics(); size != 1 {
 		t.Errorf("Insert(), got: %v, want: 1", size)
 	}
 
-	if s := zeroTree.CoveredBy(zeroItem); s != nil {
+	if s := tree.CoveredBy(zeroItem); s != nil {
 		t.Errorf("CoveredBy(), got: %v, want: nil", s)
 	}
 
-	if s := zeroTree.Covers(zeroItem); s != nil {
+	if s := tree.Covers(zeroItem); s != nil {
 		t.Errorf("Covers(), got: %v, want: nil", s)
 	}
 
-	if s := zeroTree.Intersects(zeroItem); s != false {
+	if s := tree.Intersects(zeroItem); s != false {
 		t.Errorf("Intersectons(), got: %v, want: false", s)
 	}
 
-	if s := zeroTree.Intersections(zeroItem); s != nil {
+	if s := tree.Intersections(zeroItem); s != nil {
 		t.Errorf("Intersections(), got: %v, want: nil", s)
 	}
 
-	if s := zeroTree.Precedes(zeroItem); s != nil {
+	if s := tree.Precedes(zeroItem); s != nil {
 		t.Errorf("Precedes(), got: %v, want: nil", s)
 	}
 
-	if s := zeroTree.PrecededBy(zeroItem); s != nil {
+	if s := tree.PrecededBy(zeroItem); s != nil {
 		t.Errorf("PrecededBy(), got: %v, want: nil", s)
 	}
 
-	if s := zeroTree.Min(); s != zeroItem {
+	if s := tree.Min(); s != zeroItem {
 		t.Errorf("Min(), got: %v, want: %v", s, zeroItem)
 	}
 
-	if s := zeroTree.Max(); s != zeroItem {
+	if s := tree.Max(); s != zeroItem {
 		t.Errorf("Max(), got: %v, want: %v", s, zeroItem)
 	}
 
 	var items []Ival
-	zeroTree.Visit(zeroItem, zeroItem, func(item Ival) bool {
+	tree.Visit(zeroItem, zeroItem, func(item Ival) bool {
 		items = append(items, item)
 		return true
 	})
