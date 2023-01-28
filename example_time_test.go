@@ -9,11 +9,26 @@ import (
 	"github.com/gaissmai/interval"
 )
 
+// example time period interval
+type timeInterval struct {
+	birth time.Time
+	death time.Time
+	name  string
+}
+
+// cmp func for timeInterval
+func cmpTimeInterval(p, q timeInterval) (ll, rr, lr, rl int) {
+	return cmpTime(p.birth, q.birth),
+		cmpTime(p.death, q.death),
+		cmpTime(p.birth, q.death),
+		cmpTime(p.death, q.birth)
+}
+
 // little helper
-func mkTval(i, j int, s string) Tval {
+func makeTimeInterval(i, j int, s string) timeInterval {
 	t1, _ := time.Parse("2006", strconv.Itoa(i))
 	t2, _ := time.Parse("2006", strconv.Itoa(j))
-	return Tval{birth: t1, death: t2, name: s}
+	return timeInterval{birth: t1, death: t2, name: s}
 }
 
 // little helper
@@ -27,68 +42,52 @@ func cmpTime(a, b time.Time) int {
 	return 0
 }
 
-// example time period interval
-type Tval struct {
-	birth time.Time
-	death time.Time
-	name  string
+// example data
+var physicists = []timeInterval{
+	makeTimeInterval(1473, 1543, "Kopernikus"),
+	makeTimeInterval(1544, 1603, "Gilbert"),
+	makeTimeInterval(1564, 1642, "Galilei"),
+	makeTimeInterval(1571, 1630, "Kepler"),
+	makeTimeInterval(1623, 1662, "Pascal"),
+	makeTimeInterval(1629, 1695, "Huygens"),
+	makeTimeInterval(1643, 1727, "Newton"),
+	makeTimeInterval(1700, 1782, "Bernoulli"),
+	makeTimeInterval(1777, 1855, "Gauss"),
+	makeTimeInterval(1707, 1783, "Euler"),
+	makeTimeInterval(1731, 1810, "Cavendish"),
+	makeTimeInterval(1736, 1813, "Lagrange"),
+	makeTimeInterval(1736, 1806, "Coulomb"),
+	makeTimeInterval(1745, 1827, "Volta"),
+	makeTimeInterval(1749, 1827, "Laplace"),
+	makeTimeInterval(1768, 1830, "Fourier"),
+	makeTimeInterval(1773, 1829, "Young"),
+	makeTimeInterval(1775, 1836, "Ampère"),
+	makeTimeInterval(1788, 1827, "Fresnel"),
+	makeTimeInterval(1791, 1867, "Faraday"),
+	makeTimeInterval(1796, 1832, "Carnot"),
+	makeTimeInterval(1805, 1865, "Hamilton"),
+	makeTimeInterval(1818, 1889, "Joule"),
+	makeTimeInterval(1821, 1894, "Helholtz"),
+	makeTimeInterval(1822, 1888, "Clausius"),
+	makeTimeInterval(1824, 1887, "Kirchhoff"),
+	makeTimeInterval(1824, 1907, "Kelvin"),
+	makeTimeInterval(1831, 1879, "Maxwell"),
 }
 
 // String, implements fmt.Stringer for nice formattting
-func (p Tval) String() string {
+func (p timeInterval) String() string {
 	return fmt.Sprintf("%s...%s (%s)", p.birth.Format("2006"), p.death.Format("2006"), p.name)
 }
 
-// cmp func for type Tval
-func compareTval(p, q Tval) (ll, rr, lr, rl int) {
-	return cmpTime(p.birth, q.birth),
-		cmpTime(p.death, q.death),
-		cmpTime(p.birth, q.death),
-		cmpTime(p.death, q.birth)
-}
-
-// example data
-var physicists = []Tval{
-	mkTval(1473, 1543, "Kopernikus"),
-	mkTval(1544, 1603, "Gilbert"),
-	mkTval(1564, 1642, "Galilei"),
-	mkTval(1571, 1630, "Kepler"),
-	mkTval(1623, 1662, "Pascal"),
-	mkTval(1629, 1695, "Huygens"),
-	mkTval(1643, 1727, "Newton"),
-	mkTval(1700, 1782, "Bernoulli"),
-	mkTval(1777, 1855, "Gauss"),
-	mkTval(1707, 1783, "Euler"),
-	mkTval(1731, 1810, "Cavendish"),
-	mkTval(1736, 1813, "Lagrange"),
-	mkTval(1736, 1806, "Coulomb"),
-	mkTval(1745, 1827, "Volta"),
-	mkTval(1749, 1827, "Laplace"),
-	mkTval(1768, 1830, "Fourier"),
-	mkTval(1773, 1829, "Young"),
-	mkTval(1775, 1836, "Ampère"),
-	mkTval(1788, 1827, "Fresnel"),
-	mkTval(1791, 1867, "Faraday"),
-	mkTval(1796, 1832, "Carnot"),
-	mkTval(1805, 1865, "Hamilton"),
-	mkTval(1818, 1889, "Joule"),
-	mkTval(1821, 1894, "Helholtz"),
-	mkTval(1822, 1888, "Clausius"),
-	mkTval(1824, 1887, "Kirchhoff"),
-	mkTval(1824, 1907, "Kelvin"),
-	mkTval(1831, 1879, "Maxwell"),
-}
-
 func ExampleTree_Precedes_time() {
-	tree := interval.NewTree(compareTval, physicists...)
+	tree := interval.NewTree(cmpTimeInterval, physicists...)
 	tree.Fprint(os.Stdout)
 
-	precedes := tree.Precedes(mkTval(1643, 1727, "Newton"))
-	tree = interval.NewTree(compareTval, precedes...)
+	precedes := tree.Precedes(makeTimeInterval(1643, 1727, "Newton"))
+	tree = interval.NewTree(cmpTimeInterval, precedes...)
 
 	fmt.Println("\nPrecedes Newton:")
 	tree.Fprint(os.Stdout)
-
 	// Output:
 	// ▼
 	// ├─ 1473...1543 (Kopernikus)
@@ -129,15 +128,14 @@ func ExampleTree_Precedes_time() {
 }
 
 func ExampleTree_PrecededBy_time() {
-	tree := interval.NewTree(compareTval, physicists...)
+	tree := interval.NewTree(cmpTimeInterval, physicists...)
 	tree.Fprint(os.Stdout)
 
-	precededBy := tree.PrecededBy(mkTval(1643, 1727, "Newton"))
-	tree = interval.NewTree(compareTval, precededBy...)
+	precededBy := tree.PrecededBy(makeTimeInterval(1643, 1727, "Newton"))
+	tree = interval.NewTree(cmpTimeInterval, precededBy...)
 
 	fmt.Println("\nPrecededBy Newton:")
 	tree.Fprint(os.Stdout)
-
 	// Output:
 	// ▼
 	// ├─ 1473...1543 (Kopernikus)

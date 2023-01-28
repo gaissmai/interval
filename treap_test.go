@@ -12,7 +12,7 @@ import (
 )
 
 // test data
-var ps = []Ival{
+var ps = []uintInterval{
 	{0, 6},
 	{0, 5},
 	{1, 8},
@@ -26,29 +26,29 @@ var ps = []Ival{
 	{7, 9},
 }
 
-func mkIval(a, b uint) Ival {
+func makeUintIval(a, b uint) uintInterval {
 	if a > b {
 		a, b = b, a
 	}
-	return Ival{a, b}
+	return uintInterval{a, b}
 }
 
 // random test data
-func generateIvals(n int) []Ival {
-	is := make([]Ival, n)
+func genUintIvals(n int) []uintInterval {
+	is := make([]uintInterval, n)
 	for i := 0; i < n; i++ {
 		a := rand.Int()
 		b := rand.Int()
-		is[i] = mkIval(uint(a), uint(b))
+		is[i] = makeUintIval(uint(a), uint(b))
 	}
 	return is
 }
 
-func equals(a, b Ival) bool {
+func equals(a, b uintInterval) bool {
 	return a[0] == b[0] && a[1] == b[1]
 }
 
-func equalStatistics(t1, t2 interval.Tree[Ival]) bool {
+func equalStatistics(t1, t2 interval.Tree[uintInterval]) bool {
 	a1, b1, c1, d1 := t1.Statistics()
 	a2, b2, c2, d2 := t2.Statistics()
 	return a1 == a2 && b1 == b2 && c1 == c2 && d1 == d2
@@ -57,8 +57,8 @@ func equalStatistics(t1, t2 interval.Tree[Ival]) bool {
 func TestNewTree(t *testing.T) {
 	t.Parallel()
 
-	var zeroItem Ival
-	tree := interval.NewTree(compareIval)
+	var zeroItem uintInterval
+	tree := interval.NewTree(cmpUintInterval)
 
 	if tree.String() != "" {
 		t.Errorf("String() = %v, want \"\"", "")
@@ -134,8 +134,8 @@ func TestNewTree(t *testing.T) {
 		t.Errorf("Max(), got: %v, want: %v", s, zeroItem)
 	}
 
-	var items []Ival
-	tree.Visit(zeroItem, zeroItem, func(item Ival) bool {
+	var items []uintInterval
+	tree.Visit(zeroItem, zeroItem, func(item uintInterval) bool {
 		items = append(items, item)
 		return true
 	})
@@ -147,7 +147,7 @@ func TestNewTree(t *testing.T) {
 func TestTreeWithDups(t *testing.T) {
 	t.Parallel()
 
-	is := []Ival{
+	is := []uintInterval{
 		{0, 100},
 		{41, 102},
 		{41, 102},
@@ -173,7 +173,7 @@ func TestTreeWithDups(t *testing.T) {
 		{3, 13},
 	}
 
-	tree1 := interval.NewTree(compareIval, is...)
+	tree1 := interval.NewTree(cmpUintInterval, is...)
 	if size, _, _, _ := tree1.Statistics(); size != 5 {
 		t.Errorf("Size() = %v, want 5", size)
 	}
@@ -192,7 +192,7 @@ func TestTreeWithDups(t *testing.T) {
 
 func TestImmutable(t *testing.T) {
 	t.Parallel()
-	tree1 := interval.NewTree(compareIval, ps...)
+	tree1 := interval.NewTree(cmpUintInterval, ps...)
 
 	if _, ok := tree1.Delete(tree1.Min()); !ok {
 		t.Fatal("Delete, could not delete min item")
@@ -201,7 +201,7 @@ func TestImmutable(t *testing.T) {
 		t.Fatal("Delete changed receiver")
 	}
 
-	item := Ival{111, 666}
+	item := uintInterval{111, 666}
 	_ = tree1.Insert(item)
 
 	if _, ok := tree1.Find(item); ok {
@@ -210,7 +210,7 @@ func TestImmutable(t *testing.T) {
 }
 
 func TestMutable(t *testing.T) {
-	tree1 := interval.NewTree(compareIval, ps...)
+	tree1 := interval.NewTree(cmpUintInterval, ps...)
 	clone := tree1.Clone()
 
 	if !equalStatistics(tree1, clone) {
@@ -233,14 +233,14 @@ func TestMutable(t *testing.T) {
 	}
 
 	// reset
-	tree1 = interval.NewTree(compareIval, ps...)
+	tree1 = interval.NewTree(cmpUintInterval, ps...)
 	clone = tree1.Clone()
 
 	if !equalStatistics(tree1, clone) {
 		t.Fatalf("Clone, something wrong, statistics differs")
 	}
 
-	item := Ival{111, 666}
+	item := uintInterval{111, 666}
 	(&tree1).InsertMutable(item)
 
 	if _, ok := tree1.Find(item); !ok {
@@ -251,15 +251,15 @@ func TestMutable(t *testing.T) {
 func TestFind(t *testing.T) {
 	t.Parallel()
 
-	ivals := generateIvals(100_00)
-	tree1 := interval.NewTree(compareIval, ivals...)
+	ivals := genUintIvals(100_00)
+	tree1 := interval.NewTree(cmpUintInterval, ivals...)
 
 	for _, ival := range ivals {
 		item, ok := tree1.Find(ival)
 		if ok != true {
 			t.Errorf("Find(%v) = %v, want %v", item, ok, true)
 		}
-		ll, rr, _, _ := compareIval(item, ival)
+		ll, rr, _, _ := cmpUintInterval(item, ival)
 		if ll != 0 || rr != 0 {
 			t.Errorf("Find(%v) = %v, want %v", ival, item, ival)
 		}
@@ -271,7 +271,7 @@ func TestLookup(t *testing.T) {
 
 	for i := 0; i < 100; i++ {
 		// bring some variance into the Treap due to the prio randomness
-		tree1 := interval.NewTree(compareIval, ps...)
+		tree1 := interval.NewTree(cmpUintInterval, ps...)
 
 		//     	 ▼
 		//     	 ├─ 0...6
@@ -286,58 +286,58 @@ func TestLookup(t *testing.T) {
 		//     	 │        └─ 6...7
 		//     	 └─ 7...9
 
-		item := Ival{0, 5}
+		item := uintInterval{0, 5}
 		if got, _ := tree1.CoverLCP(item); got != item {
 			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, item)
 		}
 
-		item = Ival{5, 5}
-		want := Ival{4, 8}
+		item = uintInterval{5, 5}
+		want := uintInterval{4, 8}
 		if got, _ := tree1.CoverLCP(item); got != want {
 			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, want)
 		}
 
-		item = Ival{8, 9}
-		want = Ival{7, 9}
+		item = uintInterval{8, 9}
+		want = uintInterval{7, 9}
 		if got, _ := tree1.CoverLCP(item); got != want {
 			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, want)
 		}
 
-		item = Ival{3, 8}
-		want = Ival{2, 8}
+		item = uintInterval{3, 8}
+		want = uintInterval{2, 8}
 		if got, _ := tree1.CoverLCP(item); got != want {
 			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, want)
 		}
 
-		item = Ival{19, 55}
+		item = uintInterval{19, 55}
 		if got, ok := tree1.CoverLCP(item); ok {
 			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, !ok)
 		}
 
-		item = Ival{0, 19}
+		item = uintInterval{0, 19}
 		if got, ok := tree1.CoverLCP(item); ok {
 			t.Errorf("CoverLCP(%v) = %v, want %v", item, got, !ok)
 		}
 
-		item = Ival{7, 7}
-		want = Ival{1, 8}
+		item = uintInterval{7, 7}
+		want = uintInterval{1, 8}
 		if got, _ := tree1.CoverSCP(item); got != want {
 			t.Errorf("CoverSCP(%v) = %v, want %v", item, got, want)
 		}
 
-		item = Ival{3, 6}
-		want = Ival{0, 6}
+		item = uintInterval{3, 6}
+		want = uintInterval{0, 6}
 		if got, _ := tree1.CoverSCP(item); got != want {
 			t.Errorf("CoverSCP(%v) = %v, want %v", item, got, want)
 		}
 
-		item = Ival{3, 7}
-		want = Ival{1, 8}
+		item = uintInterval{3, 7}
+		want = uintInterval{1, 8}
 		if got, _ := tree1.CoverSCP(item); got != want {
 			t.Errorf("CoverSCP(%v) = %v, want %v", item, got, want)
 		}
 
-		item = Ival{0, 7}
+		item = uintInterval{0, 7}
 		if _, ok := tree1.CoverSCP(item); ok {
 			t.Errorf("CoverSCP(%v) = %v, want %v", item, ok, false)
 		}
@@ -348,8 +348,8 @@ func TestLookup(t *testing.T) {
 func TestCoveredBy(t *testing.T) {
 	t.Parallel()
 
-	tree1 := interval.NewTree(compareIval, ps...)
-	var want []Ival
+	tree1 := interval.NewTree(cmpUintInterval, ps...)
+	var want []uintInterval
 
 	//     	 ▼
 	//     	 ├─ 0...6
@@ -364,8 +364,8 @@ func TestCoveredBy(t *testing.T) {
 	//     	 │        └─ 6...7
 	//     	 └─ 7...9
 
-	item := Ival{0, 6}
-	want = []Ival{{0, 6}, {0, 5}, {1, 5}, {1, 4}}
+	item := uintInterval{0, 6}
+	want = []uintInterval{{0, 6}, {0, 5}, {1, 5}, {1, 4}}
 	covered := tree1.CoveredBy(item)
 
 	if !reflect.DeepEqual(covered, want) {
@@ -373,7 +373,7 @@ func TestCoveredBy(t *testing.T) {
 	}
 
 	// ###
-	item = Ival{3, 6}
+	item = uintInterval{3, 6}
 	want = nil
 	covered = tree1.CoveredBy(item)
 
@@ -382,8 +382,8 @@ func TestCoveredBy(t *testing.T) {
 	}
 
 	// ###
-	item = Ival{3, 11}
-	want = []Ival{{4, 8}, {6, 7}, {7, 9}}
+	item = uintInterval{3, 11}
+	want = []uintInterval{{4, 8}, {6, 7}, {7, 9}}
 	covered = tree1.CoveredBy(item)
 
 	if !reflect.DeepEqual(covered, want) {
@@ -394,8 +394,8 @@ func TestCoveredBy(t *testing.T) {
 func TestCovers(t *testing.T) {
 	t.Parallel()
 
-	tree1 := interval.NewTree(compareIval, ps...)
-	var want []Ival
+	tree1 := interval.NewTree(cmpUintInterval, ps...)
+	var want []uintInterval
 
 	//     	 ▼
 	//     	 ├─ 0...6
@@ -410,8 +410,8 @@ func TestCovers(t *testing.T) {
 	//     	 │        └─ 6...7
 	//     	 └─ 7...9
 
-	item := Ival{0, 6}
-	want = []Ival{{0, 6}}
+	item := uintInterval{0, 6}
+	want = []uintInterval{{0, 6}}
 	covers := tree1.Covers(item)
 
 	if !reflect.DeepEqual(covers, want) {
@@ -419,8 +419,8 @@ func TestCovers(t *testing.T) {
 	}
 
 	// ###
-	item = Ival{3, 7}
-	want = []Ival{{1, 8}, {1, 7}, {2, 8}, {2, 7}}
+	item = uintInterval{3, 7}
+	want = []uintInterval{{1, 8}, {1, 7}, {2, 8}, {2, 7}}
 	covers = tree1.Covers(item)
 
 	if !reflect.DeepEqual(covers, want) {
@@ -428,7 +428,7 @@ func TestCovers(t *testing.T) {
 	}
 
 	// ###
-	item = Ival{3, 11}
+	item = uintInterval{3, 11}
 	want = nil
 	covers = tree1.Covers(item)
 
@@ -440,7 +440,7 @@ func TestCovers(t *testing.T) {
 func TestIntersects(t *testing.T) {
 	t.Parallel()
 
-	tree1 := interval.NewTree(compareIval, ps...)
+	tree1 := interval.NewTree(cmpUintInterval, ps...)
 
 	//     	 ▼
 	//     	 ├─ 0...6
@@ -455,7 +455,7 @@ func TestIntersects(t *testing.T) {
 	//     	 │        └─ 6...7
 	//     	 └─ 7...9
 
-	item := Ival{7, 7}
+	item := uintInterval{7, 7}
 	want := true
 	got := tree1.Intersects(item)
 
@@ -463,7 +463,7 @@ func TestIntersects(t *testing.T) {
 		t.Fatalf("Intersects(%v), got: %v, want: %v", item, got, want)
 	}
 
-	item = Ival{9, 17}
+	item = uintInterval{9, 17}
 	want = true
 	got = tree1.Intersects(item)
 
@@ -471,7 +471,7 @@ func TestIntersects(t *testing.T) {
 		t.Fatalf("Intersects(%v), got: %v, want: %v", item, got, want)
 	}
 
-	item = Ival{1, 1}
+	item = uintInterval{1, 1}
 	want = true
 	got = tree1.Intersects(item)
 
@@ -479,7 +479,7 @@ func TestIntersects(t *testing.T) {
 		t.Fatalf("Intersects(%v), got: %v, want: %v", item, got, want)
 	}
 
-	item = Ival{10, 12}
+	item = uintInterval{10, 12}
 	want = false
 	got = tree1.Intersects(item)
 
@@ -491,8 +491,8 @@ func TestIntersects(t *testing.T) {
 func TestIntersections(t *testing.T) {
 	t.Parallel()
 
-	tree1 := interval.NewTree(compareIval, ps...)
-	var want []Ival
+	tree1 := interval.NewTree(cmpUintInterval, ps...)
+	var want []uintInterval
 
 	//     	 ▼
 	//     	 ├─ 0...6
@@ -507,8 +507,8 @@ func TestIntersections(t *testing.T) {
 	//     	 │        └─ 6...7
 	//     	 └─ 7...9
 
-	item := Ival{7, 7}
-	want = []Ival{{1, 8}, {1, 7}, {2, 8}, {2, 7}, {4, 8}, {6, 7}, {7, 9}}
+	item := uintInterval{7, 7}
+	want = []uintInterval{{1, 8}, {1, 7}, {2, 8}, {2, 7}, {4, 8}, {6, 7}, {7, 9}}
 	intersections := tree1.Intersections(item)
 
 	if !reflect.DeepEqual(intersections, want) {
@@ -516,8 +516,8 @@ func TestIntersections(t *testing.T) {
 	}
 
 	// ###
-	item = Ival{8, 10}
-	want = []Ival{{1, 8}, {2, 8}, {4, 8}, {7, 9}}
+	item = uintInterval{8, 10}
+	want = []uintInterval{{1, 8}, {2, 8}, {4, 8}, {7, 9}}
 	intersections = tree1.Intersections(item)
 
 	if !reflect.DeepEqual(intersections, want) {
@@ -525,7 +525,7 @@ func TestIntersections(t *testing.T) {
 	}
 
 	// ###
-	item = Ival{10, 15}
+	item = uintInterval{10, 15}
 	want = nil
 	intersections = tree1.Intersections(item)
 
@@ -537,8 +537,8 @@ func TestIntersections(t *testing.T) {
 func TestPrecedes(t *testing.T) {
 	t.Parallel()
 
-	tree1 := interval.NewTree(compareIval, ps...)
-	var want []Ival
+	tree1 := interval.NewTree(cmpUintInterval, ps...)
+	var want []uintInterval
 
 	//     	 ▼
 	//     	 ├─ 0...6
@@ -553,8 +553,8 @@ func TestPrecedes(t *testing.T) {
 	//     	 │        └─ 6...7
 	//     	 └─ 7...9
 
-	item := Ival{7, 7}
-	want = []Ival{{0, 6}, {0, 5}, {1, 5}, {1, 4}}
+	item := uintInterval{7, 7}
+	want = []uintInterval{{0, 6}, {0, 5}, {1, 5}, {1, 4}}
 	precedes := tree1.Precedes(item)
 
 	if !reflect.DeepEqual(precedes, want) {
@@ -562,8 +562,8 @@ func TestPrecedes(t *testing.T) {
 	}
 
 	// ###
-	item = Ival{5, 10}
-	want = []Ival{{1, 4}}
+	item = uintInterval{5, 10}
+	want = []uintInterval{{1, 4}}
 	precedes = tree1.Precedes(item)
 
 	if !reflect.DeepEqual(precedes, want) {
@@ -571,7 +571,7 @@ func TestPrecedes(t *testing.T) {
 	}
 
 	// ###
-	item = Ival{0, 9}
+	item = uintInterval{0, 9}
 	want = nil
 	precedes = tree1.Precedes(item)
 
@@ -583,8 +583,8 @@ func TestPrecedes(t *testing.T) {
 func TestPrecededBy(t *testing.T) {
 	t.Parallel()
 
-	tree1 := interval.NewTree(compareIval, ps...)
-	var want []Ival
+	tree1 := interval.NewTree(cmpUintInterval, ps...)
+	var want []uintInterval
 
 	//     	 ▼
 	//     	 ├─ 0...6
@@ -599,8 +599,8 @@ func TestPrecededBy(t *testing.T) {
 	//     	 │        └─ 6...7
 	//     	 └─ 7...9
 
-	item := Ival{4, 4}
-	want = []Ival{{6, 7}, {7, 9}}
+	item := uintInterval{4, 4}
+	want = []uintInterval{{6, 7}, {7, 9}}
 	precedes := tree1.PrecededBy(item)
 
 	if !reflect.DeepEqual(precedes, want) {
@@ -608,8 +608,8 @@ func TestPrecededBy(t *testing.T) {
 	}
 
 	// ###
-	item = Ival{1, 2}
-	want = []Ival{{4, 8}, {6, 7}, {7, 9}}
+	item = uintInterval{1, 2}
+	want = []uintInterval{{4, 8}, {6, 7}, {7, 9}}
 	precedes = tree1.PrecededBy(item)
 
 	if !reflect.DeepEqual(precedes, want) {
@@ -617,7 +617,7 @@ func TestPrecededBy(t *testing.T) {
 	}
 
 	// ###
-	item = Ival{0, 7}
+	item = uintInterval{0, 7}
 	want = nil
 	precedes = tree1.PrecededBy(item)
 
@@ -628,11 +628,11 @@ func TestPrecededBy(t *testing.T) {
 
 func TestVisit(t *testing.T) {
 	t.Parallel()
-	tree1 := interval.NewTree(compareIval, ps...)
+	tree1 := interval.NewTree(cmpUintInterval, ps...)
 
-	var collect []Ival
+	var collect []uintInterval
 	want := 4
-	tree1.Visit(tree1.Min(), tree1.Max(), func(item Ival) bool {
+	tree1.Visit(tree1.Min(), tree1.Max(), func(item uintInterval) bool {
 		collect = append(collect, item)
 		return len(collect) != want
 	})
@@ -643,7 +643,7 @@ func TestVisit(t *testing.T) {
 
 	collect = nil
 	want = 9
-	tree1.Visit(tree1.Max(), tree1.Min(), func(item Ival) bool {
+	tree1.Visit(tree1.Max(), tree1.Min(), func(item uintInterval) bool {
 		collect = append(collect, item)
 		return true
 	})
@@ -655,7 +655,7 @@ func TestVisit(t *testing.T) {
 
 	collect = nil
 	want = 2
-	tree1.Visit(tree1.Max(), tree1.Min(), func(item Ival) bool {
+	tree1.Visit(tree1.Max(), tree1.Min(), func(item uintInterval) bool {
 		collect = append(collect, item)
 		return len(collect) != want
 	})
@@ -663,13 +663,13 @@ func TestVisit(t *testing.T) {
 
 func TestMinMax(t *testing.T) {
 	t.Parallel()
-	tree1 := interval.NewTree(compareIval, ps...)
-	want := Ival{0, 6}
+	tree1 := interval.NewTree(cmpUintInterval, ps...)
+	want := uintInterval{0, 6}
 	if tree1.Min() != want {
 		t.Fatalf("Min(), want: %v, got: %v", want, tree1.Min())
 	}
 
-	want = Ival{7, 9}
+	want = uintInterval{7, 9}
 	if tree1.Max() != want {
 		t.Fatalf("Max(), want: %v, got: %v", want, tree1.Max())
 	}
@@ -677,7 +677,7 @@ func TestMinMax(t *testing.T) {
 
 func TestUnion(t *testing.T) {
 	t.Parallel()
-	tree1 := interval.NewTree(compareIval)
+	tree1 := interval.NewTree(cmpUintInterval)
 
 	for i := range ps {
 		b := tree1.Insert(ps[i])
@@ -712,7 +712,7 @@ func TestUnion(t *testing.T) {
 		t.Errorf("String()\nwant:\n%sgot:\n%s", asStr, tree1.String())
 	}
 
-	ps2 := []Ival{
+	ps2 := []uintInterval{
 		{7, 60},
 		{8, 50},
 		{9, 80},
@@ -760,7 +760,7 @@ func TestStatistics(t *testing.T) {
 	for n := 10_000; n <= 1_000_000; n *= 10 {
 		count := strconv.Itoa(n)
 		t.Run(count, func(t *testing.T) {
-			tree1 := interval.NewTree(compareIval, generateIvals(n)...)
+			tree1 := interval.NewTree(cmpUintInterval, genUintIvals(n)...)
 
 			size, _, averageDepth, deviation := tree1.Statistics()
 			if size != n {
@@ -784,7 +784,7 @@ func TestStatistics(t *testing.T) {
 
 func TestPrintBST(t *testing.T) {
 	t.Parallel()
-	tree1 := interval.NewTree(compareIval, ps...)
+	tree1 := interval.NewTree(cmpUintInterval, ps...)
 
 	w := new(strings.Builder)
 	_ = tree1.FprintBST(w)
@@ -798,11 +798,11 @@ func TestPrintBST(t *testing.T) {
 
 func TestMatch(t *testing.T) {
 	t.Parallel()
-	tree1 := interval.NewTree(compareIval, generateIvals(100_000)...)
+	tree1 := interval.NewTree(cmpUintInterval, genUintIvals(100_000)...)
 
 	n := 100
 	for i := 0; i < n; i++ {
-		probe := generateIvals(100_000)[0]
+		probe := genUintIvals(100_000)[0]
 
 		t.Run(probe.String(), func(t *testing.T) {
 			tree1 := tree1.Insert(probe)
@@ -849,11 +849,11 @@ func TestMatch(t *testing.T) {
 
 func TestMissing(t *testing.T) {
 	t.Parallel()
-	tree1 := interval.NewTree(compareIval, generateIvals(100_000)...)
+	tree1 := interval.NewTree(cmpUintInterval, genUintIvals(100_000)...)
 
 	n := 100
 	for i := 0; i < n; i++ {
-		probe := generateIvals(100_000)[0]
+		probe := genUintIvals(100_000)[0]
 
 		t.Run(probe.String(), func(t *testing.T) {
 			tree1 := tree1.Insert(probe)

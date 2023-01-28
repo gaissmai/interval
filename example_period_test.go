@@ -8,23 +8,15 @@ import (
 )
 
 // example interval
-type Ival [2]uint
+type uintInterval [2]uint
 
-// example data
-var periods = []Ival{
-	{3, 4},
-	{2, 9},
-	{7, 9},
-	{3, 5},
-}
-
-// fmt.Stringer for formattting, not required
-func (p Ival) String() string {
-	return fmt.Sprintf("%d...%d", p[0], p[1])
+// cmp function for uintInterval
+func cmpUintInterval(p, q uintInterval) (ll, rr, lr, rl int) {
+	return cmpUint(p[0], q[0]), cmpUint(p[1], q[1]), cmpUint(p[0], q[1]), cmpUint(p[1], q[0])
 }
 
 // little helper
-func cmp(a, b uint) int {
+func cmpUint(a, b uint) int {
 	switch {
 	case a == b:
 		return 0
@@ -34,14 +26,21 @@ func cmp(a, b uint) int {
 	return 1
 }
 
-// cmp function for type Ival
-func compareIval(p, q Ival) (ll, rr, lr, rl int) {
-	return cmp(p[0], q[0]), cmp(p[1], q[1]), cmp(p[0], q[1]), cmp(p[1], q[0])
+// example data
+var periods = []uintInterval{
+	{3, 4},
+	{2, 9},
+	{7, 9},
+	{3, 5},
+}
+
+// fmt.Stringer for formattting, not required
+func (p uintInterval) String() string {
+	return fmt.Sprintf("%d...%d", p[0], p[1])
 }
 
 func ExampleNewTree() {
-	tree1 := interval.NewTree(compareIval, periods...)
-
+	tree1 := interval.NewTree(cmpUintInterval, periods...)
 	tree1.Fprint(os.Stdout)
 	// Output:
 	// ▼
@@ -52,12 +51,11 @@ func ExampleNewTree() {
 }
 
 func ExampleTree_Max() {
-	tree1 := interval.NewTree(compareIval, periods...)
+	tree1 := interval.NewTree(cmpUintInterval, periods...)
 	tree1.Fprint(os.Stdout)
 
 	fmt.Println("\nInterval with max value in tree:")
 	fmt.Println(tree1.Max())
-
 	// Output:
 	// ▼
 	// └─ 2...9
@@ -70,15 +68,14 @@ func ExampleTree_Max() {
 }
 
 func ExampleTree_Covers() {
-	tree1 := interval.NewTree(compareIval, periods...)
+	tree1 := interval.NewTree(cmpUintInterval, periods...)
 	tree1.Fprint(os.Stdout)
 
-	item := Ival{3, 4}
+	item := uintInterval{3, 4}
 	fmt.Printf("\nCovers for item: %v\n", item)
 	for _, p := range tree1.Covers(item) {
 		fmt.Println(p)
 	}
-
 	// Output:
 	// ▼
 	// └─ 2...9
@@ -93,15 +90,14 @@ func ExampleTree_Covers() {
 }
 
 func ExampleTree_CoveredBy() {
-	tree1 := interval.NewTree(compareIval, periods...)
+	tree1 := interval.NewTree(cmpUintInterval, periods...)
 	tree1.Fprint(os.Stdout)
 
-	item := Ival{3, 10}
+	item := uintInterval{3, 10}
 	fmt.Printf("\nCoveredBy item: %v\n", item)
 	for _, p := range tree1.CoveredBy(item) {
 		fmt.Println(p)
 	}
-
 	// Output:
 	// ▼
 	// └─ 2...9
@@ -116,15 +112,14 @@ func ExampleTree_CoveredBy() {
 }
 
 func ExampleTree_Precedes_period() {
-	tree1 := interval.NewTree(compareIval, periods...)
+	tree1 := interval.NewTree(cmpUintInterval, periods...)
 	tree1.Fprint(os.Stdout)
 
-	item := Ival{6, 6}
+	item := uintInterval{6, 6}
 	fmt.Printf("\nPrecedes item: %v\n", item)
 	for _, p := range tree1.Precedes(item) {
 		fmt.Println(p)
 	}
-
 	// Output:
 	// ▼
 	// └─ 2...9
@@ -138,13 +133,13 @@ func ExampleTree_Precedes_period() {
 }
 
 func ExampleTree_Visit() {
-	tree1 := interval.NewTree(compareIval, periods...)
+	tree1 := interval.NewTree(cmpUintInterval, periods...)
 	fmt.Println("parent/child printing")
 	tree1.Fprint(os.Stdout)
 
-	start := Ival{3, 5}
-	stop := Ival{7, 9}
-	visitFn := func(item Ival) bool {
+	start := uintInterval{3, 5}
+	stop := uintInterval{7, 9}
+	visitFn := func(item uintInterval) bool {
 		fmt.Printf("%v\n", item)
 		return true
 	}
@@ -154,7 +149,6 @@ func ExampleTree_Visit() {
 
 	fmt.Println("visit descending")
 	tree1.Visit(stop, start, visitFn)
-
 	// Output:
 	// parent/child printing
 	// ▼
