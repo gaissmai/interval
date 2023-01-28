@@ -49,7 +49,7 @@ func NewTree[T any](cmp func(a, b T) (ll, rr, lr, rl int), items ...T) Tree[T] {
 
 	// mutable insert
 	for i := range items {
-		t.root = t.root.insert(t.makeNode(items[i]), false, &t)
+		t.root = t.insert(t.root, t.makeNode(items[i]), false)
 	}
 
 	return t
@@ -57,11 +57,11 @@ func NewTree[T any](cmp func(a, b T) (ll, rr, lr, rl int), items ...T) Tree[T] {
 
 // makeNode, create new node with item and random priority.
 // The parameter t is needed to access the compare function.
-func (t Tree[T]) makeNode(item T) *node[T] {
+func (t *Tree[T]) makeNode(item T) *node[T] {
 	n := new(node[T])
 	n.item = item
 	n.prio = rand.Uint32()
-	n.recalc(&t) // initial calculation of finger pointers...
+	t.recalc(n) // initial calculation of finger pointers...
 
 	return n
 }
@@ -76,7 +76,7 @@ func (n *node[T]) copyNode() *node[T] {
 // If an element is a duplicate, it replaces the previous element.
 func (t Tree[T]) Insert(items ...T) Tree[T] {
 	for i := range items {
-		t.root = t.root.insert(t.makeNode(items[i]), true, &t)
+		t.root = t.insert(t.root, t.makeNode(items[i]), true)
 	}
 
 	return t
@@ -86,14 +86,12 @@ func (t Tree[T]) Insert(items ...T) Tree[T] {
 // If the original tree does not need to be preserved then this is much faster than the immutable insert.
 func (t *Tree[T]) InsertMutable(items ...T) {
 	for i := range items {
-		t.root = t.root.insert(t.makeNode(items[i]), false, t)
+		t.root = t.insert(t.root, t.makeNode(items[i]), false)
 	}
 }
 
 // insert into tree, changing nodes are copied, new treap is returned, old treap is modified if immutable is false.
-//
-// The parameter t is needed to access the compare function.
-func (n *node[T]) insert(m *node[T], immutable bool, t *Tree[T]) *node[T] {
+func (t *Tree[T]) insert(n, m *node[T], immutable bool) *node[T] {
 	if n == nil {
 		return m
 	}
@@ -112,11 +110,11 @@ func (n *node[T]) insert(m *node[T], immutable bool, t *Tree[T]) *node[T] {
 		//           /
 		//          l
 		//
-		l, dupe, r := n.split(m.item, immutable, t)
+		l, dupe, r := t.split(n, m.item, immutable)
 
 		// replace dupe with m. m has same key but different prio than dupe, a join() is required
 		if dupe != nil {
-			return join(l, join(m, r, immutable, t), immutable, t)
+			return t.join(l, t.join(m, r, immutable), immutable)
 		}
 
 		// no duplicate, take m as new root
@@ -126,14 +124,14 @@ func (n *node[T]) insert(m *node[T], immutable bool, t *Tree[T]) *node[T] {
 		//  <m   >m
 		//
 		m.left, m.right = l, r
-		m.recalc(t)
+		t.recalc(m)
 		return m
 	}
 
 	cmp := t.compare(m.item, n.item)
 	if cmp == 0 {
 		// replace duplicate item with m, but m has different prio, a join() is required
-		return join(n.left, join(m, n.right, immutable, t), immutable, t)
+		return t.join(n.left, t.join(m, n.right, immutable), immutable)
 	}
 
 	if immutable {
@@ -142,14 +140,14 @@ func (n *node[T]) insert(m *node[T], immutable bool, t *Tree[T]) *node[T] {
 
 	switch {
 	case cmp < 0: // rec-descent
-		n.left = n.left.insert(m, immutable, t)
+		n.left = t.insert(n.left, m, immutable)
 		//
 		//       R
 		// m    l r
 		//     l   r
 		//
 	case cmp > 0: // rec-descent
-		n.right = n.right.insert(m, immutable, t)
+		n.right = t.insert(n.right, m, immutable)
 		//
 		//   R
 		//  l r    m
@@ -157,15 +155,15 @@ func (n *node[T]) insert(m *node[T], immutable bool, t *Tree[T]) *node[T] {
 		//
 	}
 
-	n.recalc(t) // node has changed, recalc
+	t.recalc(n) // node has changed, recalc
 	return n
 }
 
 // Delete removes an item if it exists, returns the new tree and true, false if not found.
 func (t Tree[T]) Delete(item T) (Tree[T], bool) {
 	// split/join must be immutable
-	l, m, r := t.root.split(item, true, &t)
-	t.root = join(l, r, true, &t)
+	l, m, r := t.split(t.root, item, true)
+	t.root = (&t).join(l, r, true)
 
 	ok := m != nil
 	return t, ok
@@ -174,8 +172,8 @@ func (t Tree[T]) Delete(item T) (Tree[T], bool) {
 // DeleteMutable removes an item from tree, returns true if it exists, false otherwise.
 // If the original tree does not need to be preserved then this is much faster than the immutable delete.
 func (t *Tree[T]) DeleteMutable(item T) bool {
-	l, m, r := t.root.split(item, false, t)
-	t.root = join(l, r, false, t)
+	l, m, r := t.split(t.root, item, false)
+	t.root = t.join(l, r, false)
 
 	return m != nil
 }
@@ -188,25 +186,23 @@ func (t *Tree[T]) DeleteMutable(item T) bool {
 // To create very large trees, it may be time-saving to slice the input data into chunks,
 // fan out for creation and combine the generated subtrees with non-immutable unions.
 func (t Tree[T]) Union(other Tree[T], overwrite bool, immutable bool) Tree[T] {
-	t.root = t.root.union(other.root, overwrite, immutable, &t)
+	t.root = t.union(t.root, other.root, overwrite, immutable)
 	return t
 }
 
 // union combines to treaps.
-//
-// The parameter t is needed to access the compare function.
-func (n *node[T]) union(b *node[T], overwrite bool, immutable bool, t *Tree[T]) *node[T] {
+func (t *Tree[T]) union(n, m *node[T], overwrite bool, immutable bool) *node[T] {
 	// recursion stop condition
 	if n == nil {
-		return b
+		return m
 	}
-	if b == nil {
+	if m == nil {
 		return n
 	}
 
 	// swap treaps if needed, treap with higher prio remains as new root
-	if n.prio < b.prio {
-		n, b = b, n
+	if n.prio < m.prio {
+		n, m = m, n
 		overwrite = !overwrite
 	}
 
@@ -216,7 +212,7 @@ func (n *node[T]) union(b *node[T], overwrite bool, immutable bool, t *Tree[T]) 
 	}
 
 	// the treap with the lower priority is split with the root key in the treap with the higher priority
-	l, dupe, r := b.split(n.item, immutable, t)
+	l, dupe, r := t.split(m, n.item, immutable)
 
 	// the treaps may have duplicate items
 	if overwrite && dupe != nil {
@@ -224,9 +220,9 @@ func (n *node[T]) union(b *node[T], overwrite bool, immutable bool, t *Tree[T]) 
 	}
 
 	// rec-descent
-	n.left = n.left.union(l, overwrite, immutable, t)
-	n.right = n.right.union(r, overwrite, immutable, t)
-	n.recalc(t)
+	n.left = t.union(n.left, l, overwrite, immutable)
+	n.right = t.union(n.right, r, overwrite, immutable)
+	t.recalc(n)
 
 	return n
 }
@@ -235,9 +231,7 @@ func (n *node[T]) union(b *node[T], overwrite bool, immutable bool, t *Tree[T]) 
 // and greater-than the provided item (BST key). The resulting nodes are
 // properly formed treaps or nil.
 // If the split must be immutable, first copy concerned nodes.
-//
-// The parameter t is needed to access the compare function.
-func (n *node[T]) split(key T, immutable bool, t *Tree[T]) (left, mid, right *node[T]) {
+func (t *Tree[T]) split(n *node[T], key T, immutable bool) (left, mid, right *node[T]) {
 	// recursion stop condition
 	if n == nil {
 		return nil, nil, nil
@@ -249,31 +243,31 @@ func (n *node[T]) split(key T, immutable bool, t *Tree[T]) (left, mid, right *no
 
 	switch cmp := t.compare(n.item, key); {
 	case cmp < 0:
-		l, m, r := n.right.split(key, immutable, t)
+		l, m, r := t.split(n.right, key, immutable)
 		n.right = l
-		n.recalc(t) // node has changed, recalc
+		t.recalc(n) // node has changed, recalc
 		return n, m, r
 		//
 		//       (k)
 		//      R
-		//     l r   ==> (R.r, m, r) = R.r.split(k)
+		//     l r   ==> (R.r, m, r) = split(R.r, k)
 		//    l   r
 		//
 	case cmp > 0:
-		l, m, r := n.left.split(key, immutable, t)
+		l, m, r := t.split(n.left, key, immutable)
 		n.left = r
-		n.recalc(t) // node has changed, recalc
+		t.recalc(n) // node has changed, recalc
 		return l, m, n
 		//
 		//   (k)
 		//      R
-		//     l r   ==> (l, m, R.l) = R.l.split(k)
+		//     l r   ==> (l, m, R.l) = split(R.l, k)
 		//    l   r
 		//
 	default:
 		l, r := n.left, n.right
 		n.left, n.right = nil, nil
-		n.recalc(t) // node has changed, recalc
+		t.recalc(n) // node has changed, recalc
 		return l, n, r
 		//
 		//     (k)
@@ -363,13 +357,11 @@ func (t Tree[T]) Find(item T) (result T, ok bool) {
 //      tree.CoverLCP("2001:7c0:3100::/40") returns "2000::/3",    true
 //
 func (t Tree[T]) CoverLCP(item T) (result T, ok bool) {
-	return t.root.lcp(item, &t)
+	return t.lcp(t.root, item)
 }
 
 // lcp rec-descent.
-//
-// The parameter t is needed to access the compare function.
-func (n *node[T]) lcp(item T, t *Tree[T]) (result T, ok bool) {
+func (t *Tree[T]) lcp(n *node[T], item T) (result T, ok bool) {
 	if n == nil {
 		return
 	}
@@ -382,25 +374,25 @@ func (n *node[T]) lcp(item T, t *Tree[T]) (result T, ok bool) {
 	switch cmp := t.compare(n.item, item); {
 	case cmp > 0:
 		// left rec-descent
-		return n.left.lcp(item, t)
+		return t.lcp(n.left, item)
 	case cmp == 0:
 		// equality is always the shortest containing hull
 		return n.item, true
 	}
 
 	// right backtracking
-	result, ok = n.right.lcp(item, t)
+	result, ok = t.lcp(n.right, item)
 	if ok {
 		return result, ok
 	}
 
 	// not found in right subtree, try this node
-	if t.covers(n.item, item) {
+	if t.cmpCovers(n.item, item) {
 		return n.item, true
 	}
 
 	// left rec-descent
-	return n.left.lcp(item, t)
+	return t.lcp(n.left, item)
 }
 
 // CoverSCP returns the interval with the shortest-common-prefix that covers the item.
@@ -440,13 +432,11 @@ func (n *node[T]) lcp(item T, t *Tree[T]) (result T, ok bool) {
 //	 tree.CoverSCP(ival{6,9}) returns ival{},    false
 //
 func (t Tree[T]) CoverSCP(item T) (result T, ok bool) {
-	return t.root.scp(item, &t)
+	return t.scp(t.root, item)
 }
 
 // scp rec-descent
-//
-// The parameter t is needed to access the compare function.
-func (n *node[T]) scp(item T, t *Tree[T]) (result T, ok bool) {
+func (t *Tree[T]) scp(n *node[T], item T) (result T, ok bool) {
 	if n == nil {
 		return
 	}
@@ -457,29 +447,29 @@ func (n *node[T]) scp(item T, t *Tree[T]) (result T, ok bool) {
 	}
 
 	// left backtracking
-	if result, ok = n.left.scp(item, t); ok {
+	if result, ok = t.scp(n.left, item); ok {
 		return result, ok
 	}
 
 	// this item
-	if t.covers(n.item, item) {
+	if t.cmpCovers(n.item, item) {
 		return n.item, true
 	}
 
 	// right rec-descent
-	return n.right.scp(item, t)
+	return t.scp(n.right, item)
 }
 
 // Covers returns all intervals that cover the item.
 // The returned intervals are in sorted order.
 func (t Tree[T]) Covers(item T) []T {
-	return t.root.covers(item, &t)
+	return t.covers(t.root, item)
 }
 
 // covers rec-descent
 //
 // The parameter t is needed to access the compare function.
-func (n *node[T]) covers(item T, t *Tree[T]) (result []T) {
+func (t *Tree[T]) covers(n *node[T], item T) (result []T) {
 	if n == nil {
 		return
 	}
@@ -490,27 +480,25 @@ func (n *node[T]) covers(item T, t *Tree[T]) (result []T) {
 	}
 
 	// in-order traversal for supersets, recursive call to left tree
-	result = append(result, n.left.covers(item, t)...)
+	result = append(result, t.covers(n.left, item)...)
 
 	// n.item covers item
-	if t.covers(n.item, item) {
+	if t.cmpCovers(n.item, item) {
 		result = append(result, n.item)
 	}
 
 	// recursive call to right tree
-	return append(result, n.right.covers(item, t)...)
+	return append(result, t.covers(n.right, item)...)
 }
 
 // CoveredBy returns all intervals that are covered by item.
 // The returned intervals are in sorted order.
 func (t Tree[T]) CoveredBy(item T) []T {
-	return t.root.coveredBy(item, &t)
+	return t.coveredBy(t.root, item)
 }
 
 // coveredBy rec-descent
-//
-// The parameter t is needed to access the compare function.
-func (n *node[T]) coveredBy(item T, t *Tree[T]) (result []T) {
+func (t *Tree[T]) coveredBy(n *node[T], item T) (result []T) {
 	if n == nil {
 		return
 	}
@@ -521,26 +509,24 @@ func (n *node[T]) coveredBy(item T, t *Tree[T]) (result []T) {
 	}
 
 	// in-order traversal for subsets, recursive call to left tree
-	result = append(result, n.left.coveredBy(item, t)...)
+	result = append(result, t.coveredBy(n.left, item)...)
 
 	// item covers n.item
-	if t.covers(item, n.item) {
+	if t.cmpCovers(item, n.item) {
 		result = append(result, n.item)
 	}
 
 	// recursive call to right tree
-	return append(result, n.right.coveredBy(item, t)...)
+	return append(result, t.coveredBy(n.right, item)...)
 }
 
 // Intersects returns true if any interval intersects item.
 func (t Tree[T]) Intersects(item T) bool {
-	return t.root.intersects(item, &t)
+	return t.isects(t.root, item)
 }
 
-// intersetcs rec-descent
-//
-// The parameter t is needed to access the compare function.
-func (n *node[T]) intersects(item T, t *Tree[T]) bool {
+// intersects rec-descent
+func (t *Tree[T]) isects(n *node[T], item T) bool {
 	if n == nil {
 		return false
 	}
@@ -551,29 +537,27 @@ func (n *node[T]) intersects(item T, t *Tree[T]) bool {
 	}
 
 	// recursive call to left tree
-	if n.left.intersects(item, t) {
+	if t.isects(n.left, item) {
 		return true
 	}
 
 	// this n.item
-	if t.intersects(n.item, item) {
+	if t.cmpIntersects(n.item, item) {
 		return true
 	}
 
 	// recursive call to right tree
-	return n.right.intersects(item, t)
+	return t.isects(n.right, item)
 }
 
 // Intersections returns all intervals that intersect with item.
 // The returned intervals are in sorted order.
 func (t Tree[T]) Intersections(item T) []T {
-	return t.root.isections(item, &t)
+	return t.isections(t.root, item)
 }
 
 // isections rec-descent
-//
-// The parameter t is needed to access the compare function.
-func (n *node[T]) isections(item T, t *Tree[T]) (result []T) {
+func (t *Tree[T]) isections(n *node[T], item T) (result []T) {
 	if n == nil {
 		return
 	}
@@ -584,15 +568,15 @@ func (n *node[T]) isections(item T, t *Tree[T]) (result []T) {
 	}
 
 	// in-order traversal for intersections, recursive call to left tree
-	result = append(result, n.left.isections(item, t)...)
+	result = append(result, t.isections(n.left, item)...)
 
 	// this n.item
-	if t.intersects(n.item, item) {
+	if t.cmpIntersects(n.item, item) {
 		result = append(result, n.item)
 	}
 
 	// recursive call to right tree
-	return append(result, n.right.isections(item, t)...)
+	return append(result, t.isections(n.right, item)...)
 }
 
 // Precedes returns all intervals that precedes the item.
@@ -610,14 +594,12 @@ func (n *node[T]) isections(item T, t *Tree[T]) (result []T) {
 //  Precedes(item) => [D, B]
 //
 func (t Tree[T]) Precedes(item T) []T {
-	l, _, _ := t.root.split(item, true, &t)
-	return l.precedes(item, &t)
+	l, _, _ := t.split(t.root, item, true)
+	return t.precedes(l, item)
 }
 
 // precedes rec-desent
-//
-// The parameter t is needed to access the compare function.
-func (n *node[T]) precedes(item T, t *Tree[T]) (result []T) {
+func (t *Tree[T]) precedes(n *node[T], item T) (result []T) {
 	if n == nil {
 		return
 	}
@@ -628,15 +610,15 @@ func (n *node[T]) precedes(item T, t *Tree[T]) (result []T) {
 	}
 
 	// recursive call to ...
-	result = append(result, n.left.precedes(item, t)...)
+	result = append(result, t.precedes(n.left, item)...)
 
 	// this n.item
-	if !t.intersects(n.item, item) {
+	if !t.cmpIntersects(n.item, item) {
 		result = append(result, n.item)
 	}
 
 	// recursive call to right tree
-	return append(result, n.right.precedes(item, t)...)
+	return append(result, t.precedes(n.right, item)...)
 }
 
 // PrecededBy returns all intervals that are preceded by the item.
@@ -654,42 +636,40 @@ func (n *node[T]) precedes(item T, t *Tree[T]) (result []T) {
 //  PrecededBy(item) => [B, D]
 //
 func (t Tree[T]) PrecededBy(item T) []T {
-	_, _, r := t.root.split(item, true, &t)
-	return r.precededby(item, &t)
+	_, _, r := t.split(t.root, item, true)
+	return t.precededBy(r, item)
 }
 
 // precededBy rec-desent
 //
 // The parameter t is needed to access the compare function.
-func (n *node[T]) precededby(item T, t *Tree[T]) (result []T) {
+func (t *Tree[T]) precededBy(n *node[T], item T) (result []T) {
 	if n == nil {
 		return
 	}
 
 	// skip some left wings
 	if n.left != nil {
-		if t.intersects(item, n.item) {
+		if t.cmpIntersects(item, n.item) {
 			// skip left, proceed instead with left.right
-			result = append(result, n.left.right.precededby(item, t)...)
+			result = append(result, t.precededBy(n.left.right, item)...)
 		} else {
-			result = append(result, n.left.precededby(item, t)...)
+			result = append(result, t.precededBy(n.left, item)...)
 		}
 	}
 
 	// this n.item
-	if !t.intersects(n.item, item) {
+	if !t.cmpIntersects(n.item, item) {
 		result = append(result, n.item)
 	}
 
 	// recursive call to right
-	return append(result, n.right.precededby(item, t)...)
+	return append(result, t.precededBy(n.right, item)...)
 }
 
 // join combines two disjunct treaps. All nodes in treap n have keys <= that of treap m
 // for this algorithm to work correctly. If the join must be immutable, first copy concerned nodes.
-//
-// The parameter t is needed to access the compare function.
-func join[T any](n, m *node[T], immutable bool, t *Tree[T]) *node[T] {
+func (t *Tree[T]) join(n, m *node[T], immutable bool) *node[T] {
 	// recursion stop condition
 	if n == nil {
 		return m
@@ -706,8 +686,8 @@ func join[T any](n, m *node[T], immutable bool, t *Tree[T]) *node[T] {
 		if immutable {
 			n = n.copyNode()
 		}
-		n.right = join(n.right, m, immutable, t)
-		n.recalc(t)
+		n.right = t.join(n.right, m, immutable)
+		t.recalc(n)
 		return n
 	} else {
 		//            m
@@ -717,8 +697,8 @@ func join[T any](n, m *node[T], immutable bool, t *Tree[T]) *node[T] {
 		if immutable {
 			m = m.copyNode()
 		}
-		m.left = join(n, m.left, immutable, t)
-		m.recalc(t)
+		m.left = t.join(n, m.left, immutable)
+		t.recalc(m)
 		return m
 	}
 }
@@ -727,7 +707,7 @@ func join[T any](n, m *node[T], immutable bool, t *Tree[T]) *node[T] {
 // Only one level deeper must be considered. The treap datastructure is very easy to augment.
 //
 // The parameter t is needed to access the compare function.
-func (n *node[T]) recalc(t *Tree[T]) {
+func (t *Tree[T]) recalc(n *node[T]) {
 	if n == nil {
 		return
 	}

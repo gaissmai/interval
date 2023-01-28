@@ -273,7 +273,7 @@ func (n *node[T]) pcmForNode(pcm parentChildsMap[T], t *Tree[T]) parentChildsMap
 	for j := len(pcm.stack) - 1; j >= 0; j-- {
 
 		that := pcm.stack[j]
-		if t.covers(that.item, n.item) {
+		if t.cmpCovers(that.item, n.item) {
 			// item in node j is parent to item
 			pcm.pcMap[that] = append(pcm.pcMap[that], n)
 			break
@@ -383,10 +383,10 @@ func (t Tree[T]) Visit(start, stop T, visitFn func(item T) bool) {
 	}
 
 	// treaps are really cool datastructures!!!
-	_, mid1, r := t.root.split(start, true, &t)
-	l, mid2, _ := r.split(stop, true, &t)
+	_, mid1, r := t.split(t.root, start, true)
+	l, mid2, _ := t.split(r, stop, true)
 
-	span := join(mid1, join(l, mid2, true, &t), true, &t)
+	span := (&t).join(mid1, (&t).join(l, mid2, true), true)
 
 	span.traverse(order, 0, func(n *node[T], _ int) bool {
 		return visitFn(n.item)
@@ -396,25 +396,23 @@ func (t Tree[T]) Visit(start, stop T, visitFn func(item T) bool) {
 // Clone, deep cloning of the tree structure.
 func (t Tree[T]) Clone() Tree[T] {
 	if t.root != nil {
-		t.root = t.root.clone(t)
+		t.root = t.clone(t.root)
 	}
 	return t
 }
 
 // clone rec-descent
-//
-// The parameter t is needed to access the compare function.
-func (n *node[T]) clone(t Tree[T]) *node[T] {
+func (t *Tree[T]) clone(n *node[T]) *node[T] {
 	n = n.copyNode()
 
 	if n.left != nil {
-		n.left = n.left.clone(t)
+		n.left = t.clone(n.left)
 	}
 
 	if n.right != nil {
-		n.right = n.right.clone(t)
+		n.right = t.clone(n.right)
 	}
 
-	n.recalc(&t)
+	t.recalc(n)
 	return n
 }

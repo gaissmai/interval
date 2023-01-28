@@ -67,7 +67,7 @@ package interval
 //  |  B1----B2              |    |    |    |    |                   |
 //  -------------------------|----------------------------------------
 //
-func (t Tree[T]) compare(a, b T) int {
+func (t *Tree[T]) compare(a, b T) int {
 	ll, rr, _, _ := t.cmp(a, b)
 	switch {
 	case ll == 0:
@@ -80,7 +80,7 @@ func (t Tree[T]) compare(a, b T) int {
 	}
 }
 
-// covers, returns true if a covers b.
+// cmpCovers, returns true if a cmpCovers b.
 //
 //  =================================================================|
 //  |  visualization         | ll | rr | lr | rl | description       |
@@ -100,12 +100,12 @@ func (t Tree[T]) compare(a, b T) int {
 //  |  B1----B2              |    |    |    |    |                   |
 //  -------------------------|----------------------------------------
 //
-func (t Tree[T]) covers(a, b T) bool {
+func (t *Tree[T]) cmpCovers(a, b T) bool {
 	ll, rr, _, _ := t.cmp(a, b)
 	return ll <= 0 && rr >= 0
 }
 
-// intersects, returns false if the intervals does precede each other.
+// cmpIntersects, returns false if the intervals does precede each other.
 //
 //  =================================================================|
 //  |  visualization         | ll | rr | lr | rl | description       |
@@ -119,19 +119,19 @@ func (t Tree[T]) covers(a, b T) bool {
 //  |  B1---B2               |    |    |    |    |                   |
 //  -------------------------|---------------------------------------|
 //
-func (t Tree[T]) intersects(a, b T) bool {
+func (t *Tree[T]) cmpIntersects(a, b T) bool {
 	ll, rr, lr, rl := t.cmp(a, b)
 	return !((ll == -1 && rr == -1 && lr == -1 && rl == -1) || (ll == 1 && rr == 1 && lr == 1 && rl == 1))
 }
 
 // cmpRR, compares just the right point of the intervals.
-func (t Tree[T]) cmpRR(a, b T) int {
+func (t *Tree[T]) cmpRR(a, b T) int {
 	_, rr, _, _ := t.cmp(a, b)
 	return rr
 }
 
 // cmpLR, compares just the left point from a with right point from b.
-func (t Tree[T]) cmpLR(a, b T) int {
+func (t *Tree[T]) cmpLR(a, b T) int {
 	_, _, lr, _ := t.cmp(a, b)
 	return lr
 }
