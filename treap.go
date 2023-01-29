@@ -26,7 +26,7 @@ type node[T any] struct {
 	item  T      // generic key/value
 }
 
-// Tree must be initialized by [NewTree].
+// Tree is the public handle, using it without initialization will panic.
 type Tree[T any] struct {
 	root *node[T]
 	cmp  func(T, T) (ll, rr, lr, rl int)
@@ -435,7 +435,7 @@ func (t Tree[T]) CoverSCP(item T) (result T, ok bool) {
 	result, ok = t.scp(l, item)
 
 	if !ok && m != nil {
-		return m.item, ok
+		return m.item, true
 	}
 
 	return result, ok
