@@ -469,6 +469,7 @@ func (t *Tree[T]) scp(n *node[T], item T) (result T, ok bool) {
 // Covers returns all intervals that cover the item.
 // The returned intervals are in sorted order.
 func (t Tree[T]) Covers(item T) []T {
+	// split, reduce the search space
 	l, m, _ := t.split(t.root, item, true)
 	result := t.covers(l, item)
 
@@ -505,7 +506,16 @@ func (t *Tree[T]) covers(n *node[T], item T) (result []T) {
 // CoveredBy returns all intervals that are covered by item.
 // The returned intervals are in sorted order.
 func (t Tree[T]) CoveredBy(item T) []T {
-	return t.coveredBy(t.root, item)
+	var result []T
+
+	// split, reduce the search space
+	_, m, r := t.split(t.root, item, true)
+
+	if m != nil {
+		result = append(result, m.item)
+	}
+
+	return append(result, t.coveredBy(r, item)...)
 }
 
 // coveredBy rec-descent
@@ -561,8 +571,8 @@ func (t *Tree[T]) intersects(n *node[T], item T) bool {
 	}
 
 	// don't traverse right subtree, subtree has too small left value for intersection.
-	// |---------| <- item
-	//     n.item  |-------------|
+	// |------------| <- item
+	//     n.item -> |-------------|
 	if t.cmpRL(item, n.item) < 0 {
 		return false
 	}
@@ -599,8 +609,8 @@ func (t *Tree[T]) intersections(n *node[T], item T) (result []T) {
 	}
 
 	// don't traverse right subtree, subtree has too small left value for intersection.
-	// |---------| <- item
-	//     n.item  |-------------|
+	// |------------| <- item
+	//     n.item -> |-------------|
 	if t.cmpRL(item, n.item) < 0 {
 		return
 	}
@@ -624,6 +634,7 @@ func (t *Tree[T]) intersections(n *node[T], item T) (result []T) {
 //  Precedes(item) => [D, B]
 //
 func (t Tree[T]) Precedes(item T) []T {
+	// split, reduce the search space
 	l, _, _ := t.split(t.root, item, true)
 	return t.precedes(l, item)
 }
@@ -666,6 +677,7 @@ func (t *Tree[T]) precedes(n *node[T], item T) (result []T) {
 //  PrecededBy(item) => [B, D]
 //
 func (t Tree[T]) PrecededBy(item T) []T {
+	// split, reduce the search space
 	_, _, r := t.split(t.root, item, true)
 	return t.precededBy(r, item)
 }
@@ -676,15 +688,8 @@ func (t *Tree[T]) precededBy(n *node[T], item T) (result []T) {
 		return
 	}
 
-	// skip some left wings
-	if n.left != nil {
-		if t.cmpIntersects(item, n.item) {
-			// skip left, proceed instead with left.right
-			result = append(result, t.precededBy(n.left.right, item)...)
-		} else {
-			result = append(result, t.precededBy(n.left, item)...)
-		}
-	}
+	// recursive call to left
+	result = append(result, t.precededBy(n.left, item)...)
 
 	// this n.item
 	if !t.cmpIntersects(n.item, item) {
