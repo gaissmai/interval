@@ -15,7 +15,7 @@ The implementation is based on treaps, augmented for intervals. Treaps are rando
 Immutability is achieved because insert/delete will return a new treap which will share some nodes with the original treap.
 All nodes are read-only after creation, allowing concurrent readers to operate safely with concurrent writers.
 
-The time complexity is **O(log(n))** or **O(k*log(n))** where k is the number of returned items, the space complexity is **O(n)**.
+The time complexity is **O(log(n))** or **O(k+log(n))** where k is the number of returned items, the space complexity is **O(n)**.
 
 ```
 Insert()       O(log(n))
