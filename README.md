@@ -61,7 +61,7 @@ Especially useful is the paper "[Fast Set Operations Using Treaps]" by Guy E. Bl
 
 ## Compare function
 
-To apply this library to types of one-dimensional intervals, you must provide a compare funtion:
+To apply this library to types of one-dimensional intervals, you must provide a compare function:
 
 ```go
   // cmp must return four int values:
