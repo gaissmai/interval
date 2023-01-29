@@ -394,24 +394,20 @@ func (t Tree[T]) Visit(start, stop T, visitFn func(item T) bool) {
 
 // Clone, deep cloning of the tree structure.
 func (t Tree[T]) Clone() Tree[T] {
-	if t.root != nil {
-		t.root = t.clone(t.root)
-	}
+	t.root = t.clone(t.root)
 	return t
 }
 
 // clone rec-descent
 func (t *Tree[T]) clone(n *node[T]) *node[T] {
+	if n == nil {
+		return n
+	}
 	n = n.copyNode()
 
-	if n.left != nil {
-		n.left = t.clone(n.left)
-	}
-
-	if n.right != nil {
-		n.right = t.clone(n.right)
-	}
-
+	n.left = t.clone(n.left)
+	n.right = t.clone(n.right)
 	t.recalc(n)
+
 	return n
 }
