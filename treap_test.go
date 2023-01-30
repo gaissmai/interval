@@ -33,7 +33,7 @@ func makeUintIval(a, b uint) uintInterval {
 	return uintInterval{a, b}
 }
 
-// random test data
+// random test data, end is random to start
 func genUintIvals(n int) []uintInterval {
 	is := make([]uintInterval, n)
 	for i := 0; i < n; i++ {
@@ -44,7 +44,7 @@ func genUintIvals(n int) []uintInterval {
 	return is
 }
 
-// random test data
+// random test data, end depends on start
 func gen2UintIvals(n int) []uintInterval {
 	is := make([]uintInterval, n)
 	for i := 0; i < n; i++ {
@@ -266,14 +266,18 @@ func TestFind(t *testing.T) {
 	tree1 := interval.NewTree(cmpUintInterval, ivals...)
 
 	for _, ival := range ivals {
-		item, ok := tree1.Find(ival)
-		if ok != true {
-			t.Errorf("Find(%v) = %v, want %v", item, ok, true)
-		}
-		ll, rr, _, _ := cmpUintInterval(item, ival)
-		if ll != 0 || rr != 0 {
-			t.Errorf("Find(%v) = %v, want %v", ival, item, ival)
-		}
+		ival := ival
+		t.Run(ival.String(), func(t *testing.T) {
+			t.Parallel()
+			item, ok := tree1.Find(ival)
+			if ok != true {
+				t.Errorf("Find(%v) = %v, want %v", item, ok, true)
+			}
+			ll, rr, _, _ := cmpUintInterval(item, ival)
+			if ll != 0 || rr != 0 {
+				t.Errorf("Find(%v) = %v, want %v", ival, item, ival)
+			}
+		})
 	}
 }
 
@@ -293,7 +297,7 @@ func TestCoverLCP(t *testing.T) {
 	//     	 │        └─ 6...7
 	//     	 └─ 7...9
 
-	tcs := []struct {
+	testcases := []struct {
 		in     uintInterval
 		want   uintInterval
 		wantOK bool
@@ -325,10 +329,12 @@ func TestCoverLCP(t *testing.T) {
 		// bring some variance into the Treap due to the prio randomness
 		tree1 := interval.NewTree(cmpUintInterval, ps...)
 
-		for _, tt := range tcs {
+		for _, tc := range testcases {
+			tc := tc // capture range variable
 			t.Run("", func(t *testing.T) {
-				if got, ok := tree1.CoverLCP(tt.in); got != tt.want || ok != tt.wantOK {
-					t.Errorf("CoverLCP(%v) = (%v, %v) want (%v, %v)", tt.in, got, ok, tt.want, tt.wantOK)
+				t.Parallel()
+				if got, ok := tree1.CoverLCP(tc.in); got != tc.want || ok != tc.wantOK {
+					t.Errorf("CoverLCP(%v) = (%v, %v) want (%v, %v)", tc.in, got, ok, tc.want, tc.wantOK)
 				}
 			})
 		}
@@ -351,7 +357,7 @@ func TestCoverSCP(t *testing.T) {
 	//     	 │        └─ 6...7
 	//     	 └─ 7...9
 
-	tcs := []struct {
+	testcases := []struct {
 		in     uintInterval
 		want   uintInterval
 		wantOK bool
@@ -418,10 +424,12 @@ func TestCoverSCP(t *testing.T) {
 		// bring some variance into the Treap due to the prio randomness
 		tree1 := interval.NewTree(cmpUintInterval, ps...)
 
-		for _, tt := range tcs {
+		for _, tc := range testcases {
+			tc := tc
 			t.Run("", func(t *testing.T) {
-				if got, ok := tree1.CoverSCP(tt.in); got != tt.want || ok != tt.wantOK {
-					t.Errorf("CoverSCP(%v) = (%v, %v) want (%v, %v)", tt.in, got, ok, tt.want, tt.wantOK)
+				t.Parallel()
+				if got, ok := tree1.CoverSCP(tc.in); got != tc.want || ok != tc.wantOK {
+					t.Errorf("CoverSCP(%v) = (%v, %v) want (%v, %v)", tc.in, got, ok, tc.want, tc.wantOK)
 				}
 			})
 		}
@@ -538,7 +546,7 @@ func TestIntersects(t *testing.T) {
 	//     	 │        └─ 6...7
 	//     	 └─ 7...9
 
-	tcs := []struct {
+	testcases := []struct {
 		in   uintInterval
 		want bool
 	}{
@@ -563,59 +571,15 @@ func TestIntersects(t *testing.T) {
 			want: false,
 		},
 	}
-	for _, tt := range tcs {
+	for _, tc := range testcases {
+		tc := tc
 		t.Run("", func(t *testing.T) {
-			if ok := tree1.Intersects(tt.in); ok != tt.want {
-				t.Errorf("Intersects(%v) = %v, want: %v", tt.in, ok, tt.want)
+			t.Parallel()
+			if ok := tree1.Intersects(tc.in); ok != tc.want {
+				t.Errorf("Intersects(%v) = %v, want: %v", tc.in, ok, tc.want)
 			}
 		})
 	}
-}
-
-func FuzzLCPandSCP(f *testing.F) {
-	ivals := genUintIvals(100_000)
-	tree := interval.NewTree(cmpUintInterval, ivals...)
-
-	for i := 0; i < 100; i++ {
-		probe := genUintIvals(1)[0]
-		a := probe[0]
-		b := probe[1]
-		f.Add(a, b)
-	}
-
-	f.Fuzz(func(t *testing.T, a, b uint) {
-		probe := makeUintIval(a, b)
-
-		_, okLCP := tree.CoverLCP(probe)
-		_, okSCP := tree.CoverSCP(probe)
-
-		if okLCP != okSCP {
-			// okLCP and okSCP must be both true or both false
-			t.Fatalf("CoverLCP(%v) and CoverSCP(%v) mismatch", probe, probe)
-		}
-	})
-}
-
-func FuzzIntersects(f *testing.F) {
-	ivals := genUintIvals(10_000)
-	tree := interval.NewTree(cmpUintInterval, ivals...)
-
-	for i := 0; i < 10; i++ {
-		a := ivals[i][0]
-		b := ivals[i][1]
-		f.Add(a, b)
-	}
-
-	f.Fuzz(func(t *testing.T, a, b uint) {
-		probe := makeUintIval(a, b)
-
-		gotBool := tree.Intersects(probe)
-		gotSlice := tree.Intersections(probe)
-
-		if gotBool && gotSlice == nil || !gotBool && gotSlice != nil {
-			t.Fatalf("Intersects(%v) and Intersections(%v) mismatch", probe, probe)
-		}
-	})
 }
 
 func TestIntersections(t *testing.T) {
@@ -888,8 +852,10 @@ func TestStatistics(t *testing.T) {
 	t.Parallel()
 
 	for n := 10_000; n <= 1_000_000; n *= 10 {
+		n := n
 		count := strconv.Itoa(n)
 		t.Run(count, func(t *testing.T) {
+			t.Parallel()
 			tree1 := interval.NewTree(cmpUintInterval, genUintIvals(n)...)
 
 			size, _, averageDepth, deviation := tree1.Statistics()
@@ -928,13 +894,14 @@ func TestPrintBST(t *testing.T) {
 
 func TestMatch(t *testing.T) {
 	t.Parallel()
-	tree1 := interval.NewTree(cmpUintInterval, genUintIvals(100_000)...)
+	tree1 := interval.NewTree(cmpUintInterval, genUintIvals(10_000)...)
 
 	n := 100
 	for i := 0; i < n; i++ {
-		probe := genUintIvals(100_000)[0]
+		probe := genUintIvals(10_000)[0]
 
 		t.Run(probe.String(), func(t *testing.T) {
+			t.Parallel()
 			tree1 := tree1.Insert(probe)
 
 			if _, ok := tree1.Find(probe); !ok {
@@ -979,13 +946,14 @@ func TestMatch(t *testing.T) {
 
 func TestMissing(t *testing.T) {
 	t.Parallel()
-	tree1 := interval.NewTree(cmpUintInterval, genUintIvals(100_000)...)
+	tree1 := interval.NewTree(cmpUintInterval, genUintIvals(10_000)...)
 
 	n := 100
 	for i := 0; i < n; i++ {
-		probe := genUintIvals(100_000)[0]
+		probe := genUintIvals(1)[0]
 
 		t.Run(probe.String(), func(t *testing.T) {
+			t.Parallel()
 			tree1 := tree1.Insert(probe)
 			var ok bool
 

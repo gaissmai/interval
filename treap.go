@@ -380,8 +380,7 @@ func (t *Tree[T]) lcp(n *node[T], item T) (result T, ok bool) {
 	}
 
 	// LCP => right backtracking
-	result, ok = t.lcp(n.right, item)
-	if ok {
+	if result, ok = t.lcp(n.right, item); ok {
 		return result, ok
 	}
 
