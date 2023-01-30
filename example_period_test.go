@@ -39,6 +39,8 @@ func (p uintInterval) String() string {
 	return fmt.Sprintf("%d...%d", p[0], p[1])
 }
 
+// The following example shows how to use the interval library with a simple interval and the correspondig
+// compare function.
 func ExampleNewTree() {
 	tree1 := interval.NewTree(cmpUintInterval, periods...)
 	tree1.Fprint(os.Stdout)
@@ -50,11 +52,12 @@ func ExampleNewTree() {
 	//    └─ 7...9
 }
 
+// The Max funtion returns the interval with max left value.
 func ExampleTree_Max() {
 	tree1 := interval.NewTree(cmpUintInterval, periods...)
 	tree1.Fprint(os.Stdout)
 
-	fmt.Println("\nInterval with max value in tree:")
+	fmt.Println("\nInterval with max left value in tree:")
 	fmt.Println(tree1.Max())
 	// Output:
 	// ▼
@@ -63,10 +66,11 @@ func ExampleTree_Max() {
 	//    │  └─ 3...4
 	//    └─ 7...9
 	//
-	//Interval with max value in tree:
+	//Interval with max left value in tree:
 	//7...9
 }
 
+// The following example explains the Covers method.
 func ExampleTree_Covers() {
 	tree1 := interval.NewTree(cmpUintInterval, periods...)
 	tree1.Fprint(os.Stdout)
@@ -89,6 +93,7 @@ func ExampleTree_Covers() {
 	// 3...4
 }
 
+// The following example explains the CoveredBy method.
 func ExampleTree_CoveredBy() {
 	tree1 := interval.NewTree(cmpUintInterval, periods...)
 	tree1.Fprint(os.Stdout)
@@ -111,6 +116,7 @@ func ExampleTree_CoveredBy() {
 	// 7...9
 }
 
+// The following example explains the Precedes method.
 func ExampleTree_Precedes_period() {
 	tree1 := interval.NewTree(cmpUintInterval, periods...)
 	tree1.Fprint(os.Stdout)
@@ -132,6 +138,7 @@ func ExampleTree_Precedes_period() {
 	// 3...4
 }
 
+// The following example explains the Visit method.
 func ExampleTree_Visit() {
 	tree1 := interval.NewTree(cmpUintInterval, periods...)
 	fmt.Println("parent/child printing")
