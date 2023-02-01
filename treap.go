@@ -361,22 +361,30 @@ func (t Tree[T]) CoverLCP(item T) (result T, ok bool) {
 
 // lcp rec-descent.
 func (t *Tree[T]) lcp(n *node[T], item T) (result T, ok bool) {
-	if n == nil {
-		return
-	}
+	for {
+		if n == nil {
+			// stop condition
+			return
+		}
 
-	// fast exit, node has too small max upper interval value (augmented value)
-	if t.cmpRR(item, n.maxUpper.item) > 0 {
-		return
-	}
+		// fast exit, node has too small max upper interval value (augmented value)
+		if t.cmpRR(item, n.maxUpper.item) > 0 {
+			// stop condition
+			return
+		}
 
-	switch cmp := t.compare(n.item, item); {
-	case cmp > 0:
-		// too big, left rec-descent
-		return t.lcp(n.left, item)
-	case cmp == 0:
-		// equality is always the shortest containing hull
-		return n.item, true
+		cmp := t.compare(n.item, item)
+		if cmp == 0 {
+			// equality is always the shortest containing hull
+			return n.item, true
+		}
+
+		if cmp < 0 {
+			break
+		}
+
+		// item too big, go left
+		n = n.left
 	}
 
 	// LCP => right backtracking
