@@ -11,6 +11,7 @@ package interval
 
 import (
 	"math/rand"
+	"sync"
 )
 
 // node is the basic recursive data structure.
@@ -52,6 +53,58 @@ func NewTree[T any](cmp func(a, b T) (ll, rr, lr, rl int), items ...T) Tree[T] {
 		t.root = t.insert(t.root, t.makeNode(items[i]), false)
 	}
 
+	return t
+}
+
+// NewTreeConcurrent, convenience function for initializing the interval tree for large inputs (> 100_000).
+// A good value reference for jobs is the number of logical CPUs usable by the current process.
+func NewTreeConcurrent[T any](jobs int, cmp func(a, b T) (ll, rr, lr, rl int), items ...T) Tree[T] {
+	if jobs <= 1 {
+		return NewTree[T](cmp, items...)
+	}
+
+	l := len(items)
+
+	chunkSize := l/jobs + 1
+	if chunkSize < 10_000 {
+		chunkSize = 10_000
+	}
+
+	var wg sync.WaitGroup
+	var chunk []T
+	partialTrees := make(chan Tree[T])
+
+	// fan out
+	for ; l > 0; l = len(items) {
+		// partition input into chunks
+		switch {
+		case l > chunkSize:
+			chunk = items[:chunkSize]
+			items = items[chunkSize:]
+		default: // rest
+			chunk = items[:l]
+			items = nil
+		}
+
+		wg.Add(1)
+		go func(chunk ...T) {
+			defer wg.Done()
+			partialTrees <- NewTree[T](cmp, chunk...)
+		}(chunk...)
+	}
+
+	// wait and close chan
+	go func() {
+		wg.Wait()
+		close(partialTrees)
+	}()
+
+	// fan in
+	t := NewTree[T](cmp)
+	for other := range partialTrees {
+		// fast union, immutable is false
+		t = t.Union(other, false, false)
+	}
 	return t
 }
 

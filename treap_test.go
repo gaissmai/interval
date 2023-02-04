@@ -75,6 +75,12 @@ func TestNewTree(t *testing.T) {
 		t.Errorf("String() = %v, want \"\"", "")
 	}
 
+	tree = interval.NewTreeConcurrent(0, cmpUintInterval)
+
+	if tree.String() != "" {
+		t.Errorf("String() = %v, want \"\"", "")
+	}
+
 	w := new(strings.Builder)
 	if err := tree.Fprint(w); err != nil {
 		t.Fatal(err)
@@ -152,6 +158,44 @@ func TestNewTree(t *testing.T) {
 	})
 	if len(items) != 0 {
 		t.Errorf("Visit(), got: %v, want: 0", len(items))
+	}
+}
+
+func TestNewTreeConcurrent(t *testing.T) {
+	t.Parallel()
+
+	ivals := genUintIvals(100_000)
+
+	tree1 := interval.NewTree(cmpUintInterval, ivals[0])
+	tree2 := interval.NewTreeConcurrent(1, cmpUintInterval, ivals[0])
+
+	if !equalStatistics(tree1, tree2) {
+		t.Fatal("New() differs with NewConcurrent(), statistics differ")
+	}
+
+	tree1 = interval.NewTree(cmpUintInterval, ivals[:2]...)
+	tree2 = interval.NewTreeConcurrent(2, cmpUintInterval, ivals[:2]...)
+
+	if !equalStatistics(tree1, tree2) {
+		t.Fatal("New() differs with NewConcurrent(), statistics differ")
+	}
+
+	tree1 = interval.NewTree(cmpUintInterval, ivals[:30_000]...)
+	tree2 = interval.NewTreeConcurrent(3, cmpUintInterval, ivals[:30_000]...)
+
+	if !equalStatistics(tree1, tree2) {
+		t.Log(tree1.Statistics())
+		t.Log(tree2.Statistics())
+		t.Fatal("New() differs with NewConcurrent(), statistics differ")
+	}
+
+	tree1 = interval.NewTree(cmpUintInterval, ivals...)
+	tree2 = interval.NewTreeConcurrent(4, cmpUintInterval, ivals...)
+
+	if !equalStatistics(tree1, tree2) {
+		t.Log(tree1.Statistics())
+		t.Log(tree2.Statistics())
+		t.Fatal("New() differs with NewConcurrent(), statistics differ")
 	}
 }
 
