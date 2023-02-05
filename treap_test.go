@@ -4,6 +4,7 @@ import (
 	"math"
 	"math/rand"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -63,6 +64,22 @@ func equalStatistics(t1, t2 interval.Tree[uintInterval]) bool {
 	a1, b1, c1, d1 := t1.Statistics()
 	a2, b2, c2, d2 := t2.Statistics()
 	return a1 == a2 && b1 == b2 && c1 == c2 && d1 == d2
+}
+
+func equalsSizeAndOrder[T any](t1, t2 interval.Tree[T]) bool {
+	var t1InOrder []T
+	t1.Visit(t1.Min(), t1.Max(), func(item T) bool {
+		t1InOrder = append(t1InOrder, item)
+		return true
+	})
+
+	var t2InOrder []T
+	t2.Visit(t2.Min(), t2.Max(), func(item T) bool {
+		t2InOrder = append(t2InOrder, item)
+		return true
+	})
+
+	return reflect.DeepEqual(t1InOrder, t2InOrder)
 }
 
 func TestNewTree(t *testing.T) {
@@ -169,33 +186,29 @@ func TestNewTreeConcurrent(t *testing.T) {
 	tree1 := interval.NewTree(cmpUintInterval, ivals[0])
 	tree2 := interval.NewTreeConcurrent(1, cmpUintInterval, ivals[0])
 
-	if !equalStatistics(tree1, tree2) {
-		t.Fatal("New() differs with NewConcurrent(), statistics differ")
+	if !equalsSizeAndOrder(tree1, tree2) {
+		t.Fatal("New() differs with NewConcurrent()")
 	}
 
 	tree1 = interval.NewTree(cmpUintInterval, ivals[:2]...)
 	tree2 = interval.NewTreeConcurrent(2, cmpUintInterval, ivals[:2]...)
 
-	if !equalStatistics(tree1, tree2) {
-		t.Fatal("New() differs with NewConcurrent(), statistics differ")
+	if !equalsSizeAndOrder(tree1, tree2) {
+		t.Fatal("New() differs with NewConcurrent()")
 	}
 
 	tree1 = interval.NewTree(cmpUintInterval, ivals[:30_000]...)
 	tree2 = interval.NewTreeConcurrent(3, cmpUintInterval, ivals[:30_000]...)
 
-	if !equalStatistics(tree1, tree2) {
-		t.Log(tree1.Statistics())
-		t.Log(tree2.Statistics())
-		t.Fatal("New() differs with NewConcurrent(), statistics differ")
+	if !equalsSizeAndOrder(tree1, tree2) {
+		t.Fatal("New() differs with NewConcurrent()")
 	}
 
 	tree1 = interval.NewTree(cmpUintInterval, ivals...)
-	tree2 = interval.NewTreeConcurrent(4, cmpUintInterval, ivals...)
+	tree2 = interval.NewTreeConcurrent(runtime.NumCPU(), cmpUintInterval, ivals...)
 
-	if !equalStatistics(tree1, tree2) {
-		t.Log(tree1.Statistics())
-		t.Log(tree2.Statistics())
-		t.Fatal("New() differs with NewConcurrent(), statistics differ")
+	if !equalsSizeAndOrder(tree1, tree2) {
+		t.Fatal("New() differs with NewConcurrent()")
 	}
 }
 
