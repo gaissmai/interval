@@ -59,23 +59,18 @@ func NewTree[T any](cmp func(a, b T) (ll, rr, lr, rl int), items ...T) Tree[T] {
 // NewTreeConcurrent, convenience function for initializing the interval tree for large inputs (> 100_000).
 // A good value reference for jobs is the number of logical CPUs usable by the current process.
 func NewTreeConcurrent[T any](jobs int, cmp func(a, b T) (ll, rr, lr, rl int), items ...T) Tree[T] {
-	if jobs <= 1 {
+	// define a min chunk size, don't split in too small chunks
+	const minChunkSize = 25_000
+
+	// no fan-out for small input slice or just one job
+	l := len(items)
+	if l <= minChunkSize || jobs <= 1 {
 		return NewTree[T](cmp, items...)
 	}
-
-	l := len(items)
-
-	// define a min chunk size, don't split in too small chunks
-	const minChunkSize = 10_000
 
 	chunkSize := l/jobs + 1
 	if chunkSize < minChunkSize {
 		chunkSize = minChunkSize
-
-		// don't use go routine and result channel for just one chunk
-		if l < chunkSize {
-			return NewTree[T](cmp, items...)
-		}
 	}
 
 	var wg sync.WaitGroup
