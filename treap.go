@@ -65,9 +65,17 @@ func NewTreeConcurrent[T any](jobs int, cmp func(a, b T) (ll, rr, lr, rl int), i
 
 	l := len(items)
 
+	// define a min chunk size, don't split in too small chunks
+	const minChunkSize = 10_000
+
 	chunkSize := l/jobs + 1
-	if chunkSize < 10_000 {
-		chunkSize = 10_000
+	if chunkSize < minChunkSize {
+		chunkSize = minChunkSize
+
+		// don't use go routine and result channel for just one chunk
+		if l < chunkSize {
+			return NewTree[T](cmp, items...)
+		}
 	}
 
 	var wg sync.WaitGroup
