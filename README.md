@@ -48,7 +48,7 @@ Due to the nature of treaps the lookups and updates can be concurrently decouple
 without delayed rebalancing, promising to be a perfect match for a software-router or firewall.
 
 To familiarize yourself with treaps, see the extraordinarily good lectures from
-Pavel Marvin about Algorithms and Datastructures e.g. "[Treaps, implicit keys]"
+Pavel Mavrin about Algorithms and Datastructures e.g. "[Treaps, implicit keys]"
 or follow [some links about treaps] from one of the inventors.
 
 Especially useful is the paper "[Fast Set Operations Using Treaps]" by Guy E. Blelloch and Margaret Reid-Miller.
