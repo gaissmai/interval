@@ -60,13 +60,13 @@ func equals(a, b uintInterval) bool {
 	return a[0] == b[0] && a[1] == b[1]
 }
 
-func equalStatistics(t1, t2 interval.Tree[uintInterval]) bool {
+func equalStatistics(t1, t2 *interval.Tree[uintInterval]) bool {
 	a1, b1, c1, d1 := t1.Statistics()
 	a2, b2, c2, d2 := t2.Statistics()
 	return a1 == a2 && b1 == b2 && c1 == c2 && d1 == d2
 }
 
-func equalsSizeAndOrder[T any](t1, t2 interval.Tree[T]) bool {
+func equalsSizeAndOrder[T any](t1, t2 *interval.Tree[T]) bool {
 	var t1InOrder []T
 	t1.Visit(t1.Min(), t1.Max(), func(item T) bool {
 		t1InOrder = append(t1InOrder, item)
@@ -120,7 +120,7 @@ func TestNewTree(t *testing.T) {
 		t.Errorf("Find(), got: %v, want: false", ok)
 	}
 
-	if _, ok := tree.Delete(zeroItem); ok {
+	if _, ok := tree.DeleteImmutable(zeroItem); ok {
 		t.Errorf("Delete(), got: %v, want: false", ok)
 	}
 
@@ -132,7 +132,7 @@ func TestNewTree(t *testing.T) {
 		t.Errorf("CoverSCP(), got: %v, want: false", ok)
 	}
 
-	if size, _, _, _ := tree.Insert(zeroItem).Statistics(); size != 1 {
+	if size, _, _, _ := tree.InsertImmutable(zeroItem).Statistics(); size != 1 {
 		t.Errorf("Insert(), got: %v, want: 1", size)
 	}
 
@@ -262,15 +262,15 @@ func TestImmutable(t *testing.T) {
 	t.Parallel()
 	tree1 := interval.NewTree(cmpUintInterval, ps...)
 
-	if _, ok := tree1.Delete(tree1.Min()); !ok {
+	if _, ok := tree1.DeleteImmutable(tree1.Min()); !ok {
 		t.Fatal("Delete, could not delete min item")
 	}
-	if _, ok := tree1.Delete(tree1.Min()); !ok {
+	if _, ok := tree1.DeleteImmutable(tree1.Min()); !ok {
 		t.Fatal("Delete changed receiver")
 	}
 
 	item := uintInterval{111, 666}
-	_ = tree1.Insert(item)
+	_ = tree1.InsertImmutable(item)
 
 	if _, ok := tree1.Find(item); ok {
 		t.Fatal("Insert changed receiver")
@@ -288,16 +288,16 @@ func TestMutable(t *testing.T) {
 	min := tree1.Min()
 
 	var ok bool
-	if ok = (&tree1).DeleteMutable(min); !ok {
-		t.Fatal("DeleteMutable, could not delete min item")
+	if ok = tree1.Delete(min); !ok {
+		t.Fatal("Delete, could not delete min item")
 	}
 
 	if equalStatistics(tree1, clone) {
-		t.Fatal("DeleteMutable didn't change receiver")
+		t.Fatal("Delete didn't change receiver")
 	}
 
-	if ok = (&tree1).DeleteMutable(min); ok {
-		t.Fatal("DeleteMutable didn't change receiver")
+	if ok = tree1.Delete(min); ok {
+		t.Fatal("Delete didn't change receiver")
 	}
 
 	// reset
@@ -309,10 +309,10 @@ func TestMutable(t *testing.T) {
 	}
 
 	item := uintInterval{111, 666}
-	(&tree1).InsertMutable(item)
+	tree1.Insert(item)
 
 	if _, ok := tree1.Find(item); !ok {
-		t.Fatal("InsertMutable didn't changed receiver")
+		t.Fatal("Insert didn't changed receiver")
 	}
 }
 
@@ -831,8 +831,8 @@ func TestUnion(t *testing.T) {
 	tree1 := interval.NewTree(cmpUintInterval)
 
 	for i := range ps {
-		b := tree1.Insert(ps[i])
-		tree1 = tree1.Union(b, false, true)
+		b := tree1.InsertImmutable(ps[i])
+		tree1 = tree1.UnionImmutable(b, false)
 	}
 
 	asStr := `▼
@@ -855,8 +855,8 @@ func TestUnion(t *testing.T) {
 
 	// now with dupe overwrite
 	for i := range ps {
-		b := tree1.Insert(ps[i])
-		tree1 = tree1.Union(b, true, true)
+		b := tree1.InsertImmutable(ps[i])
+		tree1 = tree1.UnionImmutable(b, true)
 	}
 
 	if tree1.String() != asStr {
@@ -877,8 +877,8 @@ func TestUnion(t *testing.T) {
 		{7, 9},
 	}
 
-	tree2 := tree1.Insert(ps2...)
-	tree1 = tree1.Union(tree2, false, false)
+	tree2 := tree1.InsertImmutable(ps2...)
+	tree1.Union(tree2, false)
 
 	asStr = `▼
 ├─ 0...6
@@ -959,7 +959,7 @@ func TestMatch(t *testing.T) {
 
 		t.Run(probe.String(), func(t *testing.T) {
 			t.Parallel()
-			tree1 := tree1.Insert(probe)
+			tree1 := tree1.InsertImmutable(probe)
 
 			if _, ok := tree1.Find(probe); !ok {
 				t.Fatalf("inserted item not found in tree: %v", probe)
@@ -1011,14 +1011,14 @@ func TestMissing(t *testing.T) {
 
 		t.Run(probe.String(), func(t *testing.T) {
 			t.Parallel()
-			tree1 := tree1.Insert(probe)
+			tree1 := tree1.InsertImmutable(probe)
 			var ok bool
 
 			if _, ok = tree1.Find(probe); !ok {
 				t.Fatalf("inserted item not found in tree: %v", probe)
 			}
 
-			if tree1, ok = tree1.Delete(probe); !ok {
+			if tree1, ok = tree1.DeleteImmutable(probe); !ok {
 				t.Fatalf("delete, inserted item not found in tree: %v", probe)
 			}
 

@@ -35,16 +35,15 @@ type Tree[T any] struct {
 
 // NewTree initializes the interval tree with the compare function and items from type T.
 //
-//   cmp(a, b T) (ll, rr, lr, rl int)
+//	cmp(a, b T) (ll, rr, lr, rl int)
 //
 // The result of cmp() must be four int values:
 //
-//  ll: left  point interval a compared with left  point interval b (-1, 0, +1)
-//  rr: right point interval a compared with right point interval b (-1, 0, +1)
-//  lr: left  point interval a compared with right point interval b (-1, 0, +1)
-//  rl: right point interval a compared with left  point interval b (-1, 0, +1)
-//
-func NewTree[T any](cmp func(a, b T) (ll, rr, lr, rl int), items ...T) Tree[T] {
+//	ll: left  point interval a compared with left  point interval b (-1, 0, +1)
+//	rr: right point interval a compared with right point interval b (-1, 0, +1)
+//	lr: left  point interval a compared with right point interval b (-1, 0, +1)
+//	rl: right point interval a compared with left  point interval b (-1, 0, +1)
+func NewTree[T any](cmp func(a, b T) (ll, rr, lr, rl int), items ...T) *Tree[T] {
 	var t Tree[T]
 	t.cmp = cmp
 
@@ -53,12 +52,12 @@ func NewTree[T any](cmp func(a, b T) (ll, rr, lr, rl int), items ...T) Tree[T] {
 		t.root = t.insert(t.root, t.makeNode(items[i]), false)
 	}
 
-	return t
+	return &t
 }
 
 // NewTreeConcurrent, convenience function for initializing the interval tree for large inputs (> 100_000).
 // A good value reference for jobs is the number of logical CPUs usable by the current process.
-func NewTreeConcurrent[T any](jobs int, cmp func(a, b T) (ll, rr, lr, rl int), items ...T) Tree[T] {
+func NewTreeConcurrent[T any](jobs int, cmp func(a, b T) (ll, rr, lr, rl int), items ...T) *Tree[T] {
 	// define a min chunk size, don't split in too small chunks
 	const minChunkSize = 25_000
 
@@ -75,7 +74,7 @@ func NewTreeConcurrent[T any](jobs int, cmp func(a, b T) (ll, rr, lr, rl int), i
 
 	var wg sync.WaitGroup
 	var chunk []T
-	partialTrees := make(chan Tree[T])
+	partialTrees := make(chan *Tree[T])
 
 	// fan out
 	for ; l > 0; l = len(items) {
@@ -105,8 +104,8 @@ func NewTreeConcurrent[T any](jobs int, cmp func(a, b T) (ll, rr, lr, rl int), i
 	// fan in
 	t := NewTree[T](cmp)
 	for other := range partialTrees {
-		// fast union, immutable is false
-		t = t.Union(other, false, false)
+		// fast union
+		t.Union(other, false)
 	}
 	return t
 }
@@ -127,19 +126,19 @@ func (n *node[T]) copyNode() *node[T] {
 	return &c
 }
 
-// Insert elements into the tree, returns the new Tree.
+// InsertImmutable elements into the tree, returns the new Tree.
 // If an element is a duplicate, it replaces the previous element.
-func (t Tree[T]) Insert(items ...T) Tree[T] {
+func (t Tree[T]) InsertImmutable(items ...T) *Tree[T] {
 	for i := range items {
 		t.root = t.insert(t.root, t.makeNode(items[i]), true)
 	}
 
-	return t
+	return &t
 }
 
-// InsertMutable inserts items into the tree, changing the original tree.
+// Insert inserts items into the tree, changing the original tree.
 // If the original tree does not need to be preserved then this is much faster than the immutable insert.
-func (t *Tree[T]) InsertMutable(items ...T) {
+func (t *Tree[T]) Insert(items ...T) {
 	for i := range items {
 		t.root = t.insert(t.root, t.makeNode(items[i]), false)
 	}
@@ -214,19 +213,19 @@ func (t *Tree[T]) insert(n, m *node[T], immutable bool) *node[T] {
 	return n
 }
 
-// Delete removes an item if it exists, returns the new tree and true, false if not found.
-func (t Tree[T]) Delete(item T) (Tree[T], bool) {
+// DeleteImmutable removes an item if it exists, returns the new tree and true, false if not found.
+func (t Tree[T]) DeleteImmutable(item T) (*Tree[T], bool) {
 	// split/join must be immutable
 	l, m, r := t.split(t.root, item, true)
 	t.root = (&t).join(l, r, true)
 
 	ok := m != nil
-	return t, ok
+	return &t, ok
 }
 
-// DeleteMutable removes an item from tree, returns true if it exists, false otherwise.
+// Delete removes an item from tree, returns true if it exists, false otherwise.
 // If the original tree does not need to be preserved then this is much faster than the immutable delete.
-func (t *Tree[T]) DeleteMutable(item T) bool {
+func (t *Tree[T]) Delete(item T) bool {
 	l, m, r := t.split(t.root, item, false)
 	t.root = t.join(l, r, false)
 
@@ -240,9 +239,13 @@ func (t *Tree[T]) DeleteMutable(item T) bool {
 //
 // To create very large trees, it may be time-saving to slice the input data into chunks,
 // fan out for creation and combine the generated subtrees with non-immutable unions.
-func (t Tree[T]) Union(other Tree[T], overwrite bool, immutable bool) Tree[T] {
-	t.root = t.union(t.root, other.root, overwrite, immutable)
-	return t
+func (t *Tree[T]) Union(other *Tree[T], overwrite bool) {
+	t.root = t.union(t.root, other.root, overwrite, false)
+}
+
+func (t Tree[T]) UnionImmutable(other *Tree[T], overwrite bool) *Tree[T] {
+	t.root = t.union(t.root, other.root, overwrite, true)
+	return &t
 }
 
 // union combines to treaps.
@@ -358,59 +361,58 @@ func (t Tree[T]) Find(item T) (result T, ok bool) {
 //
 // The meaning of 'LCP' is best explained with examples:
 //
-//   A, B and C covers the item, but B has longest-common-prefix (LCP) with item.
+//	A, B and C covers the item, but B has longest-common-prefix (LCP) with item.
 //
-//   ------LCP--->|
+//	------LCP--->|
 //
-//   Item            |----|
+//	Item            |----|
 //
-//   A |------------------------|
-//   B            |---------------------------|
-//   C     |---------------|
-//   D              |--|
+//	A |------------------------|
+//	B            |---------------------------|
+//	C     |---------------|
+//	D              |--|
 //
-//     e.g. for this interval tree
+//	  e.g. for this interval tree
 //
-//     	 ▼
-//     	 ├─ 0...6
-//     	 │  └─ 0...5
-//     	 ├─ 1...8
-//     	 │  ├─ 1...7
-//     	 │  │  └─ 1...5
-//     	 │  │     └─ 1...4
-//     	 │  └─ 2...8
-//     	 │     ├─ 2...7
-//     	 │     └─ 4...8
-//     	 │        └─ 6...7
-//     	 └─ 7...9
+//	  	 ▼
+//	  	 ├─ 0...6
+//	  	 │  └─ 0...5
+//	  	 ├─ 1...8
+//	  	 │  ├─ 1...7
+//	  	 │  │  └─ 1...5
+//	  	 │  │     └─ 1...4
+//	  	 │  └─ 2...8
+//	  	 │     ├─ 2...7
+//	  	 │     └─ 4...8
+//	  	 │        └─ 6...7
+//	  	 └─ 7...9
 //
-//      tree.CoverLCP(ival{0,5}) returns ival{0,5}, true
-//      tree.CoverLCP(ival{3,6}) returns ival{2,7}, true
-//      tree.CoverLCP(ival{6,9}) returns ival{},    false
+//	   tree.CoverLCP(ival{0,5}) returns ival{0,5}, true
+//	   tree.CoverLCP(ival{3,6}) returns ival{2,7}, true
+//	   tree.CoverLCP(ival{6,9}) returns ival{},    false
 //
 // If the interval tree consists of IP CIDRs, CoverLCP is identical to the
 // longest-prefix-match.
 //
-//  example: IP CIDRs as intervals
+//	example: IP CIDRs as intervals
 //
-//     ▼
-//     ├─ 0.0.0.0/0
-//     │  ├─ 10.0.0.0/8
-//     │  │  ├─ 10.0.0.0/24
-//     │  │  └─ 10.0.1.0/24
-//     │  └─ 127.0.0.0/8
-//     │     └─ 127.0.0.1/32
-//     └─ ::/0
-//        ├─ ::1/128
-//        ├─ 2000::/3
-//        │  └─ 2001:db8::/32
-//        ├─ fc00::/7
-//        ├─ fe80::/10
-//        └─ ff00::/8
+//	   ▼
+//	   ├─ 0.0.0.0/0
+//	   │  ├─ 10.0.0.0/8
+//	   │  │  ├─ 10.0.0.0/24
+//	   │  │  └─ 10.0.1.0/24
+//	   │  └─ 127.0.0.0/8
+//	   │     └─ 127.0.0.1/32
+//	   └─ ::/0
+//	      ├─ ::1/128
+//	      ├─ 2000::/3
+//	      │  └─ 2001:db8::/32
+//	      ├─ fc00::/7
+//	      ├─ fe80::/10
+//	      └─ ff00::/8
 //
-//      tree.CoverLCP("10.0.1.17/32")       returns "10.0.1.0/24", true
-//      tree.CoverLCP("2001:7c0:3100::/40") returns "2000::/3",    true
-//
+//	    tree.CoverLCP("10.0.1.17/32")       returns "10.0.1.0/24", true
+//	    tree.CoverLCP("2001:7c0:3100::/40") returns "2000::/3",    true
 func (t Tree[T]) CoverLCP(item T) (result T, ok bool) {
 	return t.lcp(t.root, item)
 }
@@ -462,37 +464,36 @@ func (t *Tree[T]) lcp(n *node[T], item T) (result T, ok bool) {
 //
 // The meaning of 'SCP' is best explained with examples:
 //
-//   A, B and C covers the item, but A has shortest-common-prefix (SCP) with item.
+//	  A, B and C covers the item, but A has shortest-common-prefix (SCP) with item.
 //
-//   --SCP-->|
+//	  --SCP-->|
 //
-//   Item                  |----|
+//	  Item                  |----|
 //
-//   A       |------------------------|
-//   B                  |---------------------------|
-//   C           |---------------|
-//   D     |-----------------|
+//	  A       |------------------------|
+//	  B                  |---------------------------|
+//	  C           |---------------|
+//	  D     |-----------------|
 //
-//	e.g. for this interval tree
+//		e.g. for this interval tree
 //
-//		 ▼
-//		 ├─ 0...6
-//		 │  └─ 0...5
-//		 ├─ 1...8
-//		 │  ├─ 1...7
-//		 │  │  └─ 1...5
-//		 │  │     └─ 1...4
-//		 │  └─ 2...8
-//		 │     ├─ 2...7
-//		 │     └─ 4...8
-//		 │        └─ 6...7
-//		 └─ 7...9
+//			 ▼
+//			 ├─ 0...6
+//			 │  └─ 0...5
+//			 ├─ 1...8
+//			 │  ├─ 1...7
+//			 │  │  └─ 1...5
+//			 │  │     └─ 1...4
+//			 │  └─ 2...8
+//			 │     ├─ 2...7
+//			 │     └─ 4...8
+//			 │        └─ 6...7
+//			 └─ 7...9
 //
-//	 tree.CoverSCP(ival{0,6}) returns ival{0,6}, true
-//	 tree.CoverSCP(ival{0,5}) returns ival{0,6}, true
-//	 tree.CoverSCP(ival{3,7}) returns ival{1,8}, true
-//	 tree.CoverSCP(ival{6,9}) returns ival{},    false
-//
+//		 tree.CoverSCP(ival{0,6}) returns ival{0,6}, true
+//		 tree.CoverSCP(ival{0,5}) returns ival{0,6}, true
+//		 tree.CoverSCP(ival{3,7}) returns ival{1,8}, true
+//		 tree.CoverSCP(ival{6,9}) returns ival{},    false
 func (t Tree[T]) CoverSCP(item T) (result T, ok bool) {
 	l, m, _ := t.split(t.root, item, true)
 	result, ok = t.scp(l, item)
@@ -685,17 +686,16 @@ func (t *Tree[T]) intersections(n *node[T], item T) (result []T) {
 // Precedes returns all intervals that precedes the item.
 // The returned intervals are in sorted order.
 //
-//  example:
+//	example:
 //
-//   Item                       |-----------------|
+//	 Item                       |-----------------|
 //
-//   A       |---------------------------------------|
-//   B                  |-----|
-//   C           |-----------------|
-//   D     |-----------------|
+//	 A       |---------------------------------------|
+//	 B                  |-----|
+//	 C           |-----------------|
+//	 D     |-----------------|
 //
-//  Precedes(item) => [D, B]
-//
+//	Precedes(item) => [D, B]
 func (t Tree[T]) Precedes(item T) []T {
 	// split, reduce the search space
 	l, _, _ := t.split(t.root, item, true)
@@ -728,17 +728,16 @@ func (t *Tree[T]) precedes(n *node[T], item T) (result []T) {
 // PrecededBy returns all intervals that are preceded by the item.
 // The returned intervals are in sorted order.
 //
-//  example:
+//	example:
 //
-//   Item       |-----|
+//	 Item       |-----|
 //
-//   A       |---------------------------------------|
-//   B                  |-----|
-//   C           |-----------------|
-//   D                    |-----------------|
+//	 A       |---------------------------------------|
+//	 B                  |-----|
+//	 C           |-----------------|
+//	 D                    |-----------------|
 //
-//  PrecededBy(item) => [B, D]
-//
+//	PrecededBy(item) => [B, D]
 func (t Tree[T]) PrecededBy(item T) []T {
 	// split, reduce the search space
 	_, _, r := t.split(t.root, item, true)

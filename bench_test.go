@@ -17,38 +17,38 @@ var intMap = map[int]string{
 	1_000_000: "1_000_000",
 }
 
+func BenchmarkInsertImmutable(b *testing.B) {
+	for n := 1; n <= 1_000_000; n *= 10 {
+		tree := interval.NewTree(cmpUintInterval, genUintIvals(n)...)
+
+		probe := genUintIvals(1)[0]
+		name := "Into" + intMap[n]
+
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_ = tree.InsertImmutable(probe)
+			}
+		})
+	}
+}
+
 func BenchmarkInsert(b *testing.B) {
 	for n := 1; n <= 1_000_000; n *= 10 {
 		tree := interval.NewTree(cmpUintInterval, genUintIvals(n)...)
-
 		probe := genUintIvals(1)[0]
 		name := "Into" + intMap[n]
 
 		b.Run(name, func(b *testing.B) {
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
-				_ = tree.Insert(probe)
+				tree.Insert(probe)
 			}
 		})
 	}
 }
 
-func BenchmarkInsertMutable(b *testing.B) {
-	for n := 1; n <= 1_000_000; n *= 10 {
-		tree := interval.NewTree(cmpUintInterval, genUintIvals(n)...)
-		probe := genUintIvals(1)[0]
-		name := "Into" + intMap[n]
-
-		b.Run(name, func(b *testing.B) {
-			b.ResetTimer()
-			for n := 0; n < b.N; n++ {
-				(&tree).InsertMutable(probe)
-			}
-		})
-	}
-}
-
-func BenchmarkDelete(b *testing.B) {
+func BenchmarkDeleteImmutable(b *testing.B) {
 	for n := 1; n <= 1_000_000; n *= 10 {
 		ivals := genUintIvals(n)
 		probe := ivals[rand.Intn(len(ivals))]
@@ -59,13 +59,13 @@ func BenchmarkDelete(b *testing.B) {
 		b.Run(name, func(b *testing.B) {
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
-				_, _ = tree.Delete(probe)
+				_, _ = tree.DeleteImmutable(probe)
 			}
 		})
 	}
 }
 
-func BenchmarkDeleteMutable(b *testing.B) {
+func BenchmarkDelete(b *testing.B) {
 	for n := 1; n <= 1_000_000; n *= 10 {
 		ivals := genUintIvals(n)
 		probe := ivals[rand.Intn(len(ivals))]
@@ -76,7 +76,7 @@ func BenchmarkDeleteMutable(b *testing.B) {
 		b.Run(name, func(b *testing.B) {
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
-				_ = (&tree).DeleteMutable(probe)
+				_ = tree.Delete(probe)
 			}
 		})
 	}
@@ -105,13 +105,13 @@ func BenchmarkUnionImmutable(b *testing.B) {
 		b.Run(name, func(b *testing.B) {
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
-				_ = this100_000.Union(tree, false, true)
+				_ = this100_000.UnionImmutable(tree, false)
 			}
 		})
 	}
 }
 
-func BenchmarkUnionMutable(b *testing.B) {
+func BenchmarkUnion(b *testing.B) {
 	for n := 10; n <= 100_000; n *= 10 {
 		this100_000 := interval.NewTree(cmpUintInterval, genUintIvals(100_000)...)
 		tree := interval.NewTree(cmpUintInterval, genUintIvals(n)...)
@@ -120,7 +120,7 @@ func BenchmarkUnionMutable(b *testing.B) {
 		b.Run(name, func(b *testing.B) {
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
-				_ = this100_000.Union(tree, false, false)
+				this100_000.Union(tree, false)
 			}
 		})
 	}

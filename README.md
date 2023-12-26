@@ -6,31 +6,15 @@
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## API CHANGE !!!
+
+The API has changed from v0.1.0 to v0.2.0
+
 ## Overview
 
 `package interval` is an immutable datastructure for fast lookups in one dimensional intervals.
 
 The implementation is based on treaps, augmented for intervals. Treaps are randomized self balancing binary search trees.
-
-Immutability is achieved because insert/delete will return a new treap which will share some nodes with the original treap.
-All nodes are read-only after creation, allowing concurrent readers to operate safely with concurrent writers.
-
-The time complexity is **O(log(n))** or **O(k+log(n))** where k is the number of returned items, the space complexity is **O(n)**.
-
-```
-Insert()       O(log(n))
-Delete()       O(log(n))
-Find()         O(log(n))
-Intersects()   O(log(n))
-CoverLCP()     O(log(n))
-CoverSCP()     O(log(n))
-
-Covers()         O(k+log(n))
-CoveredBy()      O(k+log(n))
-Precedes()       O(k+log(n))
-PrecededBy()     O(k+log(n))
-Intersections()  O(k+log(n))
-```
 
 The author is propably the first (in december 2022) using augmented treaps
 as a very promising [data structure] for the representation of dynamic IP address tables
@@ -79,15 +63,18 @@ To apply this library to types of one-dimensional intervals, you must provide a 
   import "github.com/gaissmai/interval"
 
   type Tree[T any] struct{ ... }
-  func NewTree[T any](cmp func(a, b T) (ll, rr, lr, rl int), items ...T) Tree[T]
+  func NewTree[T any](cmp func(a, b T) (ll, rr, lr, rl int), items ...T) *Tree[T]
 
-  func NewTreeConcurrent[T any](jobs int, cmp func(a, b T) (ll, rr, lr, rl int), items ...T) Tree[T]
+  func NewTreeConcurrent[T any](jobs int, cmp func(a, b T) (ll, rr, lr, rl int), items ...T) *Tree[T]
 
-  func (t Tree[T]) Insert(items ...T) Tree[T]
-  func (t Tree[T]) Delete(item T) (Tree[T], bool)
+  func (t *Tree[T]) Insert(items ...T)
+  func (t *Tree[T]) Delete(item T) bool
+  func (t *Tree[T]) Union(other *Tree[T], overwrite bool)
 
-  func (t *Tree[T]) InsertMutable(items ...T)
-  func (t *Tree[T]) DeleteMutable(item T) bool
+  func (t Tree[T]) InsertImmutable(items ...T) *Tree[T]
+  func (t Tree[T]) DeleteImmutable(item T) (*Tree[T], bool)
+  func (t Tree[T]) UnionImmutable(other *Tree[T], overwrite bool) *Tree[T]
+  func (t Tree[T]) Clone() *Tree[T]
 
   func (t Tree[T]) Find(item T) (result T, ok bool)
   func (t Tree[T]) CoverLCP(item T) (result T, ok bool)
@@ -101,9 +88,6 @@ To apply this library to types of one-dimensional intervals, you must provide a 
   func (t Tree[T]) PrecededBy(item T) []T
 
   func (t Tree[T]) Intersections(item T) []T
-
-  func (t Tree[T]) Clone() Tree[T]
-  func (t Tree[T]) Union(other Tree[T], overwrite bool, immutable bool) Tree[T]
 
   func (t Tree[T]) Visit(start, stop T, visitFn func(item T) bool)
   func (t Tree[T]) Fprint(w io.Writer) error
@@ -135,21 +119,14 @@ goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkInsert/Into1-8                       7488871           189 ns/op       128 B/op          2 allocs/op
-BenchmarkInsert/Into10-8                      3276116           398 ns/op       256 B/op          4 allocs/op
-BenchmarkInsert/Into100-8                     1496136           951 ns/op       512 B/op          8 allocs/op
-BenchmarkInsert/Into1_000-8                    533299          1959 ns/op       960 B/op         15 allocs/op
-BenchmarkInsert/Into10_000-8                   727627          1398 ns/op       832 B/op         13 allocs/op
-BenchmarkInsert/Into100_000-8                  342596          3339 ns/op      1600 B/op         25 allocs/op
-BenchmarkInsert/Into1_000_000-8                396890          3681 ns/op      1728 B/op         27 allocs/op
 
-BenchmarkInsertMutable/Into1-8               10415164           128 ns/op        64 B/op          1 allocs/op
-BenchmarkInsertMutable/Into10-8               5160836           245 ns/op        64 B/op          1 allocs/op
-BenchmarkInsertMutable/Into100-8              2707705           443 ns/op        64 B/op          1 allocs/op
-BenchmarkInsertMutable/Into1_000-8            1694250           723 ns/op        64 B/op          1 allocs/op
-BenchmarkInsertMutable/Into10_000-8           1204220           963 ns/op        64 B/op          1 allocs/op
-BenchmarkInsertMutable/Into100_000-8           966566          1249 ns/op        64 B/op          1 allocs/op
-BenchmarkInsertMutable/Into1_000_000-8         645523          1863 ns/op        64 B/op          1 allocs/op
+BenchmarkInsert/Into1-8               10415164           128 ns/op        64 B/op          1 allocs/op
+BenchmarkInsert/Into10-8               5160836           245 ns/op        64 B/op          1 allocs/op
+BenchmarkInsert/Into100-8              2707705           443 ns/op        64 B/op          1 allocs/op
+BenchmarkInsert/Into1_000-8            1694250           723 ns/op        64 B/op          1 allocs/op
+BenchmarkInsert/Into10_000-8           1204220           963 ns/op        64 B/op          1 allocs/op
+BenchmarkInsert/Into100_000-8           966566          1249 ns/op        64 B/op          1 allocs/op
+BenchmarkInsert/Into1_000_000-8         645523          1863 ns/op        64 B/op          1 allocs/op
 ```
 
 ### Delete
@@ -162,24 +139,19 @@ goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
-BenchmarkDelete/DeleteFrom10-8                 8018518           150 ns/op      128 B/op          2 allocs/op
-BenchmarkDelete/DeleteFrom100-8                2349710           708 ns/op      448 B/op          7 allocs/op
-BenchmarkDelete/DeleteFrom1_000-8               616173          2051 ns/op     1536 B/op         24 allocs/op
-BenchmarkDelete/DeleteFrom10_000-8              446180          2362 ns/op     1856 B/op         29 allocs/op
-BenchmarkDelete/DeleteFrom100_000-8             272798          4224 ns/op     2816 B/op         44 allocs/op
-BenchmarkDelete/DeleteFrom1_000_000-8           231808          5897 ns/op     3520 B/op         55 allocs/op
 
-BenchmarkDeleteMutable/DeleteFrom10-8          7682869           156 ns/op        0 B/op          0 allocs/op
-BenchmarkDeleteMutable/DeleteFrom100-8        13009023            92 ns/op        0 B/op          0 allocs/op
-BenchmarkDeleteMutable/DeleteFrom1_000-8       1912417           627 ns/op        0 B/op          0 allocs/op
-BenchmarkDeleteMutable/DeleteFrom10_000-8      1362752           889 ns/op        0 B/op          0 allocs/op
-BenchmarkDeleteMutable/DeleteFrom100_000-8      893157          1334 ns/op        0 B/op          0 allocs/op
-BenchmarkDeleteMutable/DeleteFrom1_000_000-8    647199          1828 ns/op        0 B/op          0 allocs/op
+BenchmarkDelete/DeleteFrom10-8          7682869           156 ns/op        0 B/op          0 allocs/op
+BenchmarkDelete/DeleteFrom100-8        13009023            92 ns/op        0 B/op          0 allocs/op
+BenchmarkDelete/DeleteFrom1_000-8       1912417           627 ns/op        0 B/op          0 allocs/op
+BenchmarkDelete/DeleteFrom10_000-8      1362752           889 ns/op        0 B/op          0 allocs/op
+BenchmarkDelete/DeleteFrom100_000-8      893157          1334 ns/op        0 B/op          0 allocs/op
+BenchmarkDelete/DeleteFrom1_000_000-8    647199          1828 ns/op        0 B/op          0 allocs/op
 ```
 
 ### Lookups
 
-The benchmark for `CoverLCP()` (a.k.a. longest-prefix-match if the interval is an IP CIDR prefix) is very promising:
+The benchmark for `CoverLCP()` (also known as longest-prefix-match when the interval is an IP-CIDR prefix) is very
+promising, as it is a generalized algorithm that is not specifically optimized only for IP address lookup:
 
 ```
 $ go test -benchmem -bench='CoverLCP'
@@ -187,6 +159,7 @@ goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+
 BenchmarkCoverLCP/In100-8            4833073       239 ns/op        0 B/op    0 allocs/op
 BenchmarkCoverLCP/In1_000-8          3714054       323 ns/op        0 B/op    0 allocs/op
 BenchmarkCoverLCP/In10_000-8         1897353       630 ns/op        0 B/op    0 allocs/op
@@ -203,6 +176,7 @@ goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz
+
 BenchmarkIntersects/In1-4           58757540        19 ns/op        0 B/op    0 allocs/op
 BenchmarkIntersects/In10-4          27267051        40 ns/op        0 B/op    0 allocs/op
 BenchmarkIntersects/In100-4         17559418        60 ns/op        0 B/op    0 allocs/op
@@ -220,6 +194,7 @@ goos: linux
 goarch: amd64
 pkg: github.com/gaissmai/interval
 cpu: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+
 BenchmarkFind/In100-8               17299449        63 ns/op      0 B/op    0 allocs/op
 BenchmarkFind/In1_000-8             17327350        69 ns/op      0 B/op    0 allocs/op
 BenchmarkFind/In10_000-8            12858908        90 ns/op      0 B/op    0 allocs/op

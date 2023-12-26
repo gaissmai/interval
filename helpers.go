@@ -71,28 +71,27 @@ func (t Tree[T]) String() string {
 //
 // example: IP CIDRs as intervals
 //
-//     ▼
-//     ├─ 0.0.0.0/0
-//     │  ├─ 10.0.0.0/8
-//     │  │  ├─ 10.0.0.0/24
-//     │  │  └─ 10.0.1.0/24
-//     │  ├─ 127.0.0.0/8
-//     │  │  └─ 127.0.0.1/32
-//     │  ├─ 169.254.0.0/16
-//     │  ├─ 172.16.0.0/12
-//     │  └─ 192.168.0.0/16
-//     │     └─ 192.168.1.0/24
-//     └─ ::/0
-//        ├─ ::1/128
-//        ├─ 2000::/3
-//        │  └─ 2001:db8::/32
-//        ├─ fc00::/7
-//        ├─ fe80::/10
-//        └─ ff00::/8
+//	▼
+//	├─ 0.0.0.0/0
+//	│  ├─ 10.0.0.0/8
+//	│  │  ├─ 10.0.0.0/24
+//	│  │  └─ 10.0.1.0/24
+//	│  ├─ 127.0.0.0/8
+//	│  │  └─ 127.0.0.1/32
+//	│  ├─ 169.254.0.0/16
+//	│  ├─ 172.16.0.0/12
+//	│  └─ 192.168.0.0/16
+//	│     └─ 192.168.1.0/24
+//	└─ ::/0
+//	   ├─ ::1/128
+//	   ├─ 2000::/3
+//	   │  └─ 2001:db8::/32
+//	   ├─ fc00::/7
+//	   ├─ fe80::/10
+//	   └─ ff00::/8
 //
 // If the interval items don't implement fmt.Stringer they are stringified with
 // their default format %v.
-//
 func (t Tree[T]) Fprint(w io.Writer) error {
 	// pcm = parent-child-mapping
 	var pcm parentChildsMap[T]
@@ -159,18 +158,17 @@ func (t *Tree[T]) hierarchyStringify(w io.Writer, n *node[T], pcm parentChildsMa
 //
 // e.g. with left/right, item priority [prio] and pointers [this|left|right]
 //
-//  R 0...5 [prio:0.9405] [0xc000024940|l:0xc000024140|r:0xc000024980]
-//  ├─l 0...6 [prio:0.6047] [0xc000024140|l:0x0|r:0x0]
-//  └─r 1...4 [prio:0.6868] [0xc000024980|l:0xc000024440|r:0xc000024900]
-//      ├─l 1...8 [prio:0.6646] [0xc000024440|l:0x0|r:0xc000024480]
-//      │   └─r 1...7 [prio:0.4377] [0xc000024480|l:0x0|r:0xc0000244c0]
-//      │       └─r 1...5 [prio:0.4246] [0xc0000244c0|l:0x0|r:0x0]
-//      └─r 7...9 [prio:0.5152] [0xc000024900|l:0xc0000249c0|r:0x0]
-//          └─l 6...7 [prio:0.3009] [0xc0000249c0|l:0xc000024880|r:0x0]
-//              └─l 2...7 [prio:0.1565] [0xc000024880|l:0xc000024680|r:0xc0000248c0]
-//                  ├─l 2...8 [prio:0.06564] [0xc000024680|l:0x0|r:0x0]
-//                  └─r 4...8 [prio:0.09697] [0xc0000248c0|l:0x0|r:0x0]
-//
+//	R 0...5 [prio:0.9405] [0xc000024940|l:0xc000024140|r:0xc000024980]
+//	├─l 0...6 [prio:0.6047] [0xc000024140|l:0x0|r:0x0]
+//	└─r 1...4 [prio:0.6868] [0xc000024980|l:0xc000024440|r:0xc000024900]
+//	    ├─l 1...8 [prio:0.6646] [0xc000024440|l:0x0|r:0xc000024480]
+//	    │   └─r 1...7 [prio:0.4377] [0xc000024480|l:0x0|r:0xc0000244c0]
+//	    │       └─r 1...5 [prio:0.4246] [0xc0000244c0|l:0x0|r:0x0]
+//	    └─r 7...9 [prio:0.5152] [0xc000024900|l:0xc0000249c0|r:0x0]
+//	        └─l 6...7 [prio:0.3009] [0xc0000249c0|l:0xc000024880|r:0x0]
+//	            └─l 2...7 [prio:0.1565] [0xc000024880|l:0xc000024680|r:0xc0000248c0]
+//	                ├─l 2...8 [prio:0.06564] [0xc000024680|l:0x0|r:0x0]
+//	                └─r 4...8 [prio:0.09697] [0xc0000248c0|l:0x0|r:0x0]
 func (t Tree[T]) FprintBST(w io.Writer) error {
 	if t.root == nil {
 		return nil
@@ -232,19 +230,19 @@ func (t *Tree[T]) binarytreeStringify(w io.Writer, n *node[T], pad string) error
 // parentChildsMap, needed for interval tree printing, this is not BST printing!
 //
 // Interval tree, parent->childs relation printed. A parent interval covers a child interval.
-//  ▼
-//  ├─ 0...6
-//  │  └─ 0...5
-//  ├─ 1...8
-//  │  ├─ 1...7
-//  │  │  └─ 1...5
-//  │  │     └─ 1...4
-//  │  └─ 2...8
-//  │     ├─ 2...7
-//  │     └─ 4...8
-//  │        └─ 6...7
-//  └─ 7...9
 //
+//	▼
+//	├─ 0...6
+//	│  └─ 0...5
+//	├─ 1...8
+//	│  ├─ 1...7
+//	│  │  └─ 1...5
+//	│  │     └─ 1...4
+//	│  └─ 2...8
+//	│     ├─ 2...7
+//	│     └─ 4...8
+//	│        └─ 6...7
+//	└─ 7...9
 type parentChildsMap[T any] struct {
 	pcMap map[*node[T]][]*node[T] // parent -> []child map
 	stack []*node[T]              // just needed for the algo
@@ -300,7 +298,6 @@ func (t *Tree[T]) pcmForNode(n *node[T], pcm parentChildsMap[T]) parentChildsMap
 // Note: This is for debugging and testing purposes only during development in semver
 // 0.x.y. In future versions this will be removed without increasing the main
 // semantic version, so please do not rely on it for now.
-//
 func (t Tree[T]) Statistics() (size int, maxDepth int, average, deviation float64) {
 	// key is depth, value is the sum of nodes with this depth
 	depths := make(map[int]int)
@@ -363,13 +360,14 @@ func (t Tree[T]) Max() (max T) {
 // or if start > stop, then the order is reversed. The visit function is called for each item.
 //
 // For example, the entire tree can be traversed as follows
-//  t.Visit(t.Min(), t.Max(), visitFn)
+//
+//	t.Visit(t.Min(), t.Max(), visitFn)
 //
 // or in reverse order by
-//  t.Visit(t.Max(), t.Min(), visitFn).
+//
+//	t.Visit(t.Max(), t.Min(), visitFn).
 //
 // The traversion terminates prematurely if the visit function returns false.
-//
 func (t Tree[T]) Visit(start, stop T, visitFn func(item T) bool) {
 	if t.root == nil {
 		return
@@ -393,9 +391,10 @@ func (t Tree[T]) Visit(start, stop T, visitFn func(item T) bool) {
 }
 
 // Clone, deep cloning of the tree structure.
-func (t Tree[T]) Clone() Tree[T] {
-	t.root = t.clone(t.root)
-	return t
+func (t Tree[T]) Clone() *Tree[T] {
+	c := NewTree[T](t.cmp)
+	c.root = t.clone(t.root)
+	return c
 }
 
 // clone rec-descent
