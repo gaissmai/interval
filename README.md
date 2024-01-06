@@ -8,7 +8,7 @@
 
 ## API CHANGE !!!
 
-The API has changed from v0.1.0 to v0.2.0
+The API has changed from v0.9.1 to v0.10.0
 
 ## Overview
 
@@ -104,15 +104,6 @@ The benchmark for `Insert()` shows the values for inserting an item into trees w
 
 The trees are randomly generated, as is the item to be inserted.
 
-The trees are immutable, insertions and deletions generate new nodes on the path. The expected depth
-of the trees is **O(log(n))** and the **allocs/op** represent this well.
-
-The data structure is a randomized BST, the expected depth is determined with very
-high probability (for large n) but not deterministic.
-
-If the original tree is allowed to mutate during insert and delete because the old state is no longer needed,
-then the values are correspondingly better.
-
 ```
 $ go test -benchmem -bench='Insert'
 goos: linux
@@ -130,8 +121,6 @@ BenchmarkInsert/Into1_000_000-8         645523          1863 ns/op        64 B/o
 ```
 
 ### Delete
-
-The benchmark for `Delete()` shows the same asymptotic behavior:
 
 ```
 $ go test -benchmem -bench='Delete'

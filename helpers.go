@@ -327,7 +327,7 @@ func (t Tree[T]) Statistics() (size int, maxDepth int, average, deviation float6
 	variance = variance / float64(sum)
 	deviation = math.Sqrt(variance)
 
-	return size, maxDepth, average, deviation
+	return size, maxDepth, math.Round(average*10000) / 10000, math.Round(deviation*10000) / 10000
 }
 
 // Min returns the min item in tree.
@@ -392,9 +392,9 @@ func (t Tree[T]) Visit(start, stop T, visitFn func(item T) bool) {
 
 // Clone, deep cloning of the tree structure.
 func (t Tree[T]) Clone() *Tree[T] {
-	c := NewTree[T](t.cmp)
+	c := t
 	c.root = t.clone(t.root)
-	return c
+	return &c
 }
 
 // clone rec-descent

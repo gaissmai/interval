@@ -1,6 +1,7 @@
 package interval_test
 
 import (
+	"cmp"
 	"fmt"
 	"os"
 
@@ -12,18 +13,10 @@ type uintInterval [2]uint
 
 // cmp function for uintInterval
 func cmpUintInterval(p, q uintInterval) (ll, rr, lr, rl int) {
-	return cmpUint(p[0], q[0]), cmpUint(p[1], q[1]), cmpUint(p[0], q[1]), cmpUint(p[1], q[0])
-}
-
-// little helper
-func cmpUint(a, b uint) int {
-	switch {
-	case a == b:
-		return 0
-	case a < b:
-		return -1
-	}
-	return 1
+	return cmp.Compare(p[0], q[0]),
+		cmp.Compare(p[1], q[1]),
+		cmp.Compare(p[0], q[1]),
+		cmp.Compare(p[1], q[0])
 }
 
 // example data

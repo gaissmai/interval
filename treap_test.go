@@ -282,7 +282,7 @@ func TestMutable(t *testing.T) {
 	clone := tree1.Clone()
 
 	if !equalStatistics(tree1, clone) {
-		t.Fatalf("Clone, something wrong, statistics differs")
+		t.Error("Clone, something wrong, statistics differs")
 	}
 
 	min := tree1.Min()
